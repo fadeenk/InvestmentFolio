@@ -10,11 +10,21 @@
     "lint":         "eslint . --max-warnings=0",
     "lint:fix":     "eslint . --fix",
     "format":       "prettier --write .",
+    "typecheck":    "npm --workspace=frontend run typecheck && npm --workspace=worker run typecheck",
     "prepare":      "husky"
   },
   "devDependencies": {
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,vue}": [
+      "eslint --fix --max-warnings=0",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   }
 }

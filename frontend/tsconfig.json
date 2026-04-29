@@ -6,5 +6,16 @@
     { "path": "./.nuxt/tsconfig.server.json" },
     { "path": "./.nuxt/tsconfig.shared.json" },
     { "path": "./.nuxt/tsconfig.node.json" }
-  ]
+  ],
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true,
+    "moduleResolution": "bundler",
+    "types": ["vitest/globals", "@nuxt/test-utils"]
+  },
+  "include": ["**/*.ts", "**/*.vue", ".nuxt/types/**/*.ts"]
 }

@@ -39,7 +39,11 @@
 		"types": [
 			"./worker-configuration.d.ts",
 			"node"
-		]
+		],
+		"noImplicitAny": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"exactOptionalPropertyTypes": true
 	},
 	"exclude": ["test"],
 	"include": ["worker-configuration.d.ts", "src/**/*.ts"]

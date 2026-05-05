@@ -19,7 +19,7 @@ Set up the project scaffold, encrypted vault, and Cloudflare Worker. Nothing wor
 
 ### Project scaffold `Setup`
 
-- [ ] Initialize Nuxt 3 with TypeScript + Nuxt UI Dashboard template
+- [x] Initialize Nuxt 3 with TypeScript + Nuxt UI Dashboard template
 - [ ] Configure Tailwind CSS, Pinia, and Unovis
 - [ ] Set up `src/types/` directory with all enums and interfaces (`vault.ts`, `schwab.ts`, `enums.ts`)
 - [ ] Configure `strict: true` in `tsconfig.json`

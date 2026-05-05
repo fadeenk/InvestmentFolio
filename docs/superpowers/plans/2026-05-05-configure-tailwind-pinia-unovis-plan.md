@@ -169,6 +169,12 @@ import { usePortfolioStore } from '~/stores/portfolio'
 describe('portfolio store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    // Mock Math.random for deterministic updatePrices test
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('should add a position', () => {
@@ -202,6 +208,97 @@ describe('portfolio store', () => {
     })
     expect(store.totalValue).toBe(1550) // 10 * 155
   })
+
+  it('should calculate allocationByAsset', () => {
+    const store = usePortfolioStore()
+    store.addPosition({
+      id: '1',
+      accountId: 'acc1',
+      symbol: 'AAPL',
+      assetType: 'Stock' as const,
+      shares: 10,
+      avgCost: 150,
+      currentPrice: 155,
+      costBasisMethod: 'FIFO' as const
+    })
+    store.addPosition({
+      id: '2',
+      accountId: 'acc1',
+      symbol: 'GOOGL',
+      assetType: 'Stock' as const,
+      shares: 5,
+      avgCost: 2800,
+      currentPrice: 2850,
+      costBasisMethod: 'FIFO' as const
+    })
+    const allocation = store.allocationByAsset
+    expect(allocation.length).toBe(1) // Both are Stock
+    expect(allocation[0].label).toBe('Stock')
+    expect(allocation[0].value).toBe(1550 + 14250) // 10*155 + 5*2850
+  })
+
+  it('should add account', () => {
+    const store = usePortfolioStore()
+    store.addAccount({
+      id: 'acc1',
+      bank: 'Chase' as const,
+      type: 'Taxable' as const,
+      name: 'Main Account',
+      number: '123456'
+    })
+    expect(store.accounts.length).toBe(1)
+  })
+
+  it('should reject invalid position', () => {
+    const store = usePortfolioStore()
+    const warnSpy = vi.spyOn(console, 'warn')
+    store.addPosition({
+      id: '1',
+      accountId: 'acc1',
+      symbol: 'AAPL',
+      assetType: 'Stock' as const,
+      shares: 0, // Invalid
+      avgCost: 150,
+      currentPrice: 155,
+      costBasisMethod: 'FIFO' as const
+    })
+    expect(store.positions.length).toBe(0)
+    expect(warnSpy).toHaveBeenCalled()
+  })
+
+  it('should update prices', () => {
+    const store = usePortfolioStore()
+    store.addPosition({
+      id: '1',
+      accountId: 'acc1',
+      symbol: 'AAPL',
+      assetType: 'Stock' as const,
+      shares: 10,
+      avgCost: 150,
+      currentPrice: 155,
+      costBasisMethod: 'FIFO' as const
+    })
+    const originalPrice = store.positions[0].currentPrice
+    store.updatePrices()
+    // Price should have changed (±5%)
+    expect(store.positions[0].currentPrice).not.toBe(originalPrice)
+    expect(store.positions[0].currentPrice).toBeGreaterThan(originalPrice * 0.95)
+    expect(store.positions[0].currentPrice).toBeLessThan(originalPrice * 1.05)
+  })
+
+  it('should reject invalid account', () => {
+    const store = usePortfolioStore()
+    const warnSpy = vi.spyOn(console, 'warn')
+    store.addAccount({
+      id: '', // Invalid
+      bank: 'Chase' as const,
+      type: 'Taxable' as const,
+      name: 'Test',
+      number: '123'
+    })
+    expect(store.accounts.length).toBe(0)
+    expect(warnSpy).toHaveBeenCalled()
+  })
 })
 ```
 
@@ -218,7 +315,7 @@ Expected: FAIL with "Cannot find module ~/stores/portfolio"
 ```typescript
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import type { Position, PricePoint } from '~/types/vault'
+import type { Account, Position, PricePoint } from '~/types/vault'
 import { AssetType } from '~/types/enums'
 
 export const usePortfolioStore = defineStore('portfolio', () => {
@@ -239,7 +336,23 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     return Object.entries(groups).map(([label, value]) => ({ label, value }))
   })
 
+  function addAccount(account: Account) {
+    if (!account.id || !account.name) {
+      console.warn('Invalid account: id and name are required')
+      return
+    }
+    accounts.value.push(account)
+  }
+
   function addPosition(position: Position) {
+    if (position.shares <= 0) {
+      console.warn('Invalid position: shares must be > 0')
+      return
+    }
+    if (position.avgCost <= 0) {
+      console.warn('Invalid position: avgCost must be > 0')
+      return
+    }
     positions.value.push(position)
   }
 
@@ -250,7 +363,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     })
   }
 
-  return { accounts, positions, priceHistory, totalValue, allocationByAsset, addPosition, updatePrices }
+  return { accounts, positions, priceHistory, totalValue, allocationByAsset, addAccount, addPosition, updatePrices }
 })
 ```
 
@@ -300,18 +413,37 @@ describe('preferences store', () => {
     store.setCurrency('EUR')
     expect(store.currency).toBe('EUR')
   })
+
+  it('should persist currency to localStorage', () => {
+    const store = usePreferencesStore()
+    store.setCurrency('EUR')
+    const stored = JSON.parse(localStorage.getItem('preferences') || '{}')
+    expect(stored.currency).toBe('EUR')
+  })
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **Step 2: Note dependencies**
+
+> **Note:** Task 14 (Chunk 6) installs `@pinia-plugin-persistedstate/nuxt`. To run persistence tests, execute this task after Chunk 6, or install the package first:
+> ```bash
+> cd frontend && npm install @pinia-plugin-persistedstate/nuxt
+> ```
+
+> **Note:** This task requires Vitest and Pinia test utilities. Ensure they are installed:
+> ```bash
+> cd frontend && npm install vitest @pinia/nuxt
+> ```
+
+- [ ] **Step 3: Run test to verify it fails**
 
 ```bash
 cd frontend && npx vitest run test/unit/stores/preferences.test.ts
 ```
 
-Expected: FAIL
+Expected: FAIL (if plugin not installed, persistence test may fail)
 
-- [ ] **Step 3: Write minimal implementation**
+- [ ] **Step 4: Write minimal implementation**
 
 ```typescript
 import { defineStore } from 'pinia'
@@ -325,8 +457,8 @@ export const usePreferencesStore = defineStore('preferences', () => {
     darkMode.value = !darkMode.value
   }
 
-  function setCurrency(currency: 'USD' | 'EUR' | 'GBP') {
-    currency.value = currency
+  function setCurrency(newCurrency: 'USD' | 'EUR' | 'GBP') {
+    currency.value = newCurrency
   }
 
   return { currency, darkMode, toggleDarkMode, setCurrency }
@@ -335,15 +467,15 @@ export const usePreferencesStore = defineStore('preferences', () => {
 })
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **Step 5: Run test to verify it passes**
 
 ```bash
 cd frontend && npx vitest run test/unit/stores/preferences.test.ts
 ```
 
-Expected: PASS
+Expected: PASS (if plugin installed)
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add frontend/app/stores/preferences.ts frontend/test/unit/stores/preferences.test.ts
@@ -470,6 +602,20 @@ describe('LineChart', () => {
     })
     expect(wrapper.text()).toContain('No data available')
   })
+
+  it('should use xKey and yKey props', () => {
+    const wrapper = mount(LineChart, {
+      props: {
+        data: [
+          { date: '2026-01-01', value: 10000 },
+          { date: '2026-01-02', value: 10500 }
+        ],
+        xKey: 'date',
+        yKey: 'value'
+      }
+    })
+    expect(wrapper.find('svg').exists()).toBe(true)
+  })
 })
 ```
 
@@ -496,21 +642,21 @@ const props = withDefaults(defineProps<{
 }>(), {
   xKey: 'date',
   yKey: 'value',
-  color: 'var(--color-primary)'
+  color: '--color-primary'
 })
 
 const chartData = computed(() => {
   if (!props.data || props.data.length === 0) return []
   return props.data.map(d => ({
-    x: new Date(d.date),
-    y: d.value
+    x: new Date(d[props.xKey as keyof PricePoint] as string),
+    y: d[props.yKey as keyof PricePoint] as number
   }))
 })
 </script>
 
 <template>
-  <div v-if="chartData.length > 0" class="w-full h-64">
-    <Line :data="chartData" :x="(d: any) => d.x" :y="(d: any) => d.y" :color="color" />
+  <div v-if="chartData.length > 0" class="w-full h-64 p-4">
+    <Line :data="chartData" :x="(d: { x: Date }) => d.x" :y="(d: { y: number }) => d.y" :color="`var(${color})`" />
   </div>
   <div v-else class="w-full h-64 flex items-center justify-center text-gray-500">
     No data available
@@ -559,6 +705,13 @@ describe('PieChart', () => {
     })
     expect(wrapper.find('svg').exists()).toBe(true)
   })
+
+  it('should show fallback for empty data', () => {
+    const wrapper = mount(PieChart, {
+      props: { data: [] }
+    })
+    expect(wrapper.text()).toContain('No data available')
+  })
 })
 ```
 
@@ -582,16 +735,16 @@ const props = withDefaults(defineProps<{
   colors?: string[]
 }>(), {
   innerRadius: 0.6,
-  colors: () => ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6']
+  colors: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6']
 })
 </script>
 
 <template>
-  <div v-if="data.length > 0" class="w-full h-64">
+  <div v-if="data.length > 0" class="w-full h-64 p-4">
     <Pie 
       :data="data" 
-      :value="(d: any) => d.value" 
-      :label="(d: any) => d.label"
+      :value="(d: { value: number }) => d.value" 
+      :label="(d: { label: string }) => d.label"
       :innerRadius="innerRadius"
       :colors="colors"
     />
@@ -643,6 +796,13 @@ describe('BarChart', () => {
     })
     expect(wrapper.find('svg').exists()).toBe(true)
   })
+
+  it('should show fallback for empty data', () => {
+    const wrapper = mount(BarChart, {
+      props: { data: [] }
+    })
+    expect(wrapper.text()).toContain('No data available')
+  })
 })
 ```
 
@@ -669,11 +829,11 @@ const props = withDefaults(defineProps<{
 </script>
 
 <template>
-  <div v-if="data.length > 0" class="w-full h-64">
+  <div v-if="data.length > 0" class="w-full h-64 p-4">
     <Bar 
       :data="data" 
-      :value="(d: any) => d.value" 
-      :label="(d: any) => d.category"
+      :value="(d: { value: number }) => d.value" 
+      :label="(d: { category: string }) => d.category"
       :orientation="orientation"
     />
   </div>
@@ -726,17 +886,17 @@ Replace content with:
   --font-mono: 'JetBrains Mono', monospace;
 
   /* Green palette (existing) */
-  --color-green-50: #EFFDF5;
-  --color-green-100: #DCFCE7;
-  --color-green-200: #BBF7D0;
-  --color-green-300: #86EFAC;
-  --color-green-400: #4ADE80;
-  --color-green-500: #22C55E;
-  --color-green-600: #16A34A;
-  --color-green-700: #15803D;
+  --color-green-50: #f0fdf4;
+  --color-green-100: #dcfce7;
+  --color-green-200: #bbf7d0;
+  --color-green-300: #86efac;
+  --color-green-400: #4ade80;
+  --color-green-500: #22c55e;
+  --color-green-600: #16a34a;
+  --color-green-700: #15803d;
   --color-green-800: #166534;
-  --color-green-900: #14532D;
-  --color-green-950: #052E16;
+  --color-green-900: #14532d;
+  --color-green-950: #052e16;
 
   /* Semantic colors - light mode */
   --color-primary: var(--color-green-600);
@@ -744,19 +904,27 @@ Replace content with:
   --color-background: var(--color-white);
   --color-surface: var(--color-gray-50);
   --color-text: var(--color-gray-900);
-}
 
-/* Dark mode overrides */
-.dark {
-  --color-primary: var(--color-green-400);
-  --color-secondary: var(--color-blue-400);
-  --color-background: var(--color-gray-900);
-  --color-surface: var(--color-gray-800);
-  --color-text: var(--color-gray-100);
+  /* Dark mode overrides */
+  @variant dark {
+    --color-primary: var(--color-green-400);
+    --color-secondary: var(--color-blue-400);
+    --color-background: var(--color-gray-900);
+    --color-surface: var(--color-gray-800);
+    --color-text: var(--color-gray-100);
+  }
 }
 ```
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Verify build**
+
+```bash
+cd frontend && npm run build
+```
+
+Expected: Build succeeds with no Tailwind compilation errors
+
+- [ ] **Step 4: Commit**
 
 ```bash
 git add frontend/app/assets/css/main.css
@@ -781,7 +949,21 @@ import { usePreferencesStore } from '~/stores/preferences'
 export default defineNuxtPlugin(() => {
   const preferences = usePreferencesStore()
   
-  // Apply dark class on initial load
+  // Apply dark class on initial load with error handling for corrupted data
+  try {
+    const stored = localStorage.getItem('preferences')
+    if (stored) {
+      const parsed = JSON.parse(stored)
+      if (parsed.darkMode !== undefined) {
+        preferences.darkMode = parsed.darkMode
+      }
+    }
+  } catch (e) {
+    console.warn('Corrupted preferences data, resetting to defaults')
+    localStorage.removeItem('preferences')
+    preferences.$reset()
+  }
+
   useHead({
     htmlAttrs: {
       class: preferences.darkMode ? 'dark' : ''
@@ -799,7 +981,15 @@ export default defineNuxtPlugin(() => {
 })
 ```
 
-- [ ] **Step 2: Commit**
+- [ ] **Step 2: Verify plugin loads**
+
+```bash
+cd frontend && npm run build
+```
+
+Expected: Build succeeds, plugin registered
+
+- [ ] **Step 3: Commit**
 
 ```bash
 git add frontend/app/plugins/dark-mode.ts
@@ -825,6 +1015,7 @@ import LineChart from '~/components/charts/LineChart.vue'
 import PieChart from '~/components/charts/PieChart.vue'
 import BarChart from '~/components/charts/BarChart.vue'
 import type { PricePoint } from '~/types/vault'
+import { AssetType } from '~/types/enums'
 
 const portfolio = usePortfolioStore()
 const preferences = usePreferencesStore()
@@ -847,7 +1038,7 @@ onMounted(() => {
     id: '1',
     accountId: 'acc1',
     symbol: 'AAPL',
-    assetType: 'Stock',
+    assetType: AssetType.Stock,
     shares: 10,
     avgCost: 150,
     currentPrice: 155,
@@ -858,20 +1049,21 @@ onMounted(() => {
     id: '2',
     accountId: 'acc1',
     symbol: 'GOOGL',
-    assetType: 'Stock',
+    assetType: AssetType.Stock,
     shares: 5,
     avgCost: 2800,
     currentPrice: 2850,
     costBasisMethod: 'FIFO'
   })
 
-  // Sample price history
+  // Sample price history (6 months per spec)
   portfolio.priceHistory = [
     { date: '2026-01-01', value: 10000 },
     { date: '2026-02-01', value: 10500 },
     { date: '2026-03-01', value: 11000 },
     { date: '2026-04-01', value: 10800 },
-    { date: '2026-05-01', value: 11500 }
+    { date: '2026-05-01', value: 11500 },
+    { date: '2026-06-01', value: 12000 }
   ] as PricePoint[]
 })
 </script>
@@ -880,7 +1072,7 @@ onMounted(() => {
   <UContainer class="py-8">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold text-text">Investment Dashboard</h1>
-      <div class="flex gap-4">
+      <div class="flex gap-4 items-center">
         <USelect 
           :modelValue="preferences.currency" 
           @update:modelValue="preferences.setCurrency($event)"
@@ -889,6 +1081,9 @@ onMounted(() => {
         <UButton @click="preferences.toggleDarkMode()">
           {{ preferences.darkMode ? 'Light Mode' : 'Dark Mode' }}
         </UButton>
+        <span class="text-sm text-gray-500">
+          Sidebar: {{ ui.sidebarOpen ? 'Open' : 'Closed' }}
+        </span>
       </div>
     </div>
 
@@ -903,23 +1098,23 @@ onMounted(() => {
       </UCard>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <div class="mb-6">
       <UCard>
         <template #header>
           <h3 class="text-lg font-semibold">Portfolio Value Over Time</h3>
         </template>
         <LineChart :data="portfolio.priceHistory" />
       </UCard>
+    </div>
 
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <UCard>
         <template #header>
           <h3 class="text-lg font-semibold">Asset Allocation</h3>
         </template>
         <PieChart :data="allocationData" />
       </UCard>
-    </div>
 
-    <div class="grid grid-cols-1 gap-4">
       <UCard>
         <template #header>
           <h3 class="text-lg font-semibold">Asset Comparison</h3>
@@ -931,7 +1126,15 @@ onMounted(() => {
 </template>
 ```
 
-- [ ] **Step 2: Commit**
+- [ ] **Step 2: Verify build**
+
+```bash
+cd frontend && npm run build
+```
+
+Expected: Build succeeds
+
+- [ ] **Step 3: Commit**
 
 ```bash
 git add frontend/app/pages/dashboard.vue
@@ -976,7 +1179,15 @@ export default defineNuxtConfig({
 })
 ```
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Verify build**
+
+```bash
+cd frontend && npm run build
+```
+
+Expected: Build succeeds with no configuration errors
+
+- [ ] **Step 4: Commit**
 
 ```bash
 git add frontend/nuxt.config.ts
@@ -1017,6 +1228,8 @@ git add frontend/vitest.config.ts
 git commit -m "fix: ensure vitest config uses Nuxt test utils for component testing"
 ```
 
+Expected: Commit only if `vitest.config.ts` was modified. If already correct, skip this task.
+
 ---
 
 ### Task 14: Install Dependencies
@@ -1028,7 +1241,7 @@ git commit -m "fix: ensure vitest config uses Nuxt test utils for component test
 
 ```bash
 cd frontend
-npm install @pinia-plugin-persistedstate/nuxt @unovis/vue @unovis/ts @nuxt/ui
+npm install @pinia-plugin-persistedstate/nuxt @unovis/vue @unovis/ts @nuxt/ui vitest @nuxt/test-utils
 ```
 
 - [ ] **Step 2: Commit**

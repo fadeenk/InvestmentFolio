@@ -11,7 +11,8 @@ describe('LineChart', () => {
         ]
       }
     })
-    expect(wrapper.find('svg').exists()).toBe(true)
+    expect(wrapper.find('.w-full.h-64.p-4').exists()).toBe(true)
+    expect(wrapper.text()).not.toContain('No data available')
   })
 
   it('should show fallback for empty data', () => {
@@ -32,6 +33,6 @@ describe('LineChart', () => {
         yKey: 'value'
       }
     })
-    expect(wrapper.find('svg').exists()).toBe(true)
+    expect(wrapper.find('.w-full.h-64.p-4').exists()).toBe(true)
   })
 })

@@ -1,0 +1,34 @@
+name: Deploy Frontend
+
+on:
+    push:
+        branches: [ main ]
+    workflow_dispatch:
+
+permissions:
+    contents: write
+
+jobs:
+    build-and-deploy:
+        name: Build & Deploy to GitHub Pages
+        runs-on: ubuntu-latest
+        environment:
+            name: production
+            url: https://<your-org>.github.io/folio
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: "22"
+                  cache: "npm"
+            - run: npm --workspace=frontend ci
+            - name: Generate static site
+              run: npm --workspace=frontend run generate
+              env:
+                  NUXT_PUBLIC_WORKER_URL: ${{ vars.WORKER_URL }}
+            - name: Deploy to gh-pages
+              uses: peaceiris/actions-gh-pages@v4
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  publish_dir: frontend/.output/public
+                  cname: folio.yourdomain.com # remove if not using custom domain

@@ -1,5 +1,8 @@
 import { defineVitestConfig } from '@nuxt/test-utils/config'
 
 export default defineVitestConfig({
-  // Nuxt test config
+  test: {
+    globals: true,
+    setupFiles: ['./test/setup.ts']
+  }
 })

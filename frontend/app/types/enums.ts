@@ -23,7 +23,7 @@ export enum SyncMethod {
 
 export enum TransactionType {
   Buy = 'Buy',
-  Sell = 'sell',
+  Sell = 'Sell',
   Dividend = 'Dividend',
   Split = 'Split',
   Transfer = 'Transfer'

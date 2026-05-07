@@ -4,8 +4,12 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
     '@nuxt/ui',
     '@vueuse/nuxt',
-    '@pinia/nuxt'
+    '@pinia/nuxt',
+    '@pinia-plugin-persistedstate/nuxt'
   ],
+  colorMode: {
+    classSuffix: ''
+  },
 
   devtools: {
     enabled: true

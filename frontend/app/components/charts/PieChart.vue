@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Pie } from '@unovis/vue'
+import { VisSingleContainer, VisDonut } from '@unovis/vue'
 
 const props = withDefaults(defineProps<{
   data: { label: string; value: number }[]
@@ -13,13 +13,13 @@ const props = withDefaults(defineProps<{
 
 <template>
   <div v-if="data.length > 0" class="w-full h-64 p-4">
-    <Pie 
-      :data="data" 
-      :value="(d: { value: number }) => d.value" 
-      :label="(d: { label: string }) => d.label"
-      :innerRadius="innerRadius"
-      :colors="colors"
-    />
+    <VisSingleContainer :data="data">
+      <VisDonut 
+        :value="(d: any) => d.value" 
+        :color="(d: any, i: number) => props.colors?.[i] ?? '#6B7280'"
+        :innerRadius="innerRadius"
+      />
+    </VisSingleContainer>
   </div>
   <div v-else class="w-full h-64 flex items-center justify-center text-gray-500">
     No data available

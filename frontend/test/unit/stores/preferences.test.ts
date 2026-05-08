@@ -37,15 +37,10 @@ describe('preferences store', () => {
     expect(store.currency).toBe('EUR')
   })
 
-  it('should have persist option configured', () => {
+  it('should persist currency to localStorage', () => {
     const store = usePreferencesStore()
-    // Verify the store has the correct initial state
-    expect(store.currency).toBe('USD')
-    // Change currency and verify state updates
     store.setCurrency('EUR')
-    expect(store.currency).toBe('EUR')
-    // The persist plugin should handle localStorage persistence
-    // This is verified by the plugin configuration in the store definition
-    expect(true).toBe(true) // Placeholder - persistence verified by plugin config
+    const stored = JSON.parse(localStorage.getItem('preferences') || '{}')
+    expect(stored.currency).toBe('EUR')
   })
 })

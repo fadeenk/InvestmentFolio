@@ -1,8 +1,9 @@
 import { defineVitestConfig } from '@nuxt/test-utils/config'
 
 export default defineVitestConfig({
+  globals: true,
+  environment: 'jsdom',
   test: {
-    globals: true,
     setupFiles: ['./test/setup.ts']
   }
 })

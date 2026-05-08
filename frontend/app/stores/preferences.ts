@@ -15,7 +15,5 @@ export const usePreferencesStore = defineStore('preferences', () => {
 
   return { currency, darkMode, toggleDarkMode, setCurrency }
 }, {
-  persist: {
-    storage: process.client ? localStorage : null
-  }
+  persist: true
 })

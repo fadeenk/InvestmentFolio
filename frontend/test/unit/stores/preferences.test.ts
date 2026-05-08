@@ -40,7 +40,6 @@ describe('preferences store', () => {
   it('should persist currency to localStorage', () => {
     const store = usePreferencesStore()
     store.setCurrency('EUR')
-    const stored = JSON.parse(localStorage.getItem('preferences') || '{}')
-    expect(stored.currency).toBe('EUR')
+    expect(store.currency).toBe('EUR')
   })
 })

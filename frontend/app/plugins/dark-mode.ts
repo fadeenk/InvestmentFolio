@@ -3,10 +3,10 @@ import { usePreferencesStore } from '~/stores/preferences'
 
 export default defineNuxtPlugin(() => {
   const preferences = usePreferencesStore()
-  
+
   // Apply dark class on initial load with error handling for corrupted data
   // Only access localStorage on client-side
-  if (process.client) {
+  if (import.meta.client) {
     try {
       const stored = localStorage.getItem('preferences')
       if (stored) {

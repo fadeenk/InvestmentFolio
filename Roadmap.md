@@ -40,7 +40,6 @@ Set up the project scaffold, encrypted vault, and Cloudflare Worker. Nothing wor
 - [x] `FileReader` API fallback download for Firefox/Safari
 - [x] Create vault screen: open existing or create new + set passphrase
 - [x] Show "saving..." and "saved" indicators after every write
-- [ ] Auto-save prompt on navigate-away with unsaved changes
 
 > **Depends on:** Vault encrypt/decrypt
 
@@ -55,12 +54,6 @@ Set up the project scaffold, encrypted vault, and Cloudflare Worker. Nothing wor
 ### Deploy
 - [ ] Set up GitHub Pages deploy pipeline via `gh-pages` branch
 - [ ] Deploy worker
-
-### ⚠️ Open question
-
-**Q1:** Should Chrome be the officially supported browser given File System Access API support? Decide before coding the fallback heavily.
-
----
 
 ## Phase 2 — Schwab Integration · Weeks 5–8
 

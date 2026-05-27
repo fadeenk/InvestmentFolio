@@ -15,7 +15,7 @@ const props = withDefaults(defineProps<{
 })
 
 const chartData = computed(() => {
-  if (!props.data || props.data.length ===0) return []
+  if (!props.data || props.data.length === 0) return []
   return props.data.map(d => ({
     x: new Date(d[props.xKey as keyof PricePoint] as string),
     y: d[props.yKey as keyof PricePoint] as number
@@ -24,12 +24,22 @@ const chartData = computed(() => {
 </script>
 
 <template>
-  <div v-if="chartData.length > 0" class="w-full h-64 p-4">
+  <div
+    v-if="chartData.length > 0"
+    class="w-full h-64 p-4"
+  >
     <SingleContainer :data="chartData">
-      <Line :x="(d) => d.x" :y="(d) => d.y" :color="`var(${color})`" />
+      <Line
+        :x="(d) => d.x"
+        :y="(d) => d.y"
+        :color="`var(${color})`"
+      />
     </SingleContainer>
   </div>
-  <div v-else class="w-full h-64 flex items-center justify-center text-gray-500">
+  <div
+    v-else
+    class="w-full h-64 flex items-center justify-center text-gray-500"
+  >
     No data available
   </div>
 </template>

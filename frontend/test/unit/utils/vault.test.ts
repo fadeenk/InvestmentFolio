@@ -1,5 +1,4 @@
 import {
-  MAGIC_BYTES,
   FORMAT_VERSION,
   PBKDF2_ITERATIONS,
   SALT_LENGTH,
@@ -119,9 +118,6 @@ describe('buildVaultBuffer / parseVaultBuffer', () => {
 })
 
 describe('deriveKey / encryptPayload / decryptPayload', () => {
-  /** Minimal mock of the Web Crypto API for testing. */
-  let origSubtle: SubtleCrypto | undefined
-
   // We test with a real CryptoKey by stubbing crypto.subtle if available,
   // or we let the test fail early with a clear message when Web Crypto is
   // unavailable (jsdom / older Node).

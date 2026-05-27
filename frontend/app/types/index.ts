@@ -5,4 +5,4 @@
 
 export * from './enums'
 export * from './vault'
-export * from '../schwab'
+export * from './schwab'

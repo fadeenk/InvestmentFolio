@@ -7,15 +7,15 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@pinia-plugin-persistedstate/nuxt'
   ],
-  colorMode: {
-    classSuffix: ''
-  },
 
   devtools: {
     enabled: true
   },
 
   css: ['~/assets/css/main.css'],
+  colorMode: {
+    classSuffix: ''
+  },
 
   routeRules: {
     '/': { prerender: true }

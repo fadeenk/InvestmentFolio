@@ -36,7 +36,7 @@ onMounted(() => {
     currentPrice: 155,
     costBasisMethod: 'FIFO'
   })
-  
+
   portfolio.addPosition({
     id: '2',
     accountId: 'acc1',
@@ -63,12 +63,14 @@ onMounted(() => {
 <template>
   <UContainer class="py-8">
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-text">Investment Dashboard</h1>
+      <h1 class="text-2xl font-bold text-text">
+        Investment Dashboard
+      </h1>
       <div class="flex gap-4 items-center">
-        <USelect 
-          :modelValue="preferences.currency" 
-          @update:modelValue="preferences.setCurrency($event)"
+        <USelect
+          :model-value="preferences.currency"
           :items="['USD', 'EUR', 'GBP']"
+          @update:model-value="preferences.setCurrency($event)"
         />
         <UButton @click="preferences.toggleDarkMode()">
           {{ preferences.darkMode ? 'Light Mode' : 'Dark Mode' }}
@@ -82,7 +84,9 @@ onMounted(() => {
     <div class="mb-6">
       <UCard>
         <template #header>
-          <h2 class="text-lg font-semibold">Total Portfolio Value</h2>
+          <h2 class="text-lg font-semibold">
+            Total Portfolio Value
+          </h2>
         </template>
         <p class="text-3xl font-bold text-primary">
           {{ portfolio.totalValue.toLocaleString() }} {{ preferences.currency }}
@@ -93,7 +97,9 @@ onMounted(() => {
     <div class="mb-6">
       <UCard>
         <template #header>
-          <h3 class="text-lg font-semibold">Portfolio Value Over Time</h3>
+          <h3 class="text-lg font-semibold">
+            Portfolio Value Over Time
+          </h3>
         </template>
         <LineChart :data="portfolio.priceHistory" />
       </UCard>
@@ -102,14 +108,18 @@ onMounted(() => {
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <UCard>
         <template #header>
-          <h3 class="text-lg font-semibold">Asset Allocation</h3>
+          <h3 class="text-lg font-semibold">
+            Asset Allocation
+          </h3>
         </template>
         <PieChart :data="allocationData" />
       </UCard>
 
       <UCard>
         <template #header>
-          <h3 class="text-lg font-semibold">Asset Comparison</h3>
+          <h3 class="text-lg font-semibold">
+            Asset Comparison
+          </h3>
         </template>
         <BarChart :data="assetComparison" />
       </UCard>

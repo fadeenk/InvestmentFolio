@@ -1,5 +1,6 @@
 import { setActivePinia, createPinia } from 'pinia'
 import { useVaultStore } from '~/stores/vault.store'
+import type { VaultPayload } from '~/types/enums'
 import { VaultStatus, CostBasisMethod, Theme, DateFormat } from '~/types/enums'
 import * as vaultUtils from '~/utils/vault'
 
@@ -59,7 +60,7 @@ function mockCryptoAPI() {
 function stubDOM() {
   const downloadLinks: string[] = []
   vi.stubGlobal('URL', {
-    createObjectURL: (blob: Blob) => {
+    createObjectURL: (_blob: Blob) => {
       const url = `blob:${Math.random()}`
       downloadLinks.push(url)
       return url
@@ -189,7 +190,7 @@ describe('vault store', () => {
         schemaVersion: 1,
         createdAt: '2025-01-01T00:00:00.000Z',
         lastSyncedAt: null,
-        accounts: [{ id: 'acc-1', displayName: 'Test' }] as any[],
+        accounts: [{ id: 'acc-1', displayName: 'Test' }],
         transactions: [],
         positions: [],
         taxLots: [],
@@ -425,8 +426,8 @@ describe('vault store', () => {
       const store = useVaultStore()
       await store.createVault('test-passphrase')
 
-      store.mutatePayload((p) => {
-        p.accounts.push({ id: 'new-acc' } as any)
+      store.mutatePayload((p: VaultPayload) => {
+        p.accounts.push({ id: 'new-acc' })
       })
 
       expect(store.payload!.accounts).toHaveLength(1)
@@ -435,7 +436,7 @@ describe('vault store', () => {
 
     it('mutatePayload throws when vault is locked', () => {
       const store = useVaultStore()
-      expect(() => store.mutatePayload((p) => {})).toThrow('Vault is locked')
+      expect(() => store.mutatePayload((_p: VaultPayload) => {})).toThrow('Vault is locked')
     })
   })
 

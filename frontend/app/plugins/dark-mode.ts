@@ -16,6 +16,7 @@ export default defineNuxtPlugin(() => {
         }
       }
     } catch (e) {
+      console.error(e)
       console.warn('Corrupted preferences data, resetting to defaults')
       localStorage.removeItem('preferences')
       // Reset manually since setup stores don't have $reset

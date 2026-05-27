@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { Account, Position, PricePoint } from '~/types/vault'
-import { AssetType } from '~/types/enums'
 
 export const usePortfolioStore = defineStore('portfolio', () => {
   const accounts = ref<Account[]>([])
@@ -14,7 +13,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
 
   const allocationByAsset = computed(() => {
     const groups: Record<string, number> = {}
-    positions.value.forEach(pos => {
+    positions.value.forEach((pos) => {
       const key = pos.assetType
       groups[key] = (groups[key] || 0) + (pos.shares * pos.currentPrice)
     })
@@ -42,7 +41,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
   }
 
   function updatePrices() {
-    positions.value.forEach(pos => {
+    positions.value.forEach((pos) => {
       const change = (Math.random() - 0.5) * 0.1 // ±5%
       pos.currentPrice = Math.max(0.01, pos.currentPrice * (1 + change))
     })

@@ -6,8 +6,8 @@
     "worker"
   ],
   "scripts": {
-    "dev:frontend": "npm --workspace=frontend run dev",
-    "dev:worker": "npm --workspace=worker run dev",
+    "frontend": "npm --workspace=frontend run dev",
+    "worker": "npm --workspace=worker run dev",
     "test": "npm --workspace=frontend run test && npm --workspace=worker run test",
     "test:frontend": "npm --workspace=frontend run test",
     "lint": "npm --workspace=frontend run lint && npm --workspace=worker run lint",

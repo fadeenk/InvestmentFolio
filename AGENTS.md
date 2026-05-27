@@ -7,8 +7,8 @@ The worker has its own `AGENTS.md` with Cloudflare-specific guidance.
 
 | Command                                 | Purpose                                                             |
 | --------------------------------------- | ------------------------------------------------------------------- |
-| `npm run dev:frontend`                  | Nuxt dev server on `localhost:3000`                                 |
-| `npm run dev:worker`                    | Wrangler dev server                                                 |
+| `npm run frontend`                      | Nuxt dev server on `localhost:3000`                                 |
+| `npm run worker`                        | Wrangler dev server                                                 |
 | `npm test`                              | Tests across both workspaces                                        |
 | `npm run test:frontend`                 | Frontend unit tests only                                            |
 | `npm run lint`                          | ESLint, Auto-fix lint violations, zero warnings allowed             |

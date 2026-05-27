@@ -229,7 +229,8 @@ export const useTransactionsStore = defineStore('transactions', () => {
     vaultStore.mutatePayload((p) => {
       const idx = p.transactions.findIndex((t) => t.id === id)
       if (idx === -1) throw new Error(`Transaction ${id} not found`)
-      if (p.transactions[idx].externalId) {
+      const tx = p.transactions[idx]
+      if (tx && tx.externalId) {
         throw new Error('Cannot delete API-synced transactions')
       }
       p.transactions.splice(idx, 1)

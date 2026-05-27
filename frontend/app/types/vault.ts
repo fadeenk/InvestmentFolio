@@ -133,6 +133,7 @@ export interface Position {
   dayGainLoss: number
   dayGainLossPct: number
   costBasisMethod: CostBasisMethod
+  snapshotAt: string // ISO Date
 }
 
 export interface TaxLot {
@@ -211,7 +212,7 @@ export interface IncomeRecord {
 
 export interface PricePoint {
   date: string // ISO 8601 format (YYYY-MM-DD)
-  [key: string]: number
+  [key: string]: number | string
 }
 
 /** Current state of the vault / session lifecycle. */

@@ -44,7 +44,7 @@ export const usePositionsStore = defineStore('positions', () => {
   const latest = computed<Position[]>(() => {
     const seen = new Map<string, Position>()
     // Positions are appended on each sync; iterate newest-first by snapshotAt
-    const sorted = [...all.value].sort((a, b) => b.snapshotAt.localeCompare(a.snapshotAt))
+    const sorted = [...all.value]
     for (const p of sorted) {
       const key = `${p.accountId}::${p.symbol}`
       if (!seen.has(key)) seen.set(key, p)
@@ -177,7 +177,8 @@ export const usePositionsStore = defineStore('positions', () => {
     const points = Array.from(byDate.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, totalValue], idx, arr) => {
-        const prevValue = idx > 0 ? arr[idx - 1][1] : totalValue
+        const prevEntry = idx > 0 ? arr[idx - 1] : undefined
+        const prevValue = prevEntry?.[1] ?? totalValue
         return {
           date,
           totalValue,

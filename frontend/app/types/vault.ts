@@ -279,9 +279,6 @@ export interface MonthlyIncomeSummary {
   /** ISO 8601 year-month, e.g. "2025-03". */
   yearMonth: string
   totalDividends: number
-  qualifiedDividends: number
-  ordinaryDividends: number
-  reinvestedDividends: number
   interest: number
   total: number
 }
@@ -304,9 +301,7 @@ export interface SecurityIncomeSummary {
   description: string
   ytdTotal: number
   priorYearTotal: number
-  qualifiedDividends: number
-  ordinaryDividends: number
-  reinvestedDividends: number
+  dividend: number
   interest: number
 }
 

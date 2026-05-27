@@ -53,9 +53,6 @@ export const useIncomeStore = defineStore('income', () => {
     const months: MonthlyIncomeSummary[] = Array.from({ length: 12 }, (_, i) => ({
       yearMonth: `${year}-${String(i + 1).padStart(2, '0')}`,
       totalDividends: 0,
-      qualifiedDividends: 0,
-      ordinaryDividends: 0,
-      reinvestedDividends: 0,
       interest: 0,
       total: 0,
     }))
@@ -64,21 +61,12 @@ export const useIncomeStore = defineStore('income', () => {
       const month = parseInt(record.date.slice(5, 7), 10) - 1 // 0-indexed
       if (month < 0 || month > 11) continue
       const m = months[month]
-
+      if (!m) continue
       switch (record.incomeType) {
-        case TransactionType.DIVIDEND_QUALIFIED:
-          m.qualifiedDividends += record.amount
+        case TransactionType.Dividend:
           m.totalDividends += record.amount
           break
-        case TransactionType.DIVIDEND_ORDINARY:
-          m.ordinaryDividends += record.amount
-          m.totalDividends += record.amount
-          break
-        case TransactionType.DIVIDEND_REINVESTMENT:
-          m.reinvestedDividends += record.amount
-          m.totalDividends += record.amount
-          break
-        case TransactionType.INTEREST:
+        case TransactionType.Interest:
           m.interest += record.amount
           break
       }
@@ -107,9 +95,7 @@ export const useIncomeStore = defineStore('income', () => {
           description: symbol, // description populated from position data if available
           ytdTotal: 0,
           priorYearTotal: 0,
-          qualifiedDividends: 0,
-          ordinaryDividends: 0,
-          reinvestedDividends: 0,
+          dividend: 0,
           interest: 0,
         })
       }
@@ -120,16 +106,10 @@ export const useIncomeStore = defineStore('income', () => {
       const entry = getOrCreate(r.symbol!)
       entry.ytdTotal += r.amount
       switch (r.incomeType) {
-        case TransactionType.DIVIDEND_QUALIFIED:
-          entry.qualifiedDividends += r.amount
+        case TransactionType.Dividend:
+          entry.dividend += r.amount
           break
-        case TransactionType.DIVIDEND_ORDINARY:
-          entry.ordinaryDividends += r.amount
-          break
-        case TransactionType.DIVIDEND_REINVESTMENT:
-          entry.reinvestedDividends += r.amount
-          break
-        case TransactionType.INTEREST:
+        case TransactionType.Interest:
           entry.interest += r.amount
           break
       }
@@ -196,31 +176,19 @@ function _aggregateIncome(records: IncomeRecord[]) {
     (acc, r) => {
       acc.total += r.amount
       switch (r.incomeType) {
-        case TransactionType.DIVIDEND_QUALIFIED:
-          acc.qualifiedDividends += r.amount
+        case TransactionType.Dividend:
+          acc.dividend += r.amount
           break
-        case TransactionType.DIVIDEND_ORDINARY:
-          acc.ordinaryDividends += r.amount
-          break
-        case TransactionType.DIVIDEND_REINVESTMENT:
-          acc.reinvestedDividends += r.amount
-          break
-        case TransactionType.INTEREST:
+        case TransactionType.Interest:
           acc.interest += r.amount
-          break
-        case TransactionType.HSA_CONTRIBUTION:
-          acc.hsaContributions += r.amount
           break
       }
       return acc
     },
     {
       total: 0,
-      qualifiedDividends: 0,
-      ordinaryDividends: 0,
-      reinvestedDividends: 0,
+      dividend: 0,
       interest: 0,
-      hsaContributions: 0,
     },
   )
 }

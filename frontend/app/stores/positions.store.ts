@@ -70,7 +70,7 @@ export const usePositionsStore = defineStore('positions', () => {
     const payload = vaultStore.payload
 
     const totalMarketValue = positions.reduce((s, p) => s + p.marketValue, 0)
-    const totalCostBasis = positions.reduce((s, p) => s + p.averageCost * p.quantity, 0)
+    const totalCostBasis = positions.reduce((s, p) => s + p.avgCost * p.quantity, 0)
     const totalUnrealizedGainLoss = positions.reduce((s, p) => s + p.unrealizedGainLoss, 0)
     const totalDayGainLoss = positions.reduce((s, p) => s + p.dayGainLoss, 0)
 

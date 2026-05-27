@@ -8,20 +8,20 @@ export const usePortfolioStore = defineStore('portfolio', () => {
   const priceHistory = ref<PricePoint[]>([])
 
   const totalValue = computed(() => {
-    return positions.value.reduce((sum, pos) => sum + pos.shares * pos.currentPrice, 0)
+    return positions.value.reduce((sum, pos) => sum + pos.quantity * pos.currentPrice, 0)
   })
 
   const allocationByAsset = computed(() => {
     const groups: Record<string, number> = {}
     positions.value.forEach((pos) => {
       const key = pos.assetType
-      groups[key] = (groups[key] || 0) + pos.shares * pos.currentPrice
+      groups[key] = (groups[key] || 0) + pos.quantity * pos.currentPrice
     })
     return Object.entries(groups).map(([label, value]) => ({ label, value }))
   })
 
   function addAccount(account: Account) {
-    if (!account.id || !account.name) {
+    if (!account.id || !account.displayName) {
       console.warn('Invalid account: id and name are required')
       return
     }
@@ -29,7 +29,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
   }
 
   function addPosition(position: Position) {
-    if (position.shares <= 0) {
+    if (position.quantity <= 0) {
       console.warn('Invalid position: shares must be > 0')
       return
     }

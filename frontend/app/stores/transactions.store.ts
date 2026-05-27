@@ -127,14 +127,14 @@ export const useTransactionsStore = defineStore('transactions', () => {
   }
 
   /**
-   * For CSV import: check if a transaction with the same date + amount + type
+   * For CSV import: check if a transaction with the same date + quantity + type
    * combination already exists (no external ID available).
    */
-  function isCsvDuplicate(date: string, amount: number, type: TransactionType): boolean {
+  function isCsvDuplicate(date: string, quantity: number | null, type: TransactionType): boolean {
     return all.value.some(
       (t) =>
         t.date === date &&
-        t.amount === amount &&
+        t.quantity === quantity &&
         t.type === type &&
         t.importSource !== ImportSource.MANUAL,
     )
@@ -153,7 +153,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
 
     for (const t of incoming) {
       if (t.externalId && isDuplicate(t.externalId)) continue
-      if (!t.externalId && isCsvDuplicate(t.date, t.amount, t.type)) continue
+      if (!t.externalId && isCsvDuplicate(t.date, t.quantity, t.type)) continue
       toInsert.push({ ...t, id: randomUUID(), importedAt: now })
     }
 
@@ -207,7 +207,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
         | 'description'
         | 'quantity'
         | 'price'
-        | 'amount'
+        | 'quantity'
         | 'fees'
         | 'notes'
       >

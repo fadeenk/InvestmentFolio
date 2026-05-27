@@ -35,8 +35,8 @@ jobs:
           node-version: '22'
           cache: 'npm'
       - run: npm --workspace=frontend ci
-      - name: Unit & Nuxt tests with coverage
-        run: npm --workspace=frontend run test:coverage
+      - name: Unit & Nuxt tests
+        run: npm --workspace=frontend run test
       # - name: Upload coverage report
       #   uses: codecov/codecov-action@v4
       #   with:
@@ -55,7 +55,7 @@ jobs:
           cache: 'npm'
       - run: npm --workspace=worker ci
       - name: Worker tests with coverage
-        run: npm --workspace=worker run test:coverage
+        run: npm --workspace=worker run test
       # - name: Upload coverage report
       #   uses: codecov/codecov-action@v4
       #   with:

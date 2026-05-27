@@ -15,7 +15,7 @@ import type {
   AllocationSlice,
   PortfolioValuePoint,
 } from '@/types/vault'
-import { AssetType, TimeRange } from '@/types/enums'
+import { AssetType, TimeRange, TransactionType } from '@/types/enums'
 import { randomUUID } from '@/utils/crypto'
 
 // ---------------------------------------------------------------------------
@@ -96,17 +96,11 @@ export const usePositionsStore = defineStore('positions', () => {
     const ytdRealizedTotal = 0
 
     const ytdDividends = (payload?.dividends ?? [])
-      .filter(
-        (d) =>
-          d.taxYear === currentYear &&
-          (d.incomeType === 'DIVIDEND_QUALIFIED' ||
-            d.incomeType === 'DIVIDEND_ORDINARY' ||
-            d.incomeType === 'DIVIDEND_REINVESTMENT'),
-      )
+      .filter((d) => d.taxYear === currentYear && d.incomeType === TransactionType.Dividend)
       .reduce((s, d) => s + d.amount, 0)
 
     const ytdInterest = (payload?.dividends ?? [])
-      .filter((d) => d.taxYear === currentYear && d.incomeType === 'INTEREST')
+      .filter((d) => d.taxYear === currentYear && d.incomeType === TransactionType.Interest)
       .reduce((s, d) => s + d.amount, 0)
 
     return {
@@ -140,15 +134,12 @@ export const usePositionsStore = defineStore('positions', () => {
     }
 
     const LABELS: Record<AssetType, string> = {
-      [AssetType.EQUITY_US]: 'US Equity',
-      [AssetType.EQUITY_INTERNATIONAL]: 'International Equity',
-      [AssetType.FIXED_INCOME]: 'Fixed Income',
-      [AssetType.HSA_HOLDING]: 'HSA Holdings',
-      [AssetType.CASH_EQUIVALENT]: 'Cash & Equivalents',
-      [AssetType.OPTION]: 'Options',
-      [AssetType.MUTUAL_FUND]: 'Mutual Funds',
+      [AssetType.Stock]: 'Equity',
+      [AssetType.Bond]: 'Fixed Income (Bond)',
+      [AssetType.Crypto]: 'Crypto',
+      [AssetType.Cash]: 'Cash & Equivalents',
+      [AssetType.MutualFund]: 'Mutual Funds',
       [AssetType.ETF]: 'ETFs',
-      [AssetType.OTHER]: 'Other',
     }
 
     return Array.from(byType.entries())

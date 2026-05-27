@@ -83,20 +83,12 @@ export const useTransactionsStore = defineStore('transactions', () => {
 
   /** Quick-access tab subsets used by the Transactions view tabs. */
   const trades = computed(() =>
-    all.value.filter((t) => t.type === TransactionType.BUY || t.type === TransactionType.SELL),
+    all.value.filter((t) => t.type === TransactionType.Buy || t.type === TransactionType.Sell),
   )
 
-  const dividends = computed(() =>
-    all.value.filter((t) =>
-      [
-        TransactionType.DIVIDEND_QUALIFIED,
-        TransactionType.DIVIDEND_ORDINARY,
-        TransactionType.DIVIDEND_REINVESTMENT,
-      ].includes(t.type),
-    ),
-  )
+  const dividends = computed(() => all.value.filter((t) => t.type === TransactionType.Dividend))
 
-  const interest = computed(() => all.value.filter((t) => t.type === TransactionType.INTEREST))
+  const interest = computed(() => all.value.filter((t) => t.type === TransactionType.Interest))
 
   const transfers = computed(() =>
     all.value.filter((t) =>
@@ -105,7 +97,6 @@ export const useTransactionsStore = defineStore('transactions', () => {
         TransactionType.WITHDRAWAL,
         TransactionType.TRANSFER_IN,
         TransactionType.TRANSFER_OUT,
-        TransactionType.JOURNAL,
       ].includes(t.type),
     ),
   )

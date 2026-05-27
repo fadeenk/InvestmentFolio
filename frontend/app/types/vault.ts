@@ -167,6 +167,10 @@ export interface TaxLot {
   adjustedCostBasis: number
 }
 
+export enum TermType {
+  SHORT_TERM = 'SHORT_TERM',
+  LONG_TERM = 'LONG_TERM',
+}
 /**
  * Record of a closed (fully or partially sold) tax lot.
  * Created when a SELL transaction is matched against open lots.
@@ -184,7 +188,7 @@ export interface ClosedLot {
   costBasis: number
   proceeds: number
   realizedGainLoss: number
-  termType: 'SHORT_TERM' | 'LONG_TERM'
+  termType: TermType
   taxYear: number
   isWashSale: boolean
   washSaleDisallowedLoss: number
@@ -287,8 +291,7 @@ export interface TaxYearSummary {
   shortTermGainLoss: number
   longTermGainLoss: number
   totalRealizedGainLoss: number
-  qualifiedDividends: number
-  ordinaryDividends: number
+  dividends: number
   interest: number
   totalIncome: number
   washSaleDisallowedLosses: number

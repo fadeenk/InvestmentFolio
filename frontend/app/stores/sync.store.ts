@@ -14,7 +14,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useVaultStore } from './vault.store'
 import type { SchwabAuthStatusResponse, SchwabRefreshResponse } from '@/types/schwab'
-import { SyncStatus, TokenStatus } from '@/types/enums'
+import { SyncStatus, TokenStatus } from '@/types/vault'
 
 // ---------------------------------------------------------------------------
 // Worker URL — injected at build time via Nuxt runtimeConfig

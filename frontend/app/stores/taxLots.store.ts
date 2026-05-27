@@ -9,7 +9,8 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { useVaultStore } from './vault.store'
 import type { TaxLot, ClosedLot, TaxYearSummary } from '@/types/vault'
-import { CostBasisMethod, TermType } from '@/types/enums'
+import { TermType } from '@/types/vault'
+import { CostBasisMethod, TransactionType } from '@/types/enums'
 import { randomUUID } from '@/utils/crypto'
 
 // ---------------------------------------------------------------------------
@@ -68,17 +69,11 @@ export const useTaxLotsStore = defineStore('taxLots', () => {
       .filter((l) => !l.isOpen && l.isWashSale)
       .reduce((s, l) => s + l.washSaleDisallowedLoss, 0)
 
-    const qualifiedDividends = income
-      .filter((d) => d.incomeType === 'DIVIDEND_QUALIFIED')
-      .reduce((s, d) => s + d.amount, 0)
-    const ordinaryDividends = income
-      .filter((d) => d.incomeType === 'DIVIDEND_ORDINARY')
-      .reduce((s, d) => s + d.amount, 0)
-    const reinvestedDividends = income
-      .filter((d) => d.incomeType === 'DIVIDEND_REINVESTMENT')
+    const filteredDividends = income
+      .filter((d) => d.incomeType === TransactionType.Dividend)
       .reduce((s, d) => s + d.amount, 0)
     const interest = income
-      .filter((d) => d.incomeType === 'INTEREST')
+      .filter((d) => d.incomeType === TransactionType.Interest)
       .reduce((s, d) => s + d.amount, 0)
 
     return {
@@ -86,10 +81,9 @@ export const useTaxLotsStore = defineStore('taxLots', () => {
       shortTermGainLoss,
       longTermGainLoss,
       totalRealizedGainLoss: shortTermGainLoss + longTermGainLoss,
-      qualifiedDividends,
-      ordinaryDividends,
+      dividends: filteredDividends,
       interest,
-      totalIncome: qualifiedDividends + ordinaryDividends + reinvestedDividends + interest,
+      totalIncome: filteredDividends + interest,
       washSaleDisallowedLosses,
     }
   }
@@ -265,12 +259,12 @@ export const useTaxLotsStore = defineStore('taxLots', () => {
       case CostBasisMethod.LIFO:
         candidates.sort((a, b) => b.acquiredDate.localeCompare(a.acquiredDate))
         break
-      case CostBasisMethod.SPECIFIC_ID:
+      case CostBasisMethod.SpecificLot:
         // Caller is responsible for passing pre-selected lot IDs.
         // Return all candidates sorted by date for the UI picker.
         candidates.sort((a, b) => a.acquiredDate.localeCompare(b.acquiredDate))
         break
-      case CostBasisMethod.AVERAGE_COST:
+      case CostBasisMethod.AverageCost:
         // For average cost, the single "lot" represents the blended basis.
         break
     }

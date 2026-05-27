@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { VaultPayload, Account, DisplayPreferences } from '@/types/vault'
-import { VaultStatus, CostBasisMethod, Theme, DateFormat } from '@/types/enums'
+import { VaultStatus } from '@/types/vault'
+import { CostBasisMethod, Theme, DateFormat } from '@/types/enums'
 import {
   deriveKey,
   randomSalt,

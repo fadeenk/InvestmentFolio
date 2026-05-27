@@ -5,13 +5,6 @@ export enum Bank {
   OTHER = 'OTHER',
 }
 
-export enum VaultStatus {
-  LOCKED = 'LOCKED',
-  UNLOCKING = 'UNLOCKING',
-  UNLOCKED = 'UNLOCKED',
-  SAVING = 'SAVING',
-}
-
 /** The tax / functional type of the account. */
 export enum AccountType {
   BROKERAGE = 'BROKERAGE',

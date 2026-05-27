@@ -73,6 +73,16 @@ async function handleSave() {
   await vault.saveVault()
 }
 
+function closeCreateDialog() {
+  showCreateDialog.value = false
+  resetForm()
+}
+
+function closeOpenDialog() {
+  showOpenDialog.value = false
+  resetForm()
+}
+
 watch(
   () => vault.status,
   () => {
@@ -194,12 +204,12 @@ watch(
     </template>
 
     <!-- CREATE DIALOG -->
-    <UModal v-model="showCreateDialog">
-      <UCard>
-        <template #header>
-          <h3 class="text-lg font-bold">Create new vault</h3>
-        </template>
-
+    <UModal
+      v-model:open="showCreateDialog"
+      title="Create new vault"
+      :ui="{ footer: 'justify-end' }"
+    >
+      <template #body>
         <div class="space-y-4">
           <div>
             <label class="mb-1 block text-sm font-medium">Passphrase</label>
@@ -223,31 +233,21 @@ watch(
             {{ passphraseError }}
           </p>
         </div>
+      </template>
 
-        <template #footer>
-          <div class="flex justify-end gap-2">
-            <UButton
-              label="Cancel"
-              color="neutral"
-              variant="outline"
-              @click="
-                showCreateDialog = false
-                resetForm()
-              "
-            />
-            <UButton label="Create vault" color="primary" @click="handleCreate" />
-          </div>
-        </template>
-      </UCard>
+      <template #footer>
+        <UButton label="Cancel" color="neutral" variant="outline" @click="closeCreateDialog" />
+        <UButton label="Create vault" color="primary" @click="handleCreate" />
+      </template>
     </UModal>
 
     <!-- OPEN DIALOG -->
-    <UModal v-model="showOpenDialog">
-      <UCard>
-        <template #header>
-          <h3 class="text-lg font-bold">Open existing vault</h3>
-        </template>
-
+    <UModal
+      v-model:open="showOpenDialog"
+      title="Open existing vault"
+      :ui="{ footer: 'justify-end' }"
+    >
+      <template #body>
         <div class="space-y-4">
           <p class="text-sm text-(--ui-text-muted)">
             After clicking &quot;Open vault&quot;, select your <code>.foli</code> file.
@@ -266,22 +266,12 @@ watch(
             {{ passphraseError }}
           </p>
         </div>
+      </template>
 
-        <template #footer>
-          <div class="flex justify-end gap-2">
-            <UButton
-              label="Cancel"
-              color="neutral"
-              variant="outline"
-              @click="
-                showOpenDialog = false
-                resetForm()
-              "
-            />
-            <UButton label="Open vault" color="primary" @click="handleOpen" />
-          </div>
-        </template>
-      </UCard>
+      <template #footer>
+        <UButton label="Cancel" color="neutral" variant="outline" @click="closeOpenDialog" />
+        <UButton label="Open vault" color="primary" @click="handleOpen" />
+      </template>
     </UModal>
   </div>
 </template>

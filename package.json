@@ -6,7 +6,7 @@
     "dev:frontend": "npm --workspace=frontend run dev",
     "dev:worker":   "npm --workspace=worker run dev",
     "test":         "npm --workspace=frontend run test && npm --workspace=worker run test",
-    "test:unit":    "npm --workspace=frontend run test:unit",
+    "test:frontend":"npm --workspace=frontend run test",
     "lint":         "eslint . --max-warnings=0",
     "lint:fix":     "eslint . --fix",
     "format":       "prettier --write .",

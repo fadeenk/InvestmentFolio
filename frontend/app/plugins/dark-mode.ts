@@ -27,18 +27,22 @@ export default defineNuxtPlugin(() => {
 
   useHead({
     htmlAttrs: {
-      class: preferences.darkMode ? 'dark' : ''
-    }
+      class: preferences.darkMode ? 'dark' : '',
+    },
   })
 
   // Watch for changes and update reactively (client-side only)
-  watch(() => preferences.darkMode, (isDark) => {
-    if (import.meta.client) {
-      if (isDark) {
-        document.documentElement.classList.add('dark')
-      } else {
-        document.documentElement.classList.remove('dark')
+  watch(
+    () => preferences.darkMode,
+    (isDark) => {
+      if (import.meta.client) {
+        if (isDark) {
+          document.documentElement.classList.add('dark')
+        } else {
+          document.documentElement.classList.remove('dark')
+        }
       }
-    }
-  }, { immediate: true })
+    },
+    { immediate: true },
+  )
 })

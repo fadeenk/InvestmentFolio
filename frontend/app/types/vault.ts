@@ -1,4 +1,12 @@
-import type { Bank, AccountType, TransactionType, AssetType, CostBasisMethod, SyncMethod, ImportSource } from './enums'
+import type {
+  Bank,
+  AccountType,
+  TransactionType,
+  AssetType,
+  CostBasisMethod,
+  SyncMethod,
+  ImportSource,
+} from './enums'
 /**
  * Top-level decrypted JSON payload stored inside the .foli vault file.
  * Every field written here will be AES-256-GCM encrypted at rest.
@@ -192,16 +200,14 @@ export interface IncomeRecord {
    * Granular income sub-type. Mirrors a subset of TransactionType values
    * relevant to income.
    */
-  incomeType:
-    | TransactionType.Dividend
-    | TransactionType.Interest
+  incomeType: TransactionType.Dividend | TransactionType.Interest
   amount: number
   taxYear: number
 }
 
 export interface PricePoint {
   date: string // ISO 8601 format (YYYY-MM-DD)
-  close: number
+  [key: string]: number
 }
 
 /** Current state of the vault / session lifecycle. */
@@ -213,7 +219,7 @@ export enum VaultStatus {
   /** Vault is decrypted and data is in memory. */
   UNLOCKED = 'UNLOCKED',
   /** Vault is actively being saved/re-encrypted. */
-  SAVING = 'SAVING'
+  SAVING = 'SAVING',
 }
 
 /** High-level result state for a sync or import operation. */
@@ -223,7 +229,7 @@ export enum SyncStatus {
   SUCCESS = 'SUCCESS',
   ERROR = 'ERROR',
   /** Sync paused because the Schwab API rate limit was approached. */
-  RATE_LIMITED = 'RATE_LIMITED'
+  RATE_LIMITED = 'RATE_LIMITED',
 }
 
 /** OAuth token health reported by the Cloudflare Worker. */
@@ -231,7 +237,7 @@ export enum TokenStatus {
   VALID = 'VALID',
   EXPIRING_SOON = 'EXPIRING_SOON',
   EXPIRED = 'EXPIRED',
-  NOT_CONNECTED = 'NOT_CONNECTED'
+  NOT_CONNECTED = 'NOT_CONNECTED',
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

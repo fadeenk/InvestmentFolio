@@ -4,13 +4,23 @@ const localStorageStore: Record<string, string> = {}
 Object.defineProperty(global, 'localStorage', {
   value: {
     getItem: (key: string) => localStorageStore[key] || null,
-    setItem: (key: string, value: string) => { localStorageStore[key] = value },
-    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-    removeItem: (key: string) => { delete localStorageStore[key] },
-    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-    clear: () => { Object.keys(localStorageStore).forEach(k => delete localStorageStore[k]) },
+    setItem: (key: string, value: string) => {
+      localStorageStore[key] = value
+    },
+
+    removeItem: (key: string) => {
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+      delete localStorageStore[key]
+    },
+
+    clear: () => {
+      Object.keys(localStorageStore).forEach((k) => {
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+        delete localStorageStore[k]
+      })
+    },
     length: 0,
-    key: () => null
+    key: () => null,
   },
-  writable: true
+  writable: true,
 })

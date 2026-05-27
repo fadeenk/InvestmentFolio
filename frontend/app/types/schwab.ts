@@ -70,13 +70,7 @@ export interface SchwabSecuritiesAccount {
   projectedBalances: SchwabBalances
 }
 
-export type SchwabAccountTypeRaw
-  = | 'CASH'
-    | 'MARGIN'
-    | 'IRA'
-    | 'ROTH_IRA'
-    | 'ROLLOVER_IRA'
-    | 'HSA'
+export type SchwabAccountTypeRaw = 'CASH' | 'MARGIN' | 'IRA' | 'ROTH_IRA' | 'ROLLOVER_IRA' | 'HSA'
 
 export interface SchwabBalances {
   accruedInterest: number
@@ -145,16 +139,16 @@ export interface SchwabInstrument {
   factor?: number
 }
 
-export type SchwabAssetTypeRaw
-  = | 'EQUITY'
-    | 'ETF'
-    | 'OPTION'
-    | 'INDEX'
-    | 'MUTUAL_FUND'
-    | 'CASH_EQUIVALENT'
-    | 'FIXED_INCOME'
-    | 'CURRENCY'
-    | 'COLLECTIVE_INVESTMENT'
+export type SchwabAssetTypeRaw =
+  | 'EQUITY'
+  | 'ETF'
+  | 'OPTION'
+  | 'INDEX'
+  | 'MUTUAL_FUND'
+  | 'CASH_EQUIVALENT'
+  | 'FIXED_INCOME'
+  | 'CURRENCY'
+  | 'COLLECTIVE_INVESTMENT'
 
 export interface SchwabOptionDeliverable {
   symbol: string
@@ -254,34 +248,44 @@ export interface SchwabOrder {
   statusDescription?: string
 }
 
-export type SchwabOrderStatus
-  = | 'AWAITING_PARENT_ORDER'
-    | 'AWAITING_CONDITION'
-    | 'AWAITING_STOP_CONDITION'
-    | 'AWAITING_MANUAL_REVIEW'
-    | 'ACCEPTED'
-    | 'AWAITING_UR_OUT'
-    | 'PENDING_ACTIVATION'
-    | 'QUEUED'
-    | 'WORKING'
-    | 'REJECTED'
-    | 'PENDING_CANCEL'
-    | 'CANCELED'
-    | 'PENDING_REPLACE'
-    | 'REPLACED'
-    | 'FILLED'
-    | 'EXPIRED'
-    | 'NEW'
-    | 'AWAITING_RELEASE_TIME'
-    | 'PENDING_ACKNOWLEDGEMENT'
-    | 'PENDING_RECALL'
-    | 'UNKNOWN'
+export type SchwabOrderStatus =
+  | 'AWAITING_PARENT_ORDER'
+  | 'AWAITING_CONDITION'
+  | 'AWAITING_STOP_CONDITION'
+  | 'AWAITING_MANUAL_REVIEW'
+  | 'ACCEPTED'
+  | 'AWAITING_UR_OUT'
+  | 'PENDING_ACTIVATION'
+  | 'QUEUED'
+  | 'WORKING'
+  | 'REJECTED'
+  | 'PENDING_CANCEL'
+  | 'CANCELED'
+  | 'PENDING_REPLACE'
+  | 'REPLACED'
+  | 'FILLED'
+  | 'EXPIRED'
+  | 'NEW'
+  | 'AWAITING_RELEASE_TIME'
+  | 'PENDING_ACKNOWLEDGEMENT'
+  | 'PENDING_RECALL'
+  | 'UNKNOWN'
 
 export interface SchwabOrderLeg {
   orderLegType: string
   legId: number
   instrument: SchwabInstrument
-  instruction: 'BUY' | 'SELL' | 'BUY_TO_COVER' | 'SELL_SHORT' | 'BUY_TO_OPEN' | 'BUY_TO_CLOSE' | 'SELL_TO_OPEN' | 'SELL_TO_CLOSE' | 'EXCHANGE' | 'SELL_SHORT_EXEMPT'
+  instruction:
+    | 'BUY'
+    | 'SELL'
+    | 'BUY_TO_COVER'
+    | 'SELL_SHORT'
+    | 'BUY_TO_OPEN'
+    | 'BUY_TO_CLOSE'
+    | 'SELL_TO_OPEN'
+    | 'SELL_TO_CLOSE'
+    | 'EXCHANGE'
+    | 'SELL_SHORT_EXEMPT'
   positionEffect: 'OPENING' | 'CLOSING' | 'AUTOMATIC' | 'UNKNOWN'
   quantity: number
   quantityType: string
@@ -334,32 +338,32 @@ export interface SchwabEquityQuote extends SchwabQuoteBase {
   quote: {
     '52WeekHigh': number
     '52WeekLow': number
-    'askMICId'?: string
-    'askPrice': number
-    'askSize': number
-    'askTime': number
-    'bidMICId'?: string
-    'bidPrice': number
-    'bidSize': number
-    'bidTime': number
-    'closePrice': number
-    'highPrice': number
-    'lastMICId'?: string
-    'lastPrice': number
-    'lastSize': number
-    'lowPrice': number
-    'mark': number
-    'markChange': number
-    'markPercentChange': number
-    'netChange': number
-    'netPercentChange': number
-    'openPrice': number
-    'postMarketChange'?: number
-    'postMarketPercentChange'?: number
-    'quoteTime': number
-    'securityStatus': string
-    'totalVolume': number
-    'tradeTime': number
+    askMICId?: string
+    askPrice: number
+    askSize: number
+    askTime: number
+    bidMICId?: string
+    bidPrice: number
+    bidSize: number
+    bidTime: number
+    closePrice: number
+    highPrice: number
+    lastMICId?: string
+    lastPrice: number
+    lastSize: number
+    lowPrice: number
+    mark: number
+    markChange: number
+    markPercentChange: number
+    netChange: number
+    netPercentChange: number
+    openPrice: number
+    postMarketChange?: number
+    postMarketPercentChange?: number
+    quoteTime: number
+    securityStatus: string
+    totalVolume: number
+    tradeTime: number
   }
   reference: {
     cusip: string
@@ -443,13 +447,13 @@ export interface SchwabMutualFundQuote extends SchwabQuoteBase {
   quote: {
     '52WeekHigh': number
     '52WeekLow': number
-    'closePrice': number
-    'nAV': number
-    'netChange': number
-    'netPercentChange': number
-    'securityStatus': string
-    'totalVolume': number
-    'tradeTime': number
+    closePrice: number
+    nAV: number
+    netChange: number
+    netPercentChange: number
+    securityStatus: string
+    totalVolume: number
+    tradeTime: number
   }
   reference: {
     cusip: string

@@ -7,16 +7,16 @@ describe('PieChart', () => {
       props: {
         data: [
           { label: 'Stocks', value: 6000 },
-          { label: 'Bonds', value: 4000 }
-        ]
-      }
+          { label: 'Bonds', value: 4000 },
+        ],
+      },
     })
     expect(wrapper.find('.w-full.h-64.p-4').exists()).toBe(true)
   })
 
   it('should show fallback for empty data', () => {
     const wrapper = mount(PieChart, {
-      props: { data: [] }
+      props: { data: [] },
     })
     expect(wrapper.text()).toContain('No data available')
   })

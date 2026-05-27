@@ -11,7 +11,7 @@ useSeoMeta({
   title,
   description,
   ogTitle: title,
-  ogDescription: description
+  ogDescription: description,
 })
 
 const isUnlocked = computed(() => vault.status === VaultStatus.UNLOCKED)
@@ -23,7 +23,7 @@ const isUnlocked = computed(() => vault.status === VaultStatus.UNLOCKED)
       <UHeader>
         <template #left>
           <NuxtLink to="/">
-            <AppLogo class="w-auto h-6 shrink-0" />
+            <AppLogo class="h-6 w-auto shrink-0" />
           </NuxtLink>
         </template>
 
@@ -33,26 +33,15 @@ const isUnlocked = computed(() => vault.status === VaultStatus.UNLOCKED)
           <div class="flex items-center gap-2">
             <span
               v-if="vault.isSaving"
-              class="text-xs text-(--ui-text-muted) flex items-center gap-1"
+              class="flex items-center gap-1 text-xs text-(--ui-text-muted)"
             >
-              <UIcon
-                name="i-lucide-loader-circle"
-                class="w-3 h-3 animate-spin"
-              />
+              <UIcon name="i-lucide-loader-circle" class="h-3 w-3 animate-spin" />
               Saving...
             </span>
-            <span
-              v-else-if="vault.hasUnsavedChanges"
-              class="text-xs text-amber-500"
-            >
+            <span v-else-if="vault.hasUnsavedChanges" class="text-xs text-amber-500">
               Unsaved
             </span>
-            <span
-              v-else
-              class="text-xs text-(--ui-text-muted)"
-            >
-              Saved
-            </span>
+            <span v-else class="text-xs text-(--ui-text-muted)"> Saved </span>
             <UButton
               v-if="vault.hasUnsavedChanges"
               label="Save"

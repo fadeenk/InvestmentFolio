@@ -1,22 +1,25 @@
 {
   "name": "folio",
   "private": true,
-  "workspaces": ["frontend", "worker"],
+  "workspaces": [
+    "frontend",
+    "worker"
+  ],
   "scripts": {
     "dev:frontend": "npm --workspace=frontend run dev",
-    "dev:worker":   "npm --workspace=worker run dev",
-    "test":         "npm --workspace=frontend run test && npm --workspace=worker run test",
-    "test:frontend":"npm --workspace=frontend run test",
-    "lint":         "eslint . --max-warnings=0",
-    "lint:fix":     "eslint . --fix",
-    "format":       "prettier --write .",
-    "typecheck":    "npm --workspace=frontend run typecheck && npm --workspace=worker run typecheck",
-    "prepare":      "husky"
+    "dev:worker": "npm --workspace=worker run dev",
+    "test": "npm --workspace=frontend run test && npm --workspace=worker run test",
+    "test:frontend": "npm --workspace=frontend run test",
+    "lint": "npm --workspace=frontend run lint && npm --workspace=worker run lint",
+    "format": "prettier --write .",
+    "typecheck": "npm --workspace=frontend run typecheck && npm --workspace=worker run typecheck",
+    "prepare": "husky"
   },
   "devDependencies": {
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
-    "prettier": "^3.8.3"
+    "prettier": "^3.8.3",
+    "prettier-plugin-tailwindcss": "^0.8.0"
   },
   "lint-staged": {
     "*.{ts,tsx,vue}": [

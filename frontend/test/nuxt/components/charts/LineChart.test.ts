@@ -7,9 +7,9 @@ describe('LineChart', () => {
       props: {
         data: [
           { date: '2026-01-01', value: 10000 },
-          { date: '2026-01-02', value: 10500 }
-        ]
-      }
+          { date: '2026-01-02', value: 10500 },
+        ],
+      },
     })
     expect(wrapper.find('.w-full.h-64.p-4').exists()).toBe(true)
     expect(wrapper.text()).not.toContain('No data available')
@@ -17,7 +17,7 @@ describe('LineChart', () => {
 
   it('should show fallback for empty data', () => {
     const wrapper = mount(LineChart, {
-      props: { data: [] }
+      props: { data: [] },
     })
     expect(wrapper.text()).toContain('No data available')
   })
@@ -27,11 +27,11 @@ describe('LineChart', () => {
       props: {
         data: [
           { date: '2026-01-01', value: 10000 },
-          { date: '2026-01-02', value: 10500 }
+          { date: '2026-01-02', value: 10500 },
         ],
         xKey: 'date',
-        yKey: 'value'
-      }
+        yKey: 'value',
+      },
     })
     expect(wrapper.find('.w-full.h-64.p-4').exists()).toBe(true)
   })

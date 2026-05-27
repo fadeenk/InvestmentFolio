@@ -1,15 +1,16 @@
 # Folio — Developer Roadmap
+
 ---
 
 ## Overview
 
-| Phase | Title |
-|-------|-------|
-| 1 | Foundation 
-| 2 | Schwab Integration
-| 3 | Dashboard & Views 
-| 4 | Manual Entry & CSV
-| 5 | Polish & Launch
+| Phase | Title              |
+| ----- | ------------------ |
+| 1     | Foundation         |
+| 2     | Schwab Integration |
+| 3     | Dashboard & Views  |
+| 4     | Manual Entry & CSV |
+| 5     | Polish & Launch    |
 
 ---
 
@@ -52,6 +53,7 @@ Set up the project scaffold, encrypted vault, and Cloudflare Worker. Nothing wor
 - [ ] Add CORS headers to all proxied responses
 
 ### Deploy
+
 - [ ] Set up GitHub Pages deploy pipeline via `gh-pages` branch
 - [ ] Deploy worker
 
@@ -61,7 +63,7 @@ Wire up OAuth 2.0, token lifecycle, and all Schwab API endpoints. This is the hi
 
 ### OAuth 2.0 flow `Auth`
 
-- [ ] Register Schwab developer app, select Accounts & Trading + Market Data production *(approval takes 1–3 business days — submit at the start of this phase)*
+- [ ] Register Schwab developer app, select Accounts & Trading + Market Data production _(approval takes 1–3 business days — submit at the start of this phase)_
 - [ ] Implement `/auth/login` redirect to Schwab consent page
 - [ ] Implement `/auth/callback`: exchange code → tokens, AES-GCM encrypt tokens, store in KV
 - [ ] Implement `/auth/refresh`: swap refresh token for new access token, update KV
@@ -205,7 +207,7 @@ Add manual account entry (Other/CASH accounts) and Optum CSV import. Unblocks no
 - [ ] Wash sale detection: flag sells with a repurchase within 30-day window
 - [ ] Adjust disallowed loss and cost basis on replacement lots
 - [ ] Tax year summary: short-term G/L, long-term G/L, dividends, interest per year
-- [ ] Display disclaimer: *"This is not tax advice. Consult a CPA for accurate tax filing."*
+- [ ] Display disclaimer: _"This is not tax advice. Consult a CPA for accurate tax filing."_
 
 ### ⚠️ Open questions
 
@@ -249,9 +251,9 @@ Error handling, edge cases, mobile QA, performance, and final deployment.
 
 Resolve all remaining PRD open questions before locking the v1 scope:
 
-| # | Question | Can decide independently? |
-|---|----------|--------------------------|
-| Q1 | Official browser support policy (Chrome-first vs equal Firefox/Safari fallback) | Yes — ideally in Phase 1 |
-| Q3 | Vault file naming convention (`.foli` enforcement vs free naming with magic bytes) | Yes |
-| Q6 | CASH account sub-categorization (checking / savings / money market) for v1 | Yes |
-| Q8 | Single-user assumption or multi-vault support on shared machines | Yes |
+| #   | Question                                                                           | Can decide independently? |
+| --- | ---------------------------------------------------------------------------------- | ------------------------- |
+| Q1  | Official browser support policy (Chrome-first vs equal Firefox/Safari fallback)    | Yes — ideally in Phase 1  |
+| Q3  | Vault file naming convention (`.foli` enforcement vs free naming with magic bytes) | Yes                       |
+| Q6  | CASH account sub-categorization (checking / savings / money market) for v1         | Yes                       |
+| Q8  | Single-user assumption or multi-vault support on shared machines                   | Yes                       |

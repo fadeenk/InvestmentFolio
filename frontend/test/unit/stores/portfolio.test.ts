@@ -23,7 +23,7 @@ describe('portfolio store', () => {
       shares: 10,
       avgCost: 150,
       currentPrice: 155,
-      costBasisMethod: 'FIFO' as const
+      costBasisMethod: 'FIFO' as const,
     }
     store.addPosition(position)
     expect(store.positions.length).toBe(1)
@@ -40,7 +40,7 @@ describe('portfolio store', () => {
       shares: 10,
       avgCost: 150,
       currentPrice: 155,
-      costBasisMethod: 'FIFO' as const
+      costBasisMethod: 'FIFO' as const,
     })
     expect(store.totalValue).toBe(1550) // 10 * 155
   })
@@ -55,7 +55,7 @@ describe('portfolio store', () => {
       shares: 10,
       avgCost: 150,
       currentPrice: 155,
-      costBasisMethod: 'FIFO' as const
+      costBasisMethod: 'FIFO' as const,
     })
     store.addPosition({
       id: '2',
@@ -65,7 +65,7 @@ describe('portfolio store', () => {
       shares: 5,
       avgCost: 2800,
       currentPrice: 2850,
-      costBasisMethod: 'FIFO' as const
+      costBasisMethod: 'FIFO' as const,
     })
     const allocation = store.allocationByAsset
     expect(allocation.length).toBe(1) // Both are Stock
@@ -80,7 +80,7 @@ describe('portfolio store', () => {
       bank: 'Chase' as const,
       type: 'Taxable' as const,
       name: 'Main Account',
-      number: '123456'
+      number: '123456',
     })
     expect(store.accounts.length).toBe(1)
   })
@@ -96,7 +96,7 @@ describe('portfolio store', () => {
       shares: 0, // Invalid
       avgCost: 150,
       currentPrice: 155,
-      costBasisMethod: 'FIFO' as const
+      costBasisMethod: 'FIFO' as const,
     })
     expect(store.positions.length).toBe(0)
     expect(warnSpy).toHaveBeenCalled()
@@ -112,7 +112,7 @@ describe('portfolio store', () => {
       shares: 10,
       avgCost: 150,
       currentPrice: 155,
-      costBasisMethod: 'FIFO' as const
+      costBasisMethod: 'FIFO' as const,
     })
     const originalPrice = store.positions[0].currentPrice
     store.updatePrices()
@@ -130,7 +130,7 @@ describe('portfolio store', () => {
       bank: 'Chase' as const,
       type: 'Taxable' as const,
       name: 'Test',
-      number: '123'
+      number: '123',
     })
     expect(store.accounts.length).toBe(0)
     expect(warnSpy).toHaveBeenCalled()

@@ -31,7 +31,7 @@ export function randomIV(): Uint8Array {
 export async function deriveKey(
   passphrase: string,
   salt: Uint8Array,
-  iterations: number = PBKDF2_ITERATIONS
+  iterations: number = PBKDF2_ITERATIONS,
 ): Promise<CryptoKey> {
   const enc = new TextEncoder()
   const passphraseBytes = enc.encode(passphrase)
@@ -40,14 +40,14 @@ export async function deriveKey(
     passphraseBytes.buffer as ArrayBuffer,
     'PBKDF2',
     false,
-    ['deriveKey']
+    ['deriveKey'],
   )
   return crypto.subtle.deriveKey(
     { name: 'PBKDF2', salt: salt.buffer as ArrayBuffer, iterations, hash: 'SHA-256' },
     baseKey,
     { name: 'AES-GCM', length: 256 },
     false,
-    ['encrypt', 'decrypt']
+    ['encrypt', 'decrypt'],
   )
 }
 
@@ -56,14 +56,14 @@ export async function deriveKey(
 export async function encryptPayload(
   data: VaultPayload,
   key: CryptoKey,
-  iv?: Uint8Array
-): Promise<{ iv: Uint8Array, ciphertext: ArrayBuffer }> {
+  iv?: Uint8Array,
+): Promise<{ iv: Uint8Array; ciphertext: ArrayBuffer }> {
   const nonce = iv ?? crypto.getRandomValues(new Uint8Array(IV_LENGTH))
   const plaintext = new TextEncoder().encode(JSON.stringify(data))
   const ciphertext = await crypto.subtle.encrypt(
     { name: 'AES-GCM', iv: nonce.buffer as ArrayBuffer },
     key,
-    plaintext.buffer as ArrayBuffer
+    plaintext.buffer as ArrayBuffer,
   )
   return { iv: nonce, ciphertext }
 }
@@ -71,12 +71,12 @@ export async function encryptPayload(
 export async function decryptPayload(
   ciphertext: ArrayBuffer,
   iv: Uint8Array,
-  key: CryptoKey
+  key: CryptoKey,
 ): Promise<VaultPayload> {
   const plaintext = await crypto.subtle.decrypt(
     { name: 'AES-GCM', iv: iv.buffer as ArrayBuffer },
     key,
-    ciphertext
+    ciphertext,
   )
   return JSON.parse(new TextDecoder().decode(plaintext)) as VaultPayload
 }
@@ -93,7 +93,7 @@ export async function decryptPayload(
 export function buildVaultBuffer(
   salt: Uint8Array,
   iv: Uint8Array,
-  ciphertext: ArrayBuffer
+  ciphertext: ArrayBuffer,
 ): ArrayBuffer {
   const iterBytes = new Uint8Array(4)
   new DataView(iterBytes.buffer).setUint32(0, PBKDF2_ITERATIONS, false)
@@ -105,7 +105,7 @@ export function buildVaultBuffer(
     salt,
     new Uint8Array([ALGO_BYTE]),
     iv,
-    new Uint8Array(ciphertext)
+    new Uint8Array(ciphertext),
   ]
 
   const total = parts.reduce((acc, p) => acc + p.byteLength, 0)
@@ -129,12 +129,7 @@ export function parseVaultBuffer(buffer: ArrayBuffer): ParsedVault {
   const view = new DataView(buffer)
   const bytes = new Uint8Array(buffer)
 
-  if (
-    bytes[0] !== 0x46
-    || bytes[1] !== 0x4f
-    || bytes[2] !== 0x4c
-    || bytes[3] !== 0x49
-  ) {
+  if (bytes[0] !== 0x46 || bytes[1] !== 0x4f || bytes[2] !== 0x4c || bytes[3] !== 0x49) {
     throw new Error('Not a valid Folio vault file')
   }
 

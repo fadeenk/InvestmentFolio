@@ -17,9 +17,9 @@ const ui = useUiStore()
 const allocationData = computed(() => portfolio.allocationByAsset)
 
 const assetComparison = computed(() => {
-  return portfolio.positions.map(pos => ({
+  return portfolio.positions.map((pos) => ({
     category: pos.symbol,
-    value: pos.shares * pos.currentPrice
+    value: pos.shares * pos.currentPrice,
   }))
 })
 
@@ -34,7 +34,7 @@ onMounted(() => {
     shares: 10,
     avgCost: 150,
     currentPrice: 155,
-    costBasisMethod: 'FIFO'
+    costBasisMethod: 'FIFO',
   })
 
   portfolio.addPosition({
@@ -45,7 +45,7 @@ onMounted(() => {
     shares: 5,
     avgCost: 2800,
     currentPrice: 2850,
-    costBasisMethod: 'FIFO'
+    costBasisMethod: 'FIFO',
   })
 
   // Sample price history (6 months per spec)
@@ -55,18 +55,16 @@ onMounted(() => {
     { date: '2026-03-01', value: 11000 },
     { date: '2026-04-01', value: 10800 },
     { date: '2026-05-01', value: 11500 },
-    { date: '2026-06-01', value: 12000 }
+    { date: '2026-06-01', value: 12000 },
   ] as PricePoint[]
 })
 </script>
 
 <template>
   <UContainer class="py-8">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-text">
-        Investment Dashboard
-      </h1>
-      <div class="flex gap-4 items-center">
+    <div class="mb-6 flex items-center justify-between">
+      <h1 class="text-text text-2xl font-bold">Investment Dashboard</h1>
+      <div class="flex items-center gap-4">
         <USelect
           :model-value="preferences.currency"
           :items="['USD', 'EUR', 'GBP']"
@@ -84,11 +82,9 @@ onMounted(() => {
     <div class="mb-6">
       <UCard>
         <template #header>
-          <h2 class="text-lg font-semibold">
-            Total Portfolio Value
-          </h2>
+          <h2 class="text-lg font-semibold">Total Portfolio Value</h2>
         </template>
-        <p class="text-3xl font-bold text-primary">
+        <p class="text-primary text-3xl font-bold">
           {{ portfolio.totalValue.toLocaleString() }} {{ preferences.currency }}
         </p>
       </UCard>
@@ -97,29 +93,23 @@ onMounted(() => {
     <div class="mb-6">
       <UCard>
         <template #header>
-          <h3 class="text-lg font-semibold">
-            Portfolio Value Over Time
-          </h3>
+          <h3 class="text-lg font-semibold">Portfolio Value Over Time</h3>
         </template>
         <LineChart :data="portfolio.priceHistory" />
       </UCard>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
       <UCard>
         <template #header>
-          <h3 class="text-lg font-semibold">
-            Asset Allocation
-          </h3>
+          <h3 class="text-lg font-semibold">Asset Allocation</h3>
         </template>
         <PieChart :data="allocationData" />
       </UCard>
 
       <UCard>
         <template #header>
-          <h3 class="text-lg font-semibold">
-            Asset Comparison
-          </h3>
+          <h3 class="text-lg font-semibold">Asset Comparison</h3>
         </template>
         <BarChart :data="assetComparison" />
       </UCard>

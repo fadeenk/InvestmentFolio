@@ -15,7 +15,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     const groups: Record<string, number> = {}
     positions.value.forEach((pos) => {
       const key = pos.assetType
-      groups[key] = (groups[key] || 0) + (pos.shares * pos.currentPrice)
+      groups[key] = (groups[key] || 0) + pos.shares * pos.currentPrice
     })
     return Object.entries(groups).map(([label, value]) => ({ label, value }))
   })
@@ -47,5 +47,14 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     })
   }
 
-  return { accounts, positions, priceHistory, totalValue, allocationByAsset, addAccount, addPosition, updatePrices }
+  return {
+    accounts,
+    positions,
+    priceHistory,
+    totalValue,
+    allocationByAsset,
+    addAccount,
+    addPosition,
+    updatePrices,
+  }
 })

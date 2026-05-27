@@ -10,7 +10,7 @@ import {
   parseVaultBuffer,
   deriveKey,
   encryptPayload,
-  decryptPayload
+  decryptPayload,
 } from '~/utils/vault'
 import type { VaultPayload } from '~/types/vault'
 import { CostBasisMethod, Theme, DateFormat } from '~/types/enums'
@@ -33,13 +33,13 @@ function makeTestPayload(): VaultPayload {
         dateFormat: DateFormat.MM_DD_YYYY,
         defaultAccountFilter: null,
         defaultCostBasisMethod: CostBasisMethod.FIFO,
-        defaultTimeRange: 'YTD'
+        defaultTimeRange: 'YTD',
       },
       schwabAccountHashes: {},
       schwabTokenMeta: null,
       costBasisMethodByAccount: {},
-      lastSavedAt: null
-    }
+      lastSavedAt: null,
+    },
   }
 }
 
@@ -121,10 +121,10 @@ describe('deriveKey / encryptPayload / decryptPayload', () => {
   // We test with a real CryptoKey by stubbing crypto.subtle if available,
   // or we let the test fail early with a clear message when Web Crypto is
   // unavailable (jsdom / older Node).
-  const hasWebCrypto
-    = typeof crypto !== 'undefined'
-      && typeof crypto.subtle !== 'undefined'
-      && typeof crypto.subtle.importKey === 'function'
+  const hasWebCrypto =
+    typeof crypto !== 'undefined' &&
+    typeof crypto.subtle !== 'undefined' &&
+    typeof crypto.subtle.importKey === 'function'
 
   it('deriveKey returns a non-extractable CryptoKey', async () => {
     if (!hasWebCrypto) {

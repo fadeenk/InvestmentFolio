@@ -8,7 +8,7 @@ import {
   encryptPayload,
   decryptPayload,
   buildVaultBuffer,
-  parseVaultBuffer
+  parseVaultBuffer,
 } from '@/utils/vault'
 
 function createDefaultPayload(): VaultPayload {
@@ -30,13 +30,13 @@ function createDefaultPayload(): VaultPayload {
         dateFormat: DateFormat.MM_DD_YYYY,
         defaultAccountFilter: null,
         defaultCostBasisMethod: CostBasisMethod.FIFO,
-        defaultTimeRange: 'YTD'
+        defaultTimeRange: 'YTD',
       },
       schwabAccountHashes: {},
       schwabTokenMeta: null,
       costBasisMethodByAccount: {},
-      lastSavedAt: null
-    }
+      lastSavedAt: null,
+    },
   }
 }
 
@@ -61,10 +61,10 @@ export const useVaultStore = defineStore('vault', () => {
   const hasUnsavedChanges = computed(() => isDirty.value)
 
   const accounts = computed<Account[]>(() => payload.value?.accounts ?? [])
-  const activeAccounts = computed(() => accounts.value.filter(a => a.isActive))
+  const activeAccounts = computed(() => accounts.value.filter((a) => a.isActive))
 
   const displayPreferences = computed<DisplayPreferences | null>(
-    () => payload.value?.metadata.displayPreferences ?? null
+    () => payload.value?.metadata.displayPreferences ?? null,
   )
 
   async function createVault(passphrase: string): Promise<void> {
@@ -175,9 +175,11 @@ export const useVaultStore = defineStore('vault', () => {
   async function _writeBuffer(buffer: ArrayBuffer): Promise<void> {
     if (fileHandle.value) {
       try {
-        const writable = await (fileHandle.value as FileSystemFileHandle & {
-          createWritable(): Promise<FileSystemWritableFileStream>
-        }).createWritable()
+        const writable = await (
+          fileHandle.value as FileSystemFileHandle & {
+            createWritable(): Promise<FileSystemWritableFileStream>
+          }
+        ).createWritable()
         await writable.write(buffer)
         await writable.close()
         return
@@ -213,6 +215,6 @@ export const useVaultStore = defineStore('vault', () => {
     saveVault,
     lockVault,
     markDirty,
-    mutatePayload
+    mutatePayload,
   }
 })

@@ -5,17 +5,16 @@ The worker has its own `AGENTS.md` with Cloudflare-specific guidance.
 
 ## Commands
 
-| Command | Purpose |
-|---------|---------|
-| `npm run dev:frontend` | Nuxt dev server on `localhost:3000` |
-| `npm run dev:worker` | Wrangler dev server |
-| `npm test` | Tests across both workspaces |
-| `npm run test:frontend` | Frontend unit tests only |
-| `npm run lint` | ESLint, zero warnings allowed |
-| `npm run lint:fix` | Auto-fix lint violations |
-| `npm run format` | Prettier write (no semi, single quotes, trailing commas, 100 width) |
-| `npm run typecheck` | Both workspaces |
-| `npm run --workspace=worker cf-typegen` | Regenerate Worker types after binding changes |
+| Command                                 | Purpose                                                             |
+| --------------------------------------- | ------------------------------------------------------------------- |
+| `npm run dev:frontend`                  | Nuxt dev server on `localhost:3000`                                 |
+| `npm run dev:worker`                    | Wrangler dev server                                                 |
+| `npm test`                              | Tests across both workspaces                                        |
+| `npm run test:frontend`                 | Frontend unit tests only                                            |
+| `npm run lint`                          | ESLint, Auto-fix lint violations, zero warnings allowed             |
+| `npm run format`                        | Prettier write (no semi, single quotes, trailing commas, 100 width) |
+| `npm run typecheck`                     | Both workspaces                                                     |
+| `npm run --workspace=worker cf-typegen` | Regenerate Worker types after binding changes                       |
 
 CI order (also the preferred local order): `lint -> format -> typecheck -> test`.
 
@@ -60,6 +59,6 @@ CI order (also the preferred local order): `lint -> format -> typecheck -> test`
 ## Gotchas
 
 - `npm run format:check` does not exist despite being referenced in CI. Only `npm run format` (which write-formats) exists.
-- ESLint runs from root but the `eslint` dependency only lives in `frontend/` (workspace hoisting).
+- ESLint is configured in both workspaces (`frontend/` via `@nuxt/eslint`, `worker/` via `typescript-eslint`). The dep is hoisted to root `node_modules`.
 - The frontend `tsconfig.json` uses project references to `.nuxt/` generated configs -- these are created by `nuxt prepare` (runs automatically via `postinstall`).
 - Run `wrangler types` after changing `worker/wrangler.jsonc` bindings.

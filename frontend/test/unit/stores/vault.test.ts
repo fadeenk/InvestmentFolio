@@ -9,7 +9,12 @@ import * as vaultUtils from '~/utils/vault'
 // ---------------------------------------------------------------------------
 
 function createMockCryptoKey(): CryptoKey {
-  return { type: 'secret', extractable: false, algorithm: {} as Algorithm, usages: ['encrypt', 'decrypt'] } as CryptoKey
+  return {
+    type: 'secret',
+    extractable: false,
+    algorithm: {} as Algorithm,
+    usages: ['encrypt', 'decrypt'],
+  } as CryptoKey
 }
 
 function createMockSubtle() {
@@ -17,7 +22,7 @@ function createMockSubtle() {
     importKey: vi.fn().mockResolvedValue(createMockCryptoKey()),
     deriveKey: vi.fn().mockResolvedValue(createMockCryptoKey()),
     encrypt: vi.fn().mockResolvedValue(new ArrayBuffer(32)),
-    decrypt: vi.fn().mockResolvedValue(new TextEncoder().encode('{}').buffer as ArrayBuffer)
+    decrypt: vi.fn().mockResolvedValue(new TextEncoder().encode('{}').buffer as ArrayBuffer),
   } as unknown as SubtleCrypto
 }
 
@@ -53,7 +58,7 @@ function mockCryptoAPI() {
       return arr
     },
     subtle,
-    randomUUID: () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+    randomUUID: () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx',
   })
 }
 
@@ -65,14 +70,14 @@ function stubDOM() {
       downloadLinks.push(url)
       return url
     },
-    revokeObjectURL: vi.fn()
+    revokeObjectURL: vi.fn(),
   })
   document.createElement = vi.fn((tag: string) => {
     if (tag === 'a') {
       return {
         href: '',
         download: '',
-        click: vi.fn()
+        click: vi.fn(),
       } as unknown as HTMLElement
     }
     return document.createElement(tag)
@@ -118,7 +123,7 @@ describe('vault store', () => {
       vi.spyOn(vaultUtils, 'deriveKey').mockResolvedValue(createMockCryptoKey())
       vi.spyOn(vaultUtils, 'encryptPayload').mockResolvedValue({
         iv: new Uint8Array(12).fill(0xaa),
-        ciphertext: new ArrayBuffer(32)
+        ciphertext: new ArrayBuffer(32),
       })
       vi.spyOn(vaultUtils, 'buildVaultBuffer').mockReturnValue(new ArrayBuffer(86))
     })
@@ -183,7 +188,7 @@ describe('vault store', () => {
         iterations: 600_000,
         salt: new Uint8Array(32),
         iv: new Uint8Array(12),
-        ciphertext: new ArrayBuffer(32)
+        ciphertext: new ArrayBuffer(32),
       })
       vi.spyOn(vaultUtils, 'deriveKey').mockResolvedValue(createMockCryptoKey())
       vi.spyOn(vaultUtils, 'decryptPayload').mockResolvedValue({
@@ -203,13 +208,13 @@ describe('vault store', () => {
             dateFormat: DateFormat.MM_DD_YYYY,
             defaultAccountFilter: null,
             defaultCostBasisMethod: CostBasisMethod.FIFO,
-            defaultTimeRange: 'YTD'
+            defaultTimeRange: 'YTD',
           },
           schwabAccountHashes: {},
           schwabTokenMeta: null,
           costBasisMethodByAccount: {},
-          lastSavedAt: null
-        }
+          lastSavedAt: null,
+        },
       })
 
       const promise = store.openVault(makeMockFile(), 'correct-passphrase')
@@ -229,7 +234,7 @@ describe('vault store', () => {
         iterations: 600_000,
         salt: new Uint8Array(32),
         iv: new Uint8Array(12),
-        ciphertext: new ArrayBuffer(32)
+        ciphertext: new ArrayBuffer(32),
       })
       vi.spyOn(vaultUtils, 'deriveKey').mockResolvedValue(createMockCryptoKey())
       vi.spyOn(vaultUtils, 'decryptPayload').mockRejectedValue(new Error('operation failed'))
@@ -260,14 +265,14 @@ describe('vault store', () => {
       vi.spyOn(vaultUtils, 'deriveKey').mockResolvedValue(createMockCryptoKey())
       vi.spyOn(vaultUtils, 'encryptPayload').mockResolvedValue({
         iv: new Uint8Array(12).fill(0xbb),
-        ciphertext: new ArrayBuffer(64)
+        ciphertext: new ArrayBuffer(64),
       })
       vi.spyOn(vaultUtils, 'buildVaultBuffer').mockReturnValue(new ArrayBuffer(118))
       vi.spyOn(vaultUtils, 'parseVaultBuffer').mockReturnValue({
         iterations: 600_000,
         salt: new Uint8Array(32),
         iv: new Uint8Array(12),
-        ciphertext: new ArrayBuffer(32)
+        ciphertext: new ArrayBuffer(32),
       })
       vi.spyOn(vaultUtils, 'decryptPayload').mockResolvedValue({
         schemaVersion: 1,
@@ -286,13 +291,13 @@ describe('vault store', () => {
             dateFormat: DateFormat.MM_DD_YYYY,
             defaultAccountFilter: null,
             defaultCostBasisMethod: CostBasisMethod.FIFO,
-            defaultTimeRange: 'YTD'
+            defaultTimeRange: 'YTD',
           },
           schwabAccountHashes: {},
           schwabTokenMeta: null,
           costBasisMethodByAccount: {},
-          lastSavedAt: null
-        }
+          lastSavedAt: null,
+        },
       })
     })
 
@@ -344,14 +349,14 @@ describe('vault store', () => {
       vi.spyOn(vaultUtils, 'deriveKey').mockResolvedValue(createMockCryptoKey())
       vi.spyOn(vaultUtils, 'encryptPayload').mockResolvedValue({
         iv: new Uint8Array(12).fill(0xcc),
-        ciphertext: new ArrayBuffer(32)
+        ciphertext: new ArrayBuffer(32),
       })
       vi.spyOn(vaultUtils, 'buildVaultBuffer').mockReturnValue(new ArrayBuffer(86))
       vi.spyOn(vaultUtils, 'parseVaultBuffer').mockReturnValue({
         iterations: 600_000,
         salt: new Uint8Array(32),
         iv: new Uint8Array(12),
-        ciphertext: new ArrayBuffer(32)
+        ciphertext: new ArrayBuffer(32),
       })
       vi.spyOn(vaultUtils, 'decryptPayload').mockResolvedValue({
         schemaVersion: 1,
@@ -370,13 +375,13 @@ describe('vault store', () => {
             dateFormat: DateFormat.MM_DD_YYYY,
             defaultAccountFilter: null,
             defaultCostBasisMethod: CostBasisMethod.FIFO,
-            defaultTimeRange: 'YTD'
+            defaultTimeRange: 'YTD',
           },
           schwabAccountHashes: {},
           schwabTokenMeta: null,
           costBasisMethodByAccount: {},
-          lastSavedAt: null
-        }
+          lastSavedAt: null,
+        },
       })
     })
 
@@ -410,7 +415,7 @@ describe('vault store', () => {
       vi.spyOn(vaultUtils, 'deriveKey').mockResolvedValue(createMockCryptoKey())
       vi.spyOn(vaultUtils, 'encryptPayload').mockResolvedValue({
         iv: new Uint8Array(12).fill(0xdd),
-        ciphertext: new ArrayBuffer(32)
+        ciphertext: new ArrayBuffer(32),
       })
       vi.spyOn(vaultUtils, 'buildVaultBuffer').mockReturnValue(new ArrayBuffer(86))
     })

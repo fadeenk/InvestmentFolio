@@ -7,7 +7,7 @@
     "dev": "nuxt dev",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "lint": "eslint . --fix",
+    "lint": "eslint . --fix --max-warnings=0",
     "typecheck": "nuxt typecheck",
     "test": "vitest",
     "test:watch": "vitest --watch",

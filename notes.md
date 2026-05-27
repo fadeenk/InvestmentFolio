@@ -53,15 +53,14 @@ folio/
 
 All data models live under `frontend/types/`, `worker/types/`, and are **never** inlined into components:
 
-| File | Contents |
-|---|---|
-| `frontend/types/vault.ts` | `VaultFile`, `VaultPayload`, `Account`, `Transaction`, `Position`, `TaxLot`, `IncomeRecord`, `PricePoint`, `VaultMetadata` |
-| `frontend/types/schwab.ts` | Schwab API response shapes for all used endpoints |
-| `frontend/types/enums.ts` | `Bank`, `AccountType`, `SyncMethod`, `TransactionType`, `AssetType`, `CostBasisMethod` |
-| `worker/types/worker.ts` | Worker request/response types shared across the proxy boundary |
+| File                       | Contents                                                                                                                   |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `frontend/types/vault.ts`  | `VaultFile`, `VaultPayload`, `Account`, `Transaction`, `Position`, `TaxLot`, `IncomeRecord`, `PricePoint`, `VaultMetadata` |
+| `frontend/types/schwab.ts` | Schwab API response shapes for all used endpoints                                                                          |
+| `frontend/types/enums.ts`  | `Bank`, `AccountType`, `SyncMethod`, `TransactionType`, `AssetType`, `CostBasisMethod`                                     |
+| `worker/types/worker.ts`   | Worker request/response types shared across the proxy boundary                                                             |
 
 > **Rule:** No `any`. Use `unknown` + type narrowing, or `satisfies` operator, instead. Violations fail the CI lint check.
-
 
 ## 3. First-Time Deployment Checklist
 

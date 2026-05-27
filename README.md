@@ -33,6 +33,7 @@ For a detailed breakdown of the development phases, feature milestones, and plan
 ## ⚙️ Getting Started
 
 Refer to [notes.md](./notes.md) for the full developer environment setup guide, including:
+
 - Repository configuration
 - Type conventions
 - First-time deployment checklist

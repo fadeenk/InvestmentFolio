@@ -1,15 +1,16 @@
 # Folio — Developer Roadmap
+
 ---
 
 ## Overview
 
-| Phase | Title |
-|-------|-------|
-| 1 | Foundation 
-| 2 | Schwab Integration
-| 3 | Dashboard & Views 
-| 4 | Manual Entry & CSV
-| 5 | Polish & Launch
+| Phase | Title              |
+| ----- | ------------------ |
+| 1     | Foundation         |
+| 2     | Schwab Integration |
+| 3     | Dashboard & Views  |
+| 4     | Manual Entry & CSV |
+| 5     | Polish & Launch    |
 
 ---
 
@@ -20,28 +21,26 @@ Set up the project scaffold, encrypted vault, and Cloudflare Worker. Nothing wor
 ### Project scaffold `Setup`
 
 - [x] Initialize Nuxt 3 with TypeScript + Nuxt UI Dashboard template
-- [ ] Configure Tailwind CSS, Pinia, and Unovis
-- [ ] Set up `src/types/` directory with all enums and interfaces (`vault.ts`, `schwab.ts`, `enums.ts`)
-- [ ] Configure `strict: true` in `tsconfig.json`
-- [ ] Set up GitHub Pages deploy pipeline via `gh-pages` branch
+- [x] Configure Tailwind CSS, Pinia, and Unovis
+- [x] Set up `src/types/` directory with all enums and interfaces (`vault.ts`, `schwab.ts`, `enums.ts`)
+- [x] Configure `strict: true` in `tsconfig.json`
 
 ### Vault encrypt/decrypt `Core`
 
-- [ ] Implement binary vault file format: magic bytes + version + KDF params + IV + auth tag + ciphertext
-- [ ] PBKDF2-HMAC-SHA256 key derivation at 600,000 iterations
-- [ ] AES-256-GCM encrypt and decrypt via Web Crypto API
-- [ ] Show "Unlocking vault..." spinner during PBKDF2 (300–800ms expected)
-- [ ] Key marked non-extractable; zero key on lock/close
+- [x] Implement binary vault file format: magic bytes + version + KDF params + IV + auth tag + ciphertext
+- [x] PBKDF2-HMAC-SHA256 key derivation at 600,000 iterations
+- [x] AES-256-GCM encrypt and decrypt via Web Crypto API
+- [x] Show "Unlocking vault..." spinner during PBKDF2 (300–800ms expected)
+- [x] Key marked non-extractable; zero key on lock/close
 
 > **Blocks:** all data features
 
 ### Vault file I/O `Core`
 
-- [ ] File System Access API: `showOpenFilePicker` + `createWritable` for Chrome/Edge
-- [ ] `FileReader` API fallback download for Firefox/Safari
-- [ ] Create vault screen: open existing or create new + set passphrase
-- [ ] Show "saving..." and "saved" indicators after every write
-- [ ] Auto-save prompt on navigate-away with unsaved changes
+- [x] File System Access API: `showOpenFilePicker` + `createWritable` for Chrome/Edge
+- [x] `FileReader` API fallback download for Firefox/Safari
+- [x] Create vault screen: open existing or create new + set passphrase
+- [x] Show "saving..." and "saved" indicators after every write
 
 > **Depends on:** Vault encrypt/decrypt
 
@@ -53,11 +52,10 @@ Set up the project scaffold, encrypted vault, and Cloudflare Worker. Nothing wor
 - [ ] Set `SCHWAB_APP_KEY`, `SCHWAB_APP_SECRET`, `TOKEN_ENCRYPTION_KEY` as Worker secrets
 - [ ] Add CORS headers to all proxied responses
 
-### ⚠️ Open question
+### Deploy
 
-**Q1:** Should Chrome be the officially supported browser given File System Access API support? Decide before coding the fallback heavily.
-
----
+- [ ] Set up GitHub Pages deploy pipeline via `gh-pages` branch
+- [ ] Deploy worker
 
 ## Phase 2 — Schwab Integration · Weeks 5–8
 
@@ -65,7 +63,7 @@ Wire up OAuth 2.0, token lifecycle, and all Schwab API endpoints. This is the hi
 
 ### OAuth 2.0 flow `Auth`
 
-- [ ] Register Schwab developer app, select Accounts & Trading + Market Data production *(approval takes 1–3 business days — submit at the start of this phase)*
+- [ ] Register Schwab developer app, select Accounts & Trading + Market Data production _(approval takes 1–3 business days — submit at the start of this phase)_
 - [ ] Implement `/auth/login` redirect to Schwab consent page
 - [ ] Implement `/auth/callback`: exchange code → tokens, AES-GCM encrypt tokens, store in KV
 - [ ] Implement `/auth/refresh`: swap refresh token for new access token, update KV
@@ -209,7 +207,7 @@ Add manual account entry (Other/CASH accounts) and Optum CSV import. Unblocks no
 - [ ] Wash sale detection: flag sells with a repurchase within 30-day window
 - [ ] Adjust disallowed loss and cost basis on replacement lots
 - [ ] Tax year summary: short-term G/L, long-term G/L, dividends, interest per year
-- [ ] Display disclaimer: *"This is not tax advice. Consult a CPA for accurate tax filing."*
+- [ ] Display disclaimer: _"This is not tax advice. Consult a CPA for accurate tax filing."_
 
 ### ⚠️ Open questions
 
@@ -253,9 +251,9 @@ Error handling, edge cases, mobile QA, performance, and final deployment.
 
 Resolve all remaining PRD open questions before locking the v1 scope:
 
-| # | Question | Can decide independently? |
-|---|----------|--------------------------|
-| Q1 | Official browser support policy (Chrome-first vs equal Firefox/Safari fallback) | Yes — ideally in Phase 1 |
-| Q3 | Vault file naming convention (`.foli` enforcement vs free naming with magic bytes) | Yes |
-| Q6 | CASH account sub-categorization (checking / savings / money market) for v1 | Yes |
-| Q8 | Single-user assumption or multi-vault support on shared machines | Yes |
+| #   | Question                                                                           | Can decide independently? |
+| --- | ---------------------------------------------------------------------------------- | ------------------------- |
+| Q1  | Official browser support policy (Chrome-first vs equal Firefox/Safari fallback)    | Yes — ideally in Phase 1  |
+| Q3  | Vault file naming convention (`.foli` enforcement vs free naming with magic bytes) | Yes                       |
+| Q6  | CASH account sub-categorization (checking / savings / money market) for v1         | Yes                       |
+| Q8  | Single-user assumption or multi-vault support on shared machines                   | Yes                       |

@@ -12,21 +12,21 @@
 
 ## File Structure
 
-| File | Responsibility |
-|------|-----------------|
-| `frontend/app/types/enums.ts` | Enum definitions (Bank, AccountType, etc.) |
-| `frontend/app/types/vault.ts` | Interface definitions (Account, Position, etc.) |
-| `frontend/app/stores/portfolio.ts` | Portfolio holdings state, getters, actions |
-| `frontend/app/stores/preferences.ts` | User settings with persistence |
-| `frontend/app/stores/ui.ts` | UI state (sidebar, modals) |
-| `frontend/app/components/charts/LineChart.vue` | Portfolio value time-series chart |
-| `frontend/app/components/charts/PieChart.vue` | Asset allocation doughnut chart |
-| `frontend/app/components/charts/BarChart.vue` | Asset comparison bar chart |
-| `frontend/app/pages/dashboard.vue` | Sample dashboard wiring stores + charts |
-| `frontend/app/plugins/dark-mode.ts` | Dark mode class sync plugin |
-| `frontend/app/assets/css/main.css` | Tailwind v4 theme extension |
-| `frontend/nuxt.config.ts` | Add Pinia persistence, colorMode config |
-| `frontend/vitest.config.ts` | Verify Nuxt test utils config |
+| File                                           | Responsibility                                  |
+| ---------------------------------------------- | ----------------------------------------------- |
+| `frontend/app/types/enums.ts`                  | Enum definitions (Bank, AccountType, etc.)      |
+| `frontend/app/types/vault.ts`                  | Interface definitions (Account, Position, etc.) |
+| `frontend/app/stores/portfolio.ts`             | Portfolio holdings state, getters, actions      |
+| `frontend/app/stores/preferences.ts`           | User settings with persistence                  |
+| `frontend/app/stores/ui.ts`                    | UI state (sidebar, modals)                      |
+| `frontend/app/components/charts/LineChart.vue` | Portfolio value time-series chart               |
+| `frontend/app/components/charts/PieChart.vue`  | Asset allocation doughnut chart                 |
+| `frontend/app/components/charts/BarChart.vue`  | Asset comparison bar chart                      |
+| `frontend/app/pages/dashboard.vue`             | Sample dashboard wiring stores + charts         |
+| `frontend/app/plugins/dark-mode.ts`            | Dark mode class sync plugin                     |
+| `frontend/app/assets/css/main.css`             | Tailwind v4 theme extension                     |
+| `frontend/nuxt.config.ts`                      | Add Pinia persistence, colorMode config         |
+| `frontend/vitest.config.ts`                    | Verify Nuxt test utils config                   |
 
 ---
 
@@ -35,6 +35,7 @@
 ### Task 1: Create `types/enums.ts`
 
 **Files:**
+
 - Create: `frontend/app/types/enums.ts`
 
 - [ ] **Step 1: Write the enum definitions**
@@ -45,7 +46,7 @@ export enum Bank {
   Schwab = 'Schwab',
   Fidelity = 'Fidelity',
   ETrade = 'ETrade',
-  Other = 'Other'
+  Other = 'Other',
 }
 
 export enum AccountType {
@@ -54,13 +55,13 @@ export enum AccountType {
   RothIRA = 'RothIRA',
   k401 = '401k',
   HSA = 'HSA',
-  Plan529 = '529'
+  Plan529 = '529',
 }
 
 export enum SyncMethod {
   Manual = 'Manual',
   SchwabAPI = 'SchwabAPI',
-  CSVImport = 'CSVImport'
+  CSVImport = 'CSVImport',
 }
 
 export enum TransactionType {
@@ -68,7 +69,7 @@ export enum TransactionType {
   Sell = 'Sell',
   Dividend = 'Dividend',
   Split = 'Split',
-  Transfer = 'Transfer'
+  Transfer = 'Transfer',
 }
 
 export enum AssetType {
@@ -77,14 +78,14 @@ export enum AssetType {
   ETF = 'ETF',
   MutualFund = 'MutualFund',
   Cash = 'Cash',
-  Crypto = 'Crypto'
+  Crypto = 'Crypto',
 }
 
 export enum CostBasisMethod {
   FIFO = 'FIFO',
   LIFO = 'LIFO',
   SpecificLot = 'SpecificLot',
-  AverageCost = 'AverageCost'
+  AverageCost = 'AverageCost',
 }
 ```
 
@@ -100,6 +101,7 @@ git commit -m "feat: add enum type definitions for banking and investment types"
 ### Task 2: Create `types/vault.ts`
 
 **Files:**
+
 - Create: `frontend/app/types/vault.ts`
 
 - [ ] **Step 1: Write the interface definitions**
@@ -157,6 +159,7 @@ git commit -m "feat: add vault type definitions for accounts, positions, and tra
 ### Task 3: Create `stores/portfolio.ts`
 
 **Files:**
+
 - Create: `frontend/app/stores/portfolio.ts`
 - Test: `frontend/test/unit/stores/portfolio.test.ts`
 
@@ -187,7 +190,7 @@ describe('portfolio store', () => {
       shares: 10,
       avgCost: 150,
       currentPrice: 155,
-      costBasisMethod: 'FIFO' as const
+      costBasisMethod: 'FIFO' as const,
     }
     store.addPosition(position)
     expect(store.positions.length).toBe(1)
@@ -204,7 +207,7 @@ describe('portfolio store', () => {
       shares: 10,
       avgCost: 150,
       currentPrice: 155,
-      costBasisMethod: 'FIFO' as const
+      costBasisMethod: 'FIFO' as const,
     })
     expect(store.totalValue).toBe(1550) // 10 * 155
   })
@@ -219,7 +222,7 @@ describe('portfolio store', () => {
       shares: 10,
       avgCost: 150,
       currentPrice: 155,
-      costBasisMethod: 'FIFO' as const
+      costBasisMethod: 'FIFO' as const,
     })
     store.addPosition({
       id: '2',
@@ -229,7 +232,7 @@ describe('portfolio store', () => {
       shares: 5,
       avgCost: 2800,
       currentPrice: 2850,
-      costBasisMethod: 'FIFO' as const
+      costBasisMethod: 'FIFO' as const,
     })
     const allocation = store.allocationByAsset
     expect(allocation.length).toBe(1) // Both are Stock
@@ -244,7 +247,7 @@ describe('portfolio store', () => {
       bank: 'Chase' as const,
       type: 'Taxable' as const,
       name: 'Main Account',
-      number: '123456'
+      number: '123456',
     })
     expect(store.accounts.length).toBe(1)
   })
@@ -260,7 +263,7 @@ describe('portfolio store', () => {
       shares: 0, // Invalid
       avgCost: 150,
       currentPrice: 155,
-      costBasisMethod: 'FIFO' as const
+      costBasisMethod: 'FIFO' as const,
     })
     expect(store.positions.length).toBe(0)
     expect(warnSpy).toHaveBeenCalled()
@@ -276,7 +279,7 @@ describe('portfolio store', () => {
       shares: 10,
       avgCost: 150,
       currentPrice: 155,
-      costBasisMethod: 'FIFO' as const
+      costBasisMethod: 'FIFO' as const,
     })
     const originalPrice = store.positions[0].currentPrice
     store.updatePrices()
@@ -294,7 +297,7 @@ describe('portfolio store', () => {
       bank: 'Chase' as const,
       type: 'Taxable' as const,
       name: 'Test',
-      number: '123'
+      number: '123',
     })
     expect(store.accounts.length).toBe(0)
     expect(warnSpy).toHaveBeenCalled()
@@ -329,9 +332,9 @@ export const usePortfolioStore = defineStore('portfolio', () => {
 
   const allocationByAsset = computed(() => {
     const groups: Record<string, number> = {}
-    positions.value.forEach(pos => {
+    positions.value.forEach((pos) => {
       const key = pos.assetType
-      groups[key] = (groups[key] || 0) + (pos.shares * pos.currentPrice)
+      groups[key] = (groups[key] || 0) + pos.shares * pos.currentPrice
     })
     return Object.entries(groups).map(([label, value]) => ({ label, value }))
   })
@@ -357,13 +360,22 @@ export const usePortfolioStore = defineStore('portfolio', () => {
   }
 
   function updatePrices() {
-    positions.value.forEach(pos => {
+    positions.value.forEach((pos) => {
       const change = (Math.random() - 0.5) * 0.1 // ±5%
       pos.currentPrice = Math.max(0.01, pos.currentPrice * (1 + change))
     })
   }
 
-  return { accounts, positions, priceHistory, totalValue, allocationByAsset, addAccount, addPosition, updatePrices }
+  return {
+    accounts,
+    positions,
+    priceHistory,
+    totalValue,
+    allocationByAsset,
+    addAccount,
+    addPosition,
+    updatePrices,
+  }
 })
 ```
 
@@ -387,6 +399,7 @@ git commit -m "feat: add portfolio store with positions, price history, and comp
 ### Task 4: Create `stores/preferences.ts`
 
 **Files:**
+
 - Create: `frontend/app/stores/preferences.ts`
 - Test: `frontend/test/unit/stores/preferences.test.ts`
 
@@ -426,11 +439,13 @@ describe('preferences store', () => {
 - [ ] **Step 2: Note dependencies**
 
 > **Note:** Task 14 (Chunk 6) installs `@pinia-plugin-persistedstate/nuxt`. To run persistence tests, execute this task after Chunk 6, or install the package first:
+>
 > ```bash
 > cd frontend && npm install @pinia-plugin-persistedstate/nuxt
 > ```
 
 > **Note:** This task requires Vitest and Pinia test utilities. Ensure they are installed:
+>
 > ```bash
 > cd frontend && npm install vitest @pinia/nuxt
 > ```
@@ -449,22 +464,26 @@ Expected: FAIL (if plugin not installed, persistence test may fail)
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-export const usePreferencesStore = defineStore('preferences', () => {
-  const currency = ref<'USD' | 'EUR' | 'GBP'>('USD')
-  const darkMode = ref(false)
+export const usePreferencesStore = defineStore(
+  'preferences',
+  () => {
+    const currency = ref<'USD' | 'EUR' | 'GBP'>('USD')
+    const darkMode = ref(false)
 
-  function toggleDarkMode() {
-    darkMode.value = !darkMode.value
-  }
+    function toggleDarkMode() {
+      darkMode.value = !darkMode.value
+    }
 
-  function setCurrency(newCurrency: 'USD' | 'EUR' | 'GBP') {
-    currency.value = newCurrency
-  }
+    function setCurrency(newCurrency: 'USD' | 'EUR' | 'GBP') {
+      currency.value = newCurrency
+    }
 
-  return { currency, darkMode, toggleDarkMode, setCurrency }
-}, {
-  persist: true
-})
+    return { currency, darkMode, toggleDarkMode, setCurrency }
+  },
+  {
+    persist: true,
+  },
+)
 ```
 
 - [ ] **Step 5: Run test to verify it passes**
@@ -487,6 +506,7 @@ git commit -m "feat: add preferences store with currency and dark mode, with per
 ### Task 5: Create `stores/ui.ts`
 
 **Files:**
+
 - Create: `frontend/app/stores/ui.ts`
 - Test: `frontend/test/unit/stores/ui.test.ts`
 
@@ -574,6 +594,7 @@ git commit -m "feat: add UI store for sidebar and modal state management"
 ### Task 6: Create `components/charts/LineChart.vue`
 
 **Files:**
+
 - Create: `frontend/app/components/charts/LineChart.vue`
 - Test: `frontend/test/nuxt/components/charts/LineChart.test.ts`
 
@@ -589,16 +610,16 @@ describe('LineChart', () => {
       props: {
         data: [
           { date: '2026-01-01', value: 10000 },
-          { date: '2026-01-02', value: 10500 }
-        ]
-      }
+          { date: '2026-01-02', value: 10500 },
+        ],
+      },
     })
     expect(wrapper.find('svg').exists()).toBe(true)
   })
 
   it('should show fallback for empty data', () => {
     const wrapper = mount(LineChart, {
-      props: { data: [] }
+      props: { data: [] },
     })
     expect(wrapper.text()).toContain('No data available')
   })
@@ -608,11 +629,11 @@ describe('LineChart', () => {
       props: {
         data: [
           { date: '2026-01-01', value: 10000 },
-          { date: '2026-01-02', value: 10500 }
+          { date: '2026-01-02', value: 10500 },
         ],
         xKey: 'date',
-        yKey: 'value'
-      }
+        yKey: 'value',
+      },
     })
     expect(wrapper.find('svg').exists()).toBe(true)
   })
@@ -634,31 +655,39 @@ Expected: FAIL
 import { Line } from '@unovis/vue'
 import type { PricePoint } from '~/types/vault'
 
-const props = withDefaults(defineProps<{
-  data: PricePoint[]
-  xKey?: string
-  yKey?: string
-  color?: string
-}>(), {
-  xKey: 'date',
-  yKey: 'value',
-  color: '--color-primary'
-})
+const props = withDefaults(
+  defineProps<{
+    data: PricePoint[]
+    xKey?: string
+    yKey?: string
+    color?: string
+  }>(),
+  {
+    xKey: 'date',
+    yKey: 'value',
+    color: '--color-primary',
+  },
+)
 
 const chartData = computed(() => {
   if (!props.data || props.data.length === 0) return []
-  return props.data.map(d => ({
+  return props.data.map((d) => ({
     x: new Date(d[props.xKey as keyof PricePoint] as string),
-    y: d[props.yKey as keyof PricePoint] as number
+    y: d[props.yKey as keyof PricePoint] as number,
   }))
 })
 </script>
 
 <template>
-  <div v-if="chartData.length > 0" class="w-full h-64 p-4">
-    <Line :data="chartData" :x="(d: { x: Date }) => d.x" :y="(d: { y: number }) => d.y" :color="`var(${color})`" />
+  <div v-if="chartData.length > 0" class="h-64 w-full p-4">
+    <Line
+      :data="chartData"
+      :x="(d: { x: Date }) => d.x"
+      :y="(d: { y: number }) => d.y"
+      :color="`var(${color})`"
+    />
   </div>
-  <div v-else class="w-full h-64 flex items-center justify-center text-gray-500">
+  <div v-else class="flex h-64 w-full items-center justify-center text-gray-500">
     No data available
   </div>
 </template>
@@ -684,6 +713,7 @@ git commit -m "feat: add LineChart component for portfolio value time-series"
 ### Task 7: Create `components/charts/PieChart.vue`
 
 **Files:**
+
 - Create: `frontend/app/components/charts/PieChart.vue`
 - Test: `frontend/test/nuxt/components/charts/PieChart.test.ts`
 
@@ -699,16 +729,16 @@ describe('PieChart', () => {
       props: {
         data: [
           { label: 'Stocks', value: 6000 },
-          { label: 'Bonds', value: 4000 }
-        ]
-      }
+          { label: 'Bonds', value: 4000 },
+        ],
+      },
     })
     expect(wrapper.find('svg').exists()).toBe(true)
   })
 
   it('should show fallback for empty data', () => {
     const wrapper = mount(PieChart, {
-      props: { data: [] }
+      props: { data: [] },
     })
     expect(wrapper.text()).toContain('No data available')
   })
@@ -729,27 +759,30 @@ Expected: FAIL
 <script setup lang="ts">
 import { Pie } from '@unovis/vue'
 
-const props = withDefaults(defineProps<{
-  data: { label: string; value: number }[]
-  innerRadius?: number
-  colors?: string[]
-}>(), {
-  innerRadius: 0.6,
-  colors: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6']
-})
+const props = withDefaults(
+  defineProps<{
+    data: { label: string; value: number }[]
+    innerRadius?: number
+    colors?: string[]
+  }>(),
+  {
+    innerRadius: 0.6,
+    colors: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'],
+  },
+)
 </script>
 
 <template>
-  <div v-if="data.length > 0" class="w-full h-64 p-4">
-    <Pie 
-      :data="data" 
-      :value="(d: { value: number }) => d.value" 
+  <div v-if="data.length > 0" class="h-64 w-full p-4">
+    <Pie
+      :data="data"
+      :value="(d: { value: number }) => d.value"
       :label="(d: { label: string }) => d.label"
       :innerRadius="innerRadius"
       :colors="colors"
     />
   </div>
-  <div v-else class="w-full h-64 flex items-center justify-center text-gray-500">
+  <div v-else class="flex h-64 w-full items-center justify-center text-gray-500">
     No data available
   </div>
 </template>
@@ -775,6 +808,7 @@ git commit -m "feat: add PieChart component for asset allocation visualization"
 ### Task 8: Create `components/charts/BarChart.vue`
 
 **Files:**
+
 - Create: `frontend/app/components/charts/BarChart.vue`
 - Test: `frontend/test/nuxt/components/charts/BarChart.test.ts`
 
@@ -790,16 +824,16 @@ describe('BarChart', () => {
       props: {
         data: [
           { category: 'AAPL', value: 1550 },
-          { category: 'GOOGL', value: 2800 }
-        ]
-      }
+          { category: 'GOOGL', value: 2800 },
+        ],
+      },
     })
     expect(wrapper.find('svg').exists()).toBe(true)
   })
 
   it('should show fallback for empty data', () => {
     const wrapper = mount(BarChart, {
-      props: { data: [] }
+      props: { data: [] },
     })
     expect(wrapper.text()).toContain('No data available')
   })
@@ -820,24 +854,27 @@ Expected: FAIL
 <script setup lang="ts">
 import { Bar } from '@unovis/vue'
 
-const props = withDefaults(defineProps<{
-  data: { category: string; value: number }[]
-  orientation?: 'vertical' | 'horizontal'
-}>(), {
-  orientation: 'vertical'
-})
+const props = withDefaults(
+  defineProps<{
+    data: { category: string; value: number }[]
+    orientation?: 'vertical' | 'horizontal'
+  }>(),
+  {
+    orientation: 'vertical',
+  },
+)
 </script>
 
 <template>
-  <div v-if="data.length > 0" class="w-full h-64 p-4">
-    <Bar 
-      :data="data" 
-      :value="(d: { value: number }) => d.value" 
+  <div v-if="data.length > 0" class="h-64 w-full p-4">
+    <Bar
+      :data="data"
+      :value="(d: { value: number }) => d.value"
       :label="(d: { category: string }) => d.category"
       :orientation="orientation"
     />
   </div>
-  <div v-else class="w-full h-64 flex items-center justify-center text-gray-500">
+  <div v-else class="flex h-64 w-full items-center justify-center text-gray-500">
     No data available
   </div>
 </template>
@@ -865,6 +902,7 @@ git commit -m "feat: add BarChart component for asset comparison visualization"
 ### Task 9: Update `assets/css/main.css`
 
 **Files:**
+
 - Modify: `frontend/app/assets/css/main.css`
 
 - [ ] **Step 1: Read current file**
@@ -878,8 +916,8 @@ cat frontend/app/assets/css/main.css
 Replace content with:
 
 ```css
-@import "tailwindcss";
-@import "@nuxt/ui";
+@import 'tailwindcss';
+@import '@nuxt/ui';
 
 @theme static {
   --font-sans: 'Public Sans', sans-serif;
@@ -938,6 +976,7 @@ git commit -m "feat: extend Tailwind theme with dark mode, semantic colors, and 
 ### Task 10: Create `plugins/dark-mode.ts`
 
 **Files:**
+
 - Create: `frontend/app/plugins/dark-mode.ts`
 
 - [ ] **Step 1: Write the plugin**
@@ -948,7 +987,7 @@ import { usePreferencesStore } from '~/stores/preferences'
 
 export default defineNuxtPlugin(() => {
   const preferences = usePreferencesStore()
-  
+
   // Apply dark class on initial load with error handling for corrupted data
   try {
     const stored = localStorage.getItem('preferences')
@@ -966,18 +1005,22 @@ export default defineNuxtPlugin(() => {
 
   useHead({
     htmlAttrs: {
-      class: preferences.darkMode ? 'dark' : ''
-    }
+      class: preferences.darkMode ? 'dark' : '',
+    },
   })
 
   // Watch for changes and update reactively
-  watch(() => preferences.darkMode, (isDark) => {
-    if (isDark) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
-  }, { immediate: true })
+  watch(
+    () => preferences.darkMode,
+    (isDark) => {
+      if (isDark) {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
+    },
+    { immediate: true },
+  )
 })
 ```
 
@@ -1001,6 +1044,7 @@ git commit -m "feat: add dark mode plugin for syncing preferences with Tailwind 
 ### Task 11: Create `pages/dashboard.vue`
 
 **Files:**
+
 - Create: `frontend/app/pages/dashboard.vue`
 
 - [ ] **Step 1: Write the dashboard page**
@@ -1025,9 +1069,9 @@ const ui = useUiStore()
 const allocationData = computed(() => portfolio.allocationByAsset)
 
 const assetComparison = computed(() => {
-  return portfolio.positions.map(pos => ({
+  return portfolio.positions.map((pos) => ({
     category: pos.symbol,
-    value: pos.shares * pos.currentPrice
+    value: pos.shares * pos.currentPrice,
   }))
 })
 
@@ -1042,9 +1086,9 @@ onMounted(() => {
     shares: 10,
     avgCost: 150,
     currentPrice: 155,
-    costBasisMethod: 'FIFO'
+    costBasisMethod: 'FIFO',
   })
-  
+
   portfolio.addPosition({
     id: '2',
     accountId: 'acc1',
@@ -1053,7 +1097,7 @@ onMounted(() => {
     shares: 5,
     avgCost: 2800,
     currentPrice: 2850,
-    costBasisMethod: 'FIFO'
+    costBasisMethod: 'FIFO',
   })
 
   // Sample price history (6 months per spec)
@@ -1063,18 +1107,18 @@ onMounted(() => {
     { date: '2026-03-01', value: 11000 },
     { date: '2026-04-01', value: 10800 },
     { date: '2026-05-01', value: 11500 },
-    { date: '2026-06-01', value: 12000 }
+    { date: '2026-06-01', value: 12000 },
   ] as PricePoint[]
 })
 </script>
 
 <template>
   <UContainer class="py-8">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-text">Investment Dashboard</h1>
-      <div class="flex gap-4 items-center">
-        <USelect 
-          :modelValue="preferences.currency" 
+    <div class="mb-6 flex items-center justify-between">
+      <h1 class="text-text text-2xl font-bold">Investment Dashboard</h1>
+      <div class="flex items-center gap-4">
+        <USelect
+          :modelValue="preferences.currency"
           @update:modelValue="preferences.setCurrency($event)"
           :items="['USD', 'EUR', 'GBP']"
         />
@@ -1092,7 +1136,7 @@ onMounted(() => {
         <template #header>
           <h2 class="text-lg font-semibold">Total Portfolio Value</h2>
         </template>
-        <p class="text-3xl font-bold text-primary">
+        <p class="text-primary text-3xl font-bold">
           {{ portfolio.totalValue.toLocaleString() }} {{ preferences.currency }}
         </p>
       </UCard>
@@ -1107,7 +1151,7 @@ onMounted(() => {
       </UCard>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
       <UCard>
         <template #header>
           <h3 class="text-lg font-semibold">Asset Allocation</h3>
@@ -1148,6 +1192,7 @@ git commit -m "feat: add dashboard page wiring stores, charts, and dark mode tog
 ### Task 12: Update `nuxt.config.ts`
 
 **Files:**
+
 - Modify: `frontend/nuxt.config.ts`
 
 - [ ] **Step 1: Read current config**
@@ -1170,10 +1215,10 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     '@vueuse/nuxt',
     '@pinia/nuxt',
-    '@pinia-plugin-persistedstate/nuxt' // Add this
+    '@pinia-plugin-persistedstate/nuxt', // Add this
   ],
   colorMode: {
-    classSuffix: '' // For Tailwind dark mode class strategy
+    classSuffix: '', // For Tailwind dark mode class strategy
   },
   // rest of config...
 })
@@ -1199,6 +1244,7 @@ git commit -m "feat: add Pinia persistence plugin and colorMode config for dark 
 ### Task 13: Verify `vitest.config.ts`
 
 **Files:**
+
 - Verify: `frontend/vitest.config.ts`
 
 - [ ] **Step 1: Check if config has Nuxt test utils**
@@ -1235,6 +1281,7 @@ Expected: Commit only if `vitest.config.ts` was modified. If already correct, sk
 ### Task 14: Install Dependencies
 
 **Files:**
+
 - Modify: `frontend/package.json`
 
 - [ ] **Step 1: Install required packages**

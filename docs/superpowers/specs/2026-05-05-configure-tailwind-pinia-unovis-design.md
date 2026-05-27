@@ -39,7 +39,9 @@ frontend/app/
 All data models live under `frontend/types/`, never inlined into components.
 
 ### `types/enums.ts`
+
 Define enums with values:
+
 - `Bank`: `Chase`, `Schwab`, `Fidelity`, `ETrade`, `Other`
 - `AccountType`: `Taxable`, `IRA`, `RothIRA`, `401k`, `HSA`, `529`
 - `SyncMethod`: `Manual`, `SchwabAPI`, `CSVImport`
@@ -48,7 +50,9 @@ Define enums with values:
 - `CostBasisMethod`: `FIFO`, `LIFO`, `SpecificLot`, `AverageCost`
 
 ### `types/vault.ts`
+
 Define interfaces with properties (only those used in this spec):
+
 - `Account`: `{ id: string; bank: Bank; type: AccountType; name: string; number: string }`
 - `Transaction`: `{ id: string; accountId: string; type: TransactionType; assetType: AssetType; symbol: string; shares: number; price: number; date: string }`
 - `Position`: `{ id: string; accountId: string; symbol: string; assetType: AssetType; shares: number; avgCost: number; currentPrice: number; costBasisMethod: CostBasisMethod }`
@@ -63,6 +67,7 @@ Define interfaces with properties (only those used in this spec):
 All stores use Composition API (`setup` stores) for type safety with Vue 3 + TypeScript.
 
 ### `stores/portfolio.ts`
+
 - **Purpose**: Manage investment holdings and historical portfolio value.
 - **State**:
   - `accounts: Account[]` (from vault.ts)
@@ -70,12 +75,13 @@ All stores use Composition API (`setup` stores) for type safety with Vue 3 + Typ
   - `priceHistory: PricePoint[]` (for time-series charts)
 - **Getters**:
   - `totalValue`: Sum of `position.shares * position.currentPrice` for all positions
-  - `allocationByAsset`: Groups positions by `AssetType`, returns `{ label: string; value: number }[]` where value is sum of (shares * currentPrice) per asset type
-- **Actions**: 
+  - `allocationByAsset`: Groups positions by `AssetType`, returns `{ label: string; value: number }[]` where value is sum of (shares \* currentPrice) per asset type
+- **Actions**:
   - `addPosition(position: Position)`: Adds a new position to `positions` array
   - `updatePrices()`: Simulates price updates by randomly adjusting `currentPrice` (±5%) for demo purposes
 
 ### `stores/preferences.ts`
+
 - **Purpose**: Persist user-facing settings.
 - **State**:
   - `currency: 'USD' | 'EUR' | 'GBP'` (default 'USD')
@@ -86,6 +92,7 @@ All stores use Composition API (`setup` stores) for type safety with Vue 3 + Typ
 - **Error handling**: If localStorage data is corrupted (parse error), catch error in plugin and reset to defaults.
 
 ### `stores/ui.ts`
+
 - **Purpose**: Manage transient UI state.
 - **State**:
   - `sidebarOpen: boolean`
@@ -99,6 +106,7 @@ All stores are auto-imported by `@pinia/nuxt`. Types imported from `~/types/vaul
 ## 3.5 Package Installation
 
 Install required packages (some already installed per project exploration):
+
 ```bash
 cd frontend
 npm install @pinia-plugin-persistedstate/nuxt @unovis/vue @unovis/ts vitest @nuxt/test-utils @nuxt/ui
@@ -113,6 +121,7 @@ Verify existing packages: `tailwindcss`, `pinia`, `@pinia/nuxt` (already install
 Three presentational Vue components under `components/charts/`. Each receives data via props and renders using `@unovis/vue`. Decoupled from stores.
 
 ### `components/charts/LineChart.vue`
+
 - **Props**:
   - `data: PricePoint[]` (from types/vault.ts)
   - `xKey?: string` (default `'date'`)
@@ -122,6 +131,7 @@ Three presentational Vue components under `components/charts/`. Each receives da
 - **Use case**: Portfolio value over time.
 
 ### `components/charts/PieChart.vue`
+
 - **Props**:
   - `data: { label: string; value: number }[]` (computed from positions grouped by `AssetType`)
   - `innerRadius?: number` (default `0.6` for doughnut)
@@ -130,6 +140,7 @@ Three presentational Vue components under `components/charts/`. Each receives da
 - **Use case**: Allocation breakdown (Stocks, Bonds, ETFs).
 
 ### `components/charts/BarChart.vue`
+
 - **Props**:
   - `data: { category: string; value: number }[]`
   - `orientation?: 'vertical' | 'horizontal'` (default `'vertical'`)
@@ -145,11 +156,13 @@ All components use Tailwind for layout (`w-full`, `h-64`, `p-4`).
 Tailwind CSS v4 uses CSS-based theming via `@theme` in `main.css`.
 
 ### Current Setup (already in `main.css`)
+
 - `@import "tailwindcss"` and `@import "@nuxt/ui"`
 - Custom green palette (`--color-green-50` through `--color-green-950`)
 - `--font-sans: 'Public Sans', sans-serif`
 
 ### Extensions
+
 1. **Dark mode** — Use `class` strategy so `preferences.ts` store can toggle via adding/removing `dark` class on `<html>`. Configure in `nuxt.config.ts` with `colorMode: { classSuffix: '' }` for Nuxt UI v4.
 2. **Semantic color tokens** — Add in `@theme` with `.dark` variants:
    - `--color-primary: var(--color-green-600)` / `.dark: --color-primary: var(--color-green-400)`
@@ -167,6 +180,7 @@ Tailwind CSS v4 uses CSS-based theming via `@theme` in `main.css`.
 Sample page demonstrating everything working together.
 
 ### `pages/dashboard.vue`
+
 - **Template**: Uses Nuxt UI components (`UContainer`, `UCard`, `UButton`, `USelect`).
 - **Store integration**:
   - `usePortfolioStore()` — reads `positions`, `priceHistory`, `totalValue`
@@ -186,7 +200,8 @@ Sample page demonstrating everything working together.
 ## 7. Error Handling & Testing
 
 ### Error Handling
-- **Unovis components**: 
+
+- **Unovis components**:
   - If `data` prop is empty or malformed, render a fallback `<div>` with "No data available".
   - Validate required props: `data` must be array, `xKey`/`yKey` must exist in data objects.
 - **Pinia stores**: Actions validate inputs (e.g., `shares > 0`, `avgCost > 0`). Use `console.warn` for invalid inputs with type guards.
@@ -194,16 +209,21 @@ Sample page demonstrating everything working together.
 - **Persisted preferences**: Catch localStorage parse errors, reset to defaults on corruption.
 
 ### Testing (per notes.md TDD workflow)
+
 **TDD Process (from notes.md):**
+
 1. Write failing tests (TDD red phase)
 2. Implement to make tests pass (green phase)
 3. Refactor if needed (refactor phase)
 
 **Test Implementation:**
+
 - **Test config**: Ensure `vitest.config.ts` exists with Nuxt test utils integration:
   ```ts
   import { defineVitestConfig } from '@nuxt/test-utils/config'
-  export default defineVitestConfig({ /* Nuxt test config */ })
+  export default defineVitestConfig({
+    /* Nuxt test config */
+  })
   ```
 - **Unit tests** (`test/unit/`): Test store actions/getters with Vitest + `@pinia/nuxt` testing utilities. Example: `portfolioStore.addPosition(...)` then assert `portfolioStore.positions.length`.
 - **Component tests** (`test/nuxt/`): Use `@nuxt/test-utils` to mount chart components with sample props and assert rendered output (Unovis SVG elements).
@@ -216,6 +236,7 @@ Sample page demonstrating everything working together.
 This design provides a full integration of Tailwind CSS v4, Pinia, and Unovis in the InvestmentFolio Nuxt 4 app. It follows project conventions (types in `types/`, no `any`, TDD workflow), creates reusable components and stores, and demonstrates everything with a sample dashboard page.
 
 **Key files to create/modify:**
+
 1. `frontend/app/types/enums.ts`
 2. `frontend/app/types/vault.ts`
 3. `frontend/app/stores/portfolio.ts`

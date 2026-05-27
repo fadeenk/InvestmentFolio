@@ -5,5 +5,5 @@ export default {
   printWidth: 100,
   tabWidth: 2,
   endOfLine: 'lf',
-  plugins: ['prettier-plugin-tailwindcss'],  // auto-sorts Tailwind classes
+  plugins: ['prettier-plugin-tailwindcss'], // auto-sorts Tailwind classes
 }

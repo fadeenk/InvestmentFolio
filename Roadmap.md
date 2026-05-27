@@ -26,20 +26,20 @@ Set up the project scaffold, encrypted vault, and Cloudflare Worker. Nothing wor
 
 ### Vault encrypt/decrypt `Core`
 
-- [ ] Implement binary vault file format: magic bytes + version + KDF params + IV + auth tag + ciphertext
-- [ ] PBKDF2-HMAC-SHA256 key derivation at 600,000 iterations
-- [ ] AES-256-GCM encrypt and decrypt via Web Crypto API
-- [ ] Show "Unlocking vault..." spinner during PBKDF2 (300–800ms expected)
-- [ ] Key marked non-extractable; zero key on lock/close
+- [x] Implement binary vault file format: magic bytes + version + KDF params + IV + auth tag + ciphertext
+- [x] PBKDF2-HMAC-SHA256 key derivation at 600,000 iterations
+- [x] AES-256-GCM encrypt and decrypt via Web Crypto API
+- [x] Show "Unlocking vault..." spinner during PBKDF2 (300–800ms expected)
+- [x] Key marked non-extractable; zero key on lock/close
 
 > **Blocks:** all data features
 
 ### Vault file I/O `Core`
 
-- [ ] File System Access API: `showOpenFilePicker` + `createWritable` for Chrome/Edge
-- [ ] `FileReader` API fallback download for Firefox/Safari
-- [ ] Create vault screen: open existing or create new + set passphrase
-- [ ] Show "saving..." and "saved" indicators after every write
+- [x] File System Access API: `showOpenFilePicker` + `createWritable` for Chrome/Edge
+- [x] `FileReader` API fallback download for Firefox/Safari
+- [x] Create vault screen: open existing or create new + set passphrase
+- [x] Show "saving..." and "saved" indicators after every write
 - [ ] Auto-save prompt on navigate-away with unsaved changes
 
 > **Depends on:** Vault encrypt/decrypt

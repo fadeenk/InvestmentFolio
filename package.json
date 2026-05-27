@@ -24,6 +24,7 @@
   "lint-staged": {
     "*.{ts,tsx,vue}": [
       "eslint --fix --max-warnings=0",
+      "npm run typecheck",
       "prettier --write"
     ],
     "*.{json,md,yml,yaml}": [

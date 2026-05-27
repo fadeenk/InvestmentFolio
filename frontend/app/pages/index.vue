@@ -1,76 +1,330 @@
+<script setup lang="ts">
+import { ref, watch } from 'vue'
+import { useVaultStore } from '~/stores/vault.store'
+import { VaultStatus } from '~/types/vault'
+
+const vault = useVaultStore()
+
+const showCreateDialog = ref(false)
+const showOpenDialog = ref(false)
+const passphrase = ref('')
+const passphraseConfirm = ref('')
+const passphraseError = ref('')
+
+function resetForm() {
+  passphrase.value = ''
+  passphraseConfirm.value = ''
+  passphraseError.value = ''
+}
+
+async function handleCreate() {
+  passphraseError.value = ''
+  if (passphrase.value.length < 8) {
+    passphraseError.value = 'Passphrase must be at least 8 characters'
+    return
+  }
+  if (passphrase.value !== passphraseConfirm.value) {
+    passphraseError.value = 'Passphrases do not match'
+    return
+  }
+  try {
+    await vault.createVault(passphrase.value)
+    showCreateDialog.value = false
+    resetForm()
+  } catch {
+    // lastError is set by the store
+  }
+}
+
+async function handleOpen() {
+  passphraseError.value = ''
+  if (!passphrase.value) {
+    passphraseError.value = 'Enter your vault passphrase'
+    return
+  }
+  try {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.foli'
+    input.click()
+
+    const file = await new Promise<File | null>((resolve) => {
+      input.onchange = () => resolve(input.files?.[0] ?? null)
+    })
+    if (!file) return
+
+    await vault.openVault(file, passphrase.value)
+    showOpenDialog.value = false
+    resetForm()
+  } catch {
+    // lastError is set by the store
+  }
+}
+
+async function handleLock() {
+  if (vault.hasUnsavedChanges) {
+    const discard = window.confirm('You have unsaved changes. Discard them?')
+    if (!discard) return
+  }
+  vault.lockVault()
+}
+
+async function handleSave() {
+  await vault.saveVault()
+}
+
+watch(
+  () => vault.status,
+  () => {
+    if (vault.status === VaultStatus.LOCKED) {
+      resetForm()
+    }
+  }
+)
+</script>
+
 <template>
-  <div>
-    <UPageHero
-      title="Nuxt Starter Template"
-      description="A production-ready starter template powered by Nuxt UI. Build beautiful, accessible, and performant applications in minutes, not hours."
-      :links="[{
-        label: 'Get started',
-        to: 'https://ui.nuxt.com/docs/getting-started/installation/nuxt',
-        target: '_blank',
-        trailingIcon: 'i-lucide-arrow-right',
-        size: 'xl'
-      }, {
-        label: 'Use this template',
-        to: 'https://github.com/nuxt-ui-templates/starter',
-        target: '_blank',
-        icon: 'i-simple-icons-github',
-        size: 'xl',
-        color: 'neutral',
-        variant: 'subtle'
-      }]"
-    />
+  <div class="max-w-2xl mx-auto py-12 px-4">
+    <!-- LOCKED STATE -->
+    <template v-if="vault.status === VaultStatus.LOCKED">
+      <div class="text-center space-y-8">
+        <div class="space-y-2">
+          <div class="flex justify-center mb-6">
+            <div class="w-16 h-16 rounded-full bg-(--ui-primary) flex items-center justify-center">
+              <span class="text-white text-2xl font-bold">F</span>
+            </div>
+          </div>
+          <h1 class="text-3xl font-bold">
+            Folio
+          </h1>
+          <p class="text-(--ui-text-muted)">
+            Your private portfolio tracker. All data encrypted at rest.
+          </p>
+        </div>
 
-    <UPageSection
-      id="features"
-      title="Everything you need to build modern Nuxt apps"
-      description="Start with a solid foundation. This template includes all the essentials for building production-ready applications with Nuxt UI's powerful component system."
-      :features="[{
-        icon: 'i-lucide-rocket',
-        title: 'Production-ready from day one',
-        description: 'Pre-configured with TypeScript, ESLint, Tailwind CSS, and all the best practices. Focus on building features, not setting up tooling.'
-      }, {
-        icon: 'i-lucide-palette',
-        title: 'Beautiful by default',
-        description: 'Leveraging Nuxt UI\'s design system with automatic dark mode, consistent spacing, and polished components that look great out of the box.'
-      }, {
-        icon: 'i-lucide-zap',
-        title: 'Lightning fast',
-        description: 'Optimized for performance with SSR/SSG support, automatic code splitting, and edge-ready deployment. Your users will love the speed.'
-      }, {
-        icon: 'i-lucide-blocks',
-        title: '100+ components included',
-        description: 'Access Nuxt UI\'s comprehensive component library. From forms to navigation, everything is accessible, responsive, and customizable.'
-      }, {
-        icon: 'i-lucide-code-2',
-        title: 'Developer experience first',
-        description: 'Auto-imports, hot module replacement, and TypeScript support. Write less boilerplate and ship more features.'
-      }, {
-        icon: 'i-lucide-shield-check',
-        title: 'Built for scale',
-        description: 'Enterprise-ready architecture with proper error handling, SEO optimization, and security best practices built-in.'
-      }]"
-    />
+        <div
+          v-if="vault.lastError"
+          class="bg-(--ui-error) text-white rounded-lg p-3 text-sm"
+        >
+          {{ vault.lastError }}
+        </div>
 
-    <UPageSection>
-      <UPageCTA
-        title="Ready to build your next Nuxt app?"
-        description="Join thousands of developers building with Nuxt and Nuxt UI. Get this template and start shipping today."
-        variant="subtle"
-        :links="[{
-          label: 'Start building',
-          to: 'https://ui.nuxt.com/docs/getting-started/installation/nuxt',
-          target: '_blank',
-          trailingIcon: 'i-lucide-arrow-right',
-          color: 'neutral'
-        }, {
-          label: 'View on GitHub',
-          to: 'https://github.com/nuxt-ui-templates/starter',
-          target: '_blank',
-          icon: 'i-simple-icons-github',
-          color: 'neutral',
-          variant: 'outline'
-        }]"
-      />
-    </UPageSection>
+        <div class="flex flex-col gap-3 max-w-xs mx-auto">
+          <UButton
+            label="Open existing vault"
+            color="primary"
+            size="xl"
+            @click="showOpenDialog = true"
+          />
+          <UButton
+            label="Create new vault"
+            color="neutral"
+            variant="outline"
+            size="xl"
+            @click="showCreateDialog = true"
+          />
+        </div>
+
+        <p class="text-xs text-(--ui-text-muted) mt-8">
+          Supports Chrome, Edge, Firefox, and Safari
+        </p>
+      </div>
+    </template>
+
+    <!-- UNLOCKING STATE -->
+    <template v-else-if="vault.status === VaultStatus.UNLOCKING">
+      <div class="text-center space-y-6 py-16">
+        <UIcon
+          name="i-lucide-loader-circle"
+          class="w-10 h-10 mx-auto animate-spin"
+        />
+        <p class="text-lg font-medium">
+          Unlocking vault...
+        </p>
+        <p class="text-sm text-(--ui-text-muted)">
+          Deriving encryption key
+        </p>
+      </div>
+    </template>
+
+    <!-- SAVING STATE + UNLOCKED STATE -->
+    <template v-else-if="vault.status === VaultStatus.UNLOCKED || vault.status === VaultStatus.SAVING">
+      <div class="space-y-8">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-3 h-3 rounded-full bg-green-500" />
+            <h2 class="text-xl font-bold">
+              Vault unlocked
+            </h2>
+          </div>
+          <div class="flex items-center gap-2">
+            <span
+              v-if="vault.status === VaultStatus.SAVING"
+              class="text-sm text-(--ui-text-muted) flex items-center gap-1"
+            >
+              <UIcon
+                name="i-lucide-loader-circle"
+                class="w-3 h-3 animate-spin"
+              />
+              Saving...
+            </span>
+            <span
+              v-else-if="vault.hasUnsavedChanges"
+              class="text-sm text-amber-500"
+            >
+              Unsaved changes
+            </span>
+            <span
+              v-else
+              class="text-sm text-(--ui-text-muted)"
+            >
+              Saved
+            </span>
+            <UButton
+              v-if="vault.hasUnsavedChanges"
+              label="Save"
+              size="sm"
+              color="primary"
+              @click="handleSave"
+            />
+            <UButton
+              label="Lock"
+              size="sm"
+              color="neutral"
+              variant="outline"
+              @click="handleLock"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <UCard>
+            <template #header>
+              <p class="text-sm text-(--ui-text-muted)">
+                Accounts
+              </p>
+            </template>
+            <p class="text-2xl font-bold">
+              {{ vault.accounts.length }}
+            </p>
+          </UCard>
+          <UCard>
+            <template #header>
+              <p class="text-sm text-(--ui-text-muted)">
+                Last saved
+              </p>
+            </template>
+            <p class="text-2xl font-bold">
+              {{ vault.payload?.metadata.lastSavedAt
+                ? new Date(vault.payload.metadata.lastSavedAt).toLocaleString()
+                : '—' }}
+            </p>
+          </UCard>
+        </div>
+      </div>
+    </template>
+
+    <!-- CREATE DIALOG -->
+    <UModal v-model="showCreateDialog">
+      <UCard>
+        <template #header>
+          <h3 class="text-lg font-bold">
+            Create new vault
+          </h3>
+        </template>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Passphrase</label>
+            <UInput
+              v-model="passphrase"
+              type="password"
+              placeholder="Enter a strong passphrase (min 8 characters)"
+              size="lg"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Confirm passphrase</label>
+            <UInput
+              v-model="passphraseConfirm"
+              type="password"
+              placeholder="Re-enter passphrase"
+              size="lg"
+            />
+          </div>
+          <p
+            v-if="passphraseError"
+            class="text-sm text-(--ui-error)"
+          >
+            {{ passphraseError }}
+          </p>
+        </div>
+
+        <template #footer>
+          <div class="flex justify-end gap-2">
+            <UButton
+              label="Cancel"
+              color="neutral"
+              variant="outline"
+              @click="showCreateDialog = false; resetForm()"
+            />
+            <UButton
+              label="Create vault"
+              color="primary"
+              @click="handleCreate"
+            />
+          </div>
+        </template>
+      </UCard>
+    </UModal>
+
+    <!-- OPEN DIALOG -->
+    <UModal v-model="showOpenDialog">
+      <UCard>
+        <template #header>
+          <h3 class="text-lg font-bold">
+            Open existing vault
+          </h3>
+        </template>
+
+        <div class="space-y-4">
+          <p class="text-sm text-(--ui-text-muted)">
+            After clicking &quot;Open vault&quot;, select your <code>.foli</code> file.
+          </p>
+          <div>
+            <label class="block text-sm font-medium mb-1">Passphrase</label>
+            <UInput
+              v-model="passphrase"
+              type="password"
+              placeholder="Enter your vault passphrase"
+              size="lg"
+              @keydown.enter="handleOpen"
+            />
+          </div>
+          <p
+            v-if="passphraseError"
+            class="text-sm text-(--ui-error)"
+          >
+            {{ passphraseError }}
+          </p>
+        </div>
+
+        <template #footer>
+          <div class="flex justify-end gap-2">
+            <UButton
+              label="Cancel"
+              color="neutral"
+              variant="outline"
+              @click="showOpenDialog = false; resetForm()"
+            />
+            <UButton
+              label="Open vault"
+              color="primary"
+              @click="handleOpen"
+            />
+          </div>
+        </template>
+      </UCard>
+    </UModal>
   </div>
 </template>

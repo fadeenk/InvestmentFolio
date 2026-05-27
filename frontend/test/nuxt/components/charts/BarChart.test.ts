@@ -1,4 +1,5 @@
 import { mount } from '@vue/test-utils'
+import { describe, expect, it } from 'vitest'
 import BarChart from '~/components/charts/BarChart.vue'
 
 describe('BarChart', () => {

@@ -36,9 +36,6 @@ CI order (also the preferred local order): `lint -> format -> typecheck -> test`
 ## Code Conventions
 
 - **No `any`**: use `unknown` + narrowing or `satisfies`. Violations fail CI.
-- **Prettier** (root `prettier.config.mjs`): no semi, single quotes, trailing commas, printWidth 100, LF.
-- **Lint-staged** (pre-commit via husky): `eslint --fix --max-warnings=0` + `prettier --write` on staged `.ts/.tsx/.vue`.
-- **TypeScript strict**: `strict: true` everywhere. Frontend also: `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`. Worker: `exactOptionalPropertyTypes`, `noUnusedLocals`, `noUnusedParameters`.
 
 ## Git Workflow
 
@@ -56,9 +53,11 @@ CI order (also the preferred local order): `lint -> format -> typecheck -> test`
 - **Worker Deploy**: `wrangler deploy` via GitHub Action.
 - `NUXT_PUBLIC_WORKER_URL` env var needed at frontend build time (set as GitHub `vars.WORKER_URL`).
 
+## UI Components
+
+For detailed documentation of available UI components refernce [NuxtUI Documentation](https://ui.nuxt.com/llms.txt)
+
 ## Gotchas
 
-- `npm run format:check` does not exist despite being referenced in CI. Only `npm run format` (which write-formats) exists.
-- ESLint is configured in both workspaces (`frontend/` via `@nuxt/eslint`, `worker/` via `typescript-eslint`). The dep is hoisted to root `node_modules`.
 - The frontend `tsconfig.json` uses project references to `.nuxt/` generated configs -- these are created by `nuxt prepare` (runs automatically via `postinstall`).
 - Run `wrangler types` after changing `worker/wrangler.jsonc` bindings.

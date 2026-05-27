@@ -57,7 +57,7 @@ async function handleOpen() {
     showOpenDialog.value = false
     resetForm()
   } catch {
-    // lastError is set by the store
+    if (vault.lastError) passphraseError.value = vault.lastError
   }
 }
 

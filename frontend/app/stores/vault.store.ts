@@ -108,13 +108,14 @@ export const useVaultStore = defineStore('vault', () => {
       payload.value = decryptedPayload
       isDirty.value = false
       status.value = VaultStatus.UNLOCKED
-    } catch (err) {
+    } catch (err: Error | unknown) {
       status.value = VaultStatus.LOCKED
       _cryptoKey.value = null
       _sessionSalt.value = null
       payload.value = null
 
-      const msg = err instanceof Error ? err.message : String(err)
+      const msg =
+        err instanceof Error ? (err.message !== '' ? err.message : (err.stack ?? '')) : String(err)
       if (msg.toLowerCase().includes('operation failed') || msg.toLowerCase().includes('decrypt')) {
         lastError.value = 'Incorrect passphrase or corrupted vault file'
       } else {

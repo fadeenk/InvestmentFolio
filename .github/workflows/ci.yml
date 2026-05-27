@@ -17,8 +17,6 @@ jobs:
           node-version: '22'
           cache: 'npm'
       - run: npm ci
-      - run: npm --workspace=frontend ci
-      - run: npm --workspace=worker ci
       - name: Lint
         run: npm run lint
       - name: Typecheck
@@ -34,7 +32,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-      - run: npm --workspace=frontend ci
+      - run: npm ci
       - name: Unit & Nuxt tests
         run: npm --workspace=frontend run test
       # - name: Upload coverage report
@@ -53,7 +51,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-      - run: npm --workspace=worker ci
+      - run: npm ci
       - name: Worker tests with coverage
         run: npm --workspace=worker run test
       # - name: Upload coverage report

@@ -5,6 +5,13 @@ export enum Bank {
   OTHER = 'OTHER'
 }
 
+export enum VaultStatus {
+  LOCKED = 'LOCKED',
+  UNLOCKING = 'UNLOCKING',
+  UNLOCKED = 'UNLOCKED',
+  SAVING = 'SAVING'
+}
+
 /** The tax / functional type of the account. */
 export enum AccountType {
   BROKERAGE = 'BROKERAGE',
@@ -71,18 +78,18 @@ export enum CostBasisMethod {
 export enum Theme {
   LIGHT = 'light',
   DARK = 'dark',
-  SYSTEM = 'system',
+  SYSTEM = 'system'
 }
 
 export enum CurrencyFormat {
-  USD = 'USD',
+  USD = 'USD'
   // Extend for other currencies in future versions
 }
 
 export enum DateFormat {
   MM_DD_YYYY = 'MM/DD/YYYY',
   DD_MM_YYYY = 'DD/MM/YYYY',
-  YYYY_MM_DD = 'YYYY-MM-DD',
+  YYYY_MM_DD = 'YYYY-MM-DD'
 }
 
 /** Time-range options used throughout the dashboard. */
@@ -93,5 +100,5 @@ export enum TimeRange {
   THREE_MONTHS = '3M',
   YTD = 'YTD',
   ONE_YEAR = '1Y',
-  ALL = 'ALL',
+  ALL = 'ALL'
 }

@@ -1,77 +1,90 @@
-<script setup>
-useHead({
-  meta: [
-    { name: 'viewport', content: 'width=device-width, initial-scale=1' }
-  ],
-  link: [
-    { rel: 'icon', href: '/favicon.ico' }
-  ],
-  htmlAttrs: {
-    lang: 'en'
-  }
-})
+<script setup lang="ts">
+import { useVaultStore } from '~/stores/vault.store'
+import { VaultStatus } from '~/types/vault'
 
-const title = 'Nuxt Starter Template'
-const description = 'A production-ready starter template powered by Nuxt UI. Build beautiful, accessible, and performant applications in minutes, not hours.'
+const vault = useVaultStore()
+
+const title = 'Folio'
+const description = 'Private portfolio tracker — all data encrypted at rest'
 
 useSeoMeta({
   title,
   description,
   ogTitle: title,
-  ogDescription: description,
-  ogImage: 'https://ui.nuxt.com/assets/templates/nuxt/starter-light.png',
-  twitterCard: 'summary_large_image'
+  ogDescription: description
 })
+
+const isUnlocked = computed(() => vault.status === VaultStatus.UNLOCKED)
 </script>
 
 <template>
   <UApp>
-    <UHeader>
-      <template #left>
-        <NuxtLink to="/">
-          <AppLogo class="w-auto h-6 shrink-0" />
-        </NuxtLink>
+    <template v-if="isUnlocked">
+      <UHeader>
+        <template #left>
+          <NuxtLink to="/">
+            <AppLogo class="w-auto h-6 shrink-0" />
+          </NuxtLink>
+        </template>
 
-        <TemplateMenu />
-      </template>
+        <template #right>
+          <UColorModeButton />
 
-      <template #right>
-        <UColorModeButton />
-
-        <UButton
-          to="https://github.com/nuxt-ui-templates/starter"
-          target="_blank"
-          icon="i-simple-icons-github"
-          aria-label="GitHub"
-          color="neutral"
-          variant="ghost"
-        />
-      </template>
-    </UHeader>
+          <div class="flex items-center gap-2">
+            <span
+              v-if="vault.isSaving"
+              class="text-xs text-(--ui-text-muted) flex items-center gap-1"
+            >
+              <UIcon
+                name="i-lucide-loader-circle"
+                class="w-3 h-3 animate-spin"
+              />
+              Saving...
+            </span>
+            <span
+              v-else-if="vault.hasUnsavedChanges"
+              class="text-xs text-amber-500"
+            >
+              Unsaved
+            </span>
+            <span
+              v-else
+              class="text-xs text-(--ui-text-muted)"
+            >
+              Saved
+            </span>
+            <UButton
+              v-if="vault.hasUnsavedChanges"
+              label="Save"
+              size="xs"
+              color="primary"
+              @click="vault.saveVault()"
+            />
+            <UButton
+              label="Lock"
+              size="xs"
+              color="neutral"
+              variant="ghost"
+              @click="vault.lockVault()"
+            />
+          </div>
+        </template>
+      </UHeader>
+    </template>
 
     <UMain>
       <NuxtPage />
     </UMain>
 
-    <USeparator icon="i-simple-icons-nuxtdotjs" />
-
-    <UFooter>
-      <template #left>
-        <p class="text-sm text-muted">
-          Built with Nuxt UI • © {{ new Date().getFullYear() }}
-        </p>
-      </template>
-
-      <template #right>
-        <UButton
-          to="https://github.com/nuxt-ui-templates/starter"
-          target="_blank"
-          icon="i-simple-icons-github"
-          aria-label="GitHub"
-          color="neutral"
-          variant="ghost"
-        />
-      </template>
-    </UFooter>
+    <template v-if="isUnlocked">
+      <USeparator icon="i-lucide-lock" />
+      <UFooter>
+        <template #left>
+          <p class="text-sm text-(--ui-text-muted)">
+            Encrypted at rest &bull; {{ new Date().getFullYear() }}
+          </p>
+        </template>
+      </UFooter>
+    </template>
   </UApp>
 </template>

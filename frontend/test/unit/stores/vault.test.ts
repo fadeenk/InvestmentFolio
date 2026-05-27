@@ -1,7 +1,8 @@
 import { setActivePinia, createPinia } from 'pinia'
 import { useVaultStore } from '~/stores/vault.store'
 import type { VaultPayload } from '~/types/enums'
-import { VaultStatus, CostBasisMethod, Theme, DateFormat } from '~/types/enums'
+import { CostBasisMethod, Theme, DateFormat } from '~/types/enums'
+import { VaultStatus } from '~/types/vault'
 import * as vaultUtils from '~/utils/vault'
 
 // ---------------------------------------------------------------------------

@@ -20,4 +20,13 @@ describe('ui store', () => {
     store.closeModal()
     expect(store.activeModal).toBeNull()
   })
+
+  it('should set and clear banner', () => {
+    const store = useUiStore()
+    store.setBanner('success', 'Connected')
+    expect(store.banner).toEqual({ type: 'success', message: 'Connected' })
+
+    store.clearBanner()
+    expect(store.banner).toBeNull()
+  })
 })

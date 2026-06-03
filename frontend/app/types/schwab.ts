@@ -29,7 +29,7 @@ export interface SchwabAuthStatusResponse {
  */
 export interface SchwabRefreshResponse {
   success: boolean
-  accessTokenExpiresAt: string // ISO 8601
+  accessTokenExpiresAt?: string // ISO 8601
   error?: string
 }
 

@@ -32,6 +32,13 @@
 	"secrets": {
 		"required": ["CLIENT_ID", "CLIENT_SECRET", "TOKEN_ENCRYPTION_KEY"],
 	},
+	"vars": {
+		"SCHWAB_REDIRECT_URI": "http://localhost:8787/auth/callback",
+		"SCHWAB_AUTH_URL": "https://api.schwabapi.com/v1/oauth/authorize",
+		"SCHWAB_TOKEN_URL": "https://api.schwabapi.com/v1/oauth/token",
+		"SCHWAB_SCOPE": "readonly",
+		"FRONTEND_ORIGIN": "http://localhost:3000",
+	},
 	/**
 	 * Static Assets
 	 * https://developers.cloudflare.com/workers/static-assets/binding/
@@ -42,4 +49,10 @@
 	 * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
 	 */
 	// "services": [  {   "binding": "MY_SERVICE",   "service": "my-service"  } ]
+	"kv_namespaces": [
+		{
+			"binding": "TOKENS",
+			"id": "21948621da054a3aa3f2b29b88813c96",
+		},
+	],
 }

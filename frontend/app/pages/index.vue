@@ -1,15 +1,65 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from '#imports'
+import { useSyncStore } from '~/stores/sync.store'
+import { useUiStore } from '~/stores/ui'
 import { useVaultStore } from '~/stores/vault.store'
-import { VaultStatus } from '~/types/vault'
+import { TokenStatus, VaultStatus } from '~/types/vault'
 
 const vault = useVaultStore()
+const sync = useSyncStore()
+const ui = useUiStore()
+const route = useRoute()
+const router = useRouter()
 
 const showCreateDialog = ref(false)
 const showOpenDialog = ref(false)
 const passphrase = ref('')
 const passphraseConfirm = ref('')
 const passphraseError = ref('')
+
+const authStatusLabel = computed(() => {
+  switch (sync.tokenStatus) {
+    case TokenStatus.VALID:
+      return 'Connected'
+    case TokenStatus.EXPIRING_SOON:
+      return 'Expiring soon'
+    case TokenStatus.EXPIRED:
+      return 'Expired'
+    default:
+      return 'Not connected'
+  }
+})
+
+const authStatusTone = computed<'success' | 'warning' | 'error'>(() => {
+  switch (sync.tokenStatus) {
+    case TokenStatus.VALID:
+      return 'success'
+    case TokenStatus.EXPIRING_SOON:
+      return 'warning'
+    default:
+      return 'error'
+  }
+})
+
+const authStatusClasses = computed(() => {
+  if (authStatusTone.value === 'success')
+    return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
+  if (authStatusTone.value === 'warning')
+    return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
+  return 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200'
+})
+
+const refreshExpiryLabel = computed(() => {
+  if (sync.refreshTokenSecondsRemaining === null) return 'Unknown'
+  const hours = Math.floor(sync.refreshTokenSecondsRemaining / 3600)
+  if (hours < 1) return 'Less than 1 hour'
+  if (hours < 24) return `${hours}h remaining`
+  const days = Math.floor(hours / 24)
+  return `${days}d remaining`
+})
+
+const actionLabel = computed(() => (sync.requiresReauth ? 'Connect Schwab account' : 'Sync now'))
 
 function resetForm() {
   passphrase.value = ''
@@ -73,6 +123,70 @@ async function handleSave() {
   await vault.saveVault()
 }
 
+async function refreshAuthStatus() {
+  await sync.pollTokenStatus()
+}
+
+function openAuthSettings() {
+  ui.openModal('auth-settings')
+}
+
+function connectSchwab() {
+  sync.initiateOAuthFlow()
+}
+
+async function handleSyncIntent() {
+  try {
+    await sync.syncSchwabWithAuth()
+  } catch {
+    // Error state is already captured by sync.lastError.
+  }
+}
+
+function dismissBanner() {
+  ui.clearBanner()
+}
+
+function queryToSearchParams(): URLSearchParams {
+  const params = new URLSearchParams()
+  for (const [key, value] of Object.entries(route.query)) {
+    if (Array.isArray(value)) {
+      if (value[0]) params.set(key, value[0])
+      continue
+    }
+    if (value) params.set(key, value)
+  }
+  return params
+}
+
+async function applyAuthCallbackStateFromQuery() {
+  const auth = route.query.auth
+  if (!auth) return
+
+  sync.consumeAuthCallbackFromQuery(queryToSearchParams())
+  if (sync.callbackMessage) {
+    ui.setBanner(sync.callbackMessage.type, sync.callbackMessage.text)
+  }
+  sync.clearCallbackMessage()
+
+  const nextQuery: Record<string, string | string[]> = {}
+  for (const [key, value] of Object.entries(route.query)) {
+    if (key === 'auth' || key === 'reason') continue
+    if (Array.isArray(value)) {
+      const filteredValues = value.filter((item): item is string => item !== null)
+      if (filteredValues.length > 0) {
+        nextQuery[key] = filteredValues
+      }
+      continue
+    }
+    if (value !== null) {
+      nextQuery[key] = value
+    }
+  }
+
+  await router.replace({ query: nextQuery })
+}
+
 function closeCreateDialog() {
   showCreateDialog.value = false
   resetForm()
@@ -85,16 +199,40 @@ function closeOpenDialog() {
 
 watch(
   () => vault.status,
-  () => {
+  async () => {
     if (vault.status === VaultStatus.LOCKED) {
       resetForm()
     }
+    if (vault.status === VaultStatus.UNLOCKED) {
+      await sync.pollTokenStatus()
+    }
   },
 )
+
+onMounted(async () => {
+  await applyAuthCallbackStateFromQuery()
+
+  if (vault.status === VaultStatus.UNLOCKED) {
+    await sync.pollTokenStatus()
+  }
+})
 </script>
 
 <template>
   <div class="mx-auto max-w-2xl px-4 py-12">
+    <div
+      v-if="ui.banner"
+      class="mb-6 flex items-center justify-between rounded-lg border p-3 text-sm"
+      :class="
+        ui.banner.type === 'success'
+          ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200'
+          : 'border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-200'
+      "
+    >
+      <span>{{ ui.banner.message }}</span>
+      <UButton label="Dismiss" size="xs" color="neutral" variant="ghost" @click="dismissBanner" />
+    </div>
+
     <!-- LOCKED STATE -->
     <template v-if="vault.status === VaultStatus.LOCKED">
       <div class="space-y-8 text-center">
@@ -200,6 +338,70 @@ watch(
             </p>
           </UCard>
         </div>
+
+        <UCard>
+          <template #header>
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <p class="text-sm text-(--ui-text-muted)">Schwab authentication</p>
+                <p class="text-xs text-(--ui-text-muted)">Manage connection before syncing</p>
+              </div>
+              <span class="rounded-full px-2 py-1 text-xs font-medium" :class="authStatusClasses">
+                {{ authStatusLabel }}
+              </span>
+            </div>
+          </template>
+
+          <div class="space-y-3">
+            <p class="text-sm text-(--ui-text-muted)">
+              Refresh token:
+              <strong class="font-semibold text-(--ui-text-highlighted)">{{
+                refreshExpiryLabel
+              }}</strong>
+            </p>
+
+            <div
+              v-if="sync.expirationWarning"
+              class="rounded-md bg-amber-500/15 p-2 text-sm text-amber-700 dark:text-amber-200"
+            >
+              Re-authorization is recommended within 24 hours to avoid interruptions.
+            </div>
+
+            <div
+              v-if="sync.lastError"
+              class="rounded-md bg-red-500/15 p-2 text-sm text-red-700 dark:text-red-200"
+            >
+              {{ sync.lastError }}
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+              <UButton
+                :label="sync.requiresReauth ? 'Connect Schwab' : 'Re-authorize Schwab'"
+                color="primary"
+                @click="connectSchwab"
+              />
+              <UButton
+                label="Refresh status"
+                color="neutral"
+                variant="outline"
+                @click="refreshAuthStatus"
+              />
+              <UButton
+                label="Auth settings"
+                color="neutral"
+                variant="ghost"
+                @click="openAuthSettings"
+              />
+              <UButton
+                :label="actionLabel"
+                color="neutral"
+                variant="soft"
+                :loading="sync.isSyncing"
+                @click="handleSyncIntent"
+              />
+            </div>
+          </div>
+        </UCard>
       </div>
     </template>
 

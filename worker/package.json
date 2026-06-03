@@ -6,7 +6,7 @@
 		"deploy": "wrangler deploy",
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
-		"lint": "eslint . --fix --max-warnings=0",
+		"lint": "eslint . --fix --max-warnings=0 --no-warn-ignored",
 		"typecheck": "tsc",
 		"test": "vitest",
 		"cf-typegen": "wrangler types"

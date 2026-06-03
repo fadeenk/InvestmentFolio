@@ -1,8 +1,13 @@
 <script setup lang="ts">
+import { computed, watch } from 'vue'
+import { useSyncStore } from '~/stores/sync.store'
+import { useUiStore } from '~/stores/ui'
 import { useVaultStore } from '~/stores/vault.store'
-import { VaultStatus } from '~/types/vault'
+import { TokenStatus, VaultStatus } from '~/types/vault'
 
 const vault = useVaultStore()
+const sync = useSyncStore()
+const ui = useUiStore()
 
 const title = 'Folio'
 const description = 'Private portfolio tracker — all data encrypted at rest'
@@ -15,6 +20,47 @@ useSeoMeta({
 })
 
 const isUnlocked = computed(() => vault.status === VaultStatus.UNLOCKED)
+
+const settingsOpen = computed({
+  get: () => ui.activeModal === 'auth-settings',
+  set: (value: boolean) => {
+    if (value) {
+      ui.openModal('auth-settings')
+    } else {
+      ui.closeModal()
+    }
+  },
+})
+
+const authStatusLabel = computed(() => {
+  switch (sync.tokenStatus) {
+    case TokenStatus.VALID:
+      return 'Connected'
+    case TokenStatus.EXPIRING_SOON:
+      return 'Expiring soon'
+    case TokenStatus.EXPIRED:
+      return 'Expired'
+    default:
+      return 'Not connected'
+  }
+})
+
+watch(
+  () => vault.status,
+  async () => {
+    if (vault.status === VaultStatus.UNLOCKED) {
+      await sync.pollTokenStatus()
+    }
+  },
+)
+
+function openAuthSettings() {
+  ui.openModal('auth-settings')
+}
+
+function connectSchwab() {
+  sync.initiateOAuthFlow()
+}
 </script>
 
 <template>
@@ -29,6 +75,14 @@ const isUnlocked = computed(() => vault.status === VaultStatus.UNLOCKED)
 
         <template #right>
           <UColorModeButton />
+          <UButton
+            icon="i-lucide-settings"
+            size="xs"
+            color="neutral"
+            variant="ghost"
+            aria-label="Open auth settings"
+            @click="openAuthSettings"
+          />
 
           <div class="flex items-center gap-2">
             <span
@@ -64,6 +118,49 @@ const isUnlocked = computed(() => vault.status === VaultStatus.UNLOCKED)
     <UMain>
       <NuxtPage />
     </UMain>
+
+    <UModal
+      v-model:open="settingsOpen"
+      title="Settings"
+      description="Authentication"
+      :ui="{ footer: 'justify-end' }"
+    >
+      <template #body>
+        <div class="space-y-4">
+          <div class="rounded-lg border border-(--ui-border) p-3">
+            <p class="text-sm text-(--ui-text-muted)">Schwab status</p>
+            <p class="text-base font-semibold">
+              {{ authStatusLabel }}
+            </p>
+          </div>
+
+          <p class="text-sm text-(--ui-text-muted)">
+            Use this panel to reconnect or verify token health before running sync.
+          </p>
+
+          <p
+            v-if="sync.lastError"
+            class="rounded-md bg-red-500/15 p-2 text-sm text-red-700 dark:text-red-200"
+          >
+            {{ sync.lastError }}
+          </p>
+        </div>
+      </template>
+
+      <template #footer>
+        <UButton
+          label="Refresh status"
+          color="neutral"
+          variant="outline"
+          @click="sync.pollTokenStatus"
+        />
+        <UButton
+          :label="sync.requiresReauth ? 'Connect Schwab' : 'Re-authorize Schwab'"
+          color="primary"
+          @click="connectSchwab"
+        />
+      </template>
+    </UModal>
 
     <template v-if="isUnlocked">
       <USeparator icon="i-lucide-lock" />

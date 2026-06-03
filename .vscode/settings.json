@@ -1,0 +1,10 @@
+{
+  "chat.tools.terminal.autoApprove": {
+    "npm run --workspace=worker typecheck": true,
+    "npm run --workspace=worker lint": true,
+    "npm run --workspace=worker test": true,
+    "npm run --workspace=frontend typecheck": true,
+    "npm run --workspace=frontend lint": true,
+    "npm run --workspace=frontend test": true
+  }
+}

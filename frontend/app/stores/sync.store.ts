@@ -21,12 +21,30 @@ import { SyncStatus, TokenStatus } from '@/types/vault'
 // ---------------------------------------------------------------------------
 
 function getWorkerBaseUrl(): string {
-  // Access via useRuntimeConfig() in a real Nuxt context.
-  // Provided here as a standalone fallback for testing.
-  if (typeof window !== 'undefined') {
-    const w = window as unknown as Record<string, string>
-    return w.__FOLIO_WORKER_URL__ ?? ''
+  try {
+    const config = useRuntimeConfig()
+    const runtimeUrl = config.public.workerUrl
+    if (runtimeUrl) {
+      return runtimeUrl.replace(/\/$/, '')
+    }
+  } catch {
+    // Non-Nuxt unit-test context falls back to global/window values.
   }
+
+  if (typeof window !== 'undefined') {
+    const w = window as Window & { __FOLIO_WORKER_URL__?: string }
+    if (w.__FOLIO_WORKER_URL__) {
+      return w.__FOLIO_WORKER_URL__.replace(/\/$/, '')
+    }
+  }
+
+  if (typeof globalThis !== 'undefined') {
+    const g = globalThis as typeof globalThis & { __FOLIO_WORKER_URL__?: string }
+    if (g.__FOLIO_WORKER_URL__) {
+      return g.__FOLIO_WORKER_URL__.replace(/\/$/, '')
+    }
+  }
+
   return ''
 }
 
@@ -57,6 +75,7 @@ export const useSyncStore = defineStore('sync', () => {
   const tokenStatus = ref<TokenStatus>(TokenStatus.NOT_CONNECTED)
   const lastSyncSummary = ref<SyncSummary | null>(null)
   const lastError = ref<string | null>(null)
+  const callbackMessage = ref<{ type: 'success' | 'error'; text: string } | null>(null)
 
   /** Seconds until the access token expires. Updated by pollTokenStatus(). */
   const accessTokenSecondsRemaining = ref<number | null>(null)
@@ -118,6 +137,32 @@ export const useSyncStore = defineStore('sync', () => {
     }
   }
 
+  function consumeAuthCallbackFromQuery(params: URLSearchParams): void {
+    const authState = params.get('auth')
+    if (!authState) {
+      callbackMessage.value = null
+      return
+    }
+
+    if (authState === 'connected') {
+      callbackMessage.value = {
+        type: 'success',
+        text: 'Schwab account connected successfully.',
+      }
+      return
+    }
+
+    const reason = params.get('reason')
+    callbackMessage.value = {
+      type: 'error',
+      text: reason ?? 'Unable to complete Schwab authorization.',
+    }
+  }
+
+  function clearCallbackMessage(): void {
+    callbackMessage.value = null
+  }
+
   /**
    * Trigger an access token refresh via the Worker.
    * Called automatically when the frontend receives a 401 mid-sync.
@@ -137,7 +182,7 @@ export const useSyncStore = defineStore('sync', () => {
       }
 
       const data: SchwabRefreshResponse = await resp.json()
-      if (data.success) {
+      if (data.success && data.accessTokenExpiresAt) {
         await pollTokenStatus()
         return true
       }
@@ -156,6 +201,16 @@ export const useSyncStore = defineStore('sync', () => {
     const base = getWorkerBaseUrl()
     if (!base) throw new Error('Worker URL not configured')
     window.location.href = `${base}/auth/login`
+  }
+
+  async function syncSchwabWithAuth(): Promise<SyncSummary | null> {
+    await pollTokenStatus()
+    if (requiresReauth.value) {
+      initiateOAuthFlow()
+      return null
+    }
+
+    return syncSchwab()
   }
 
   // ── Schwab API Sync ────────────────────────────────────────────────────────
@@ -271,11 +326,7 @@ export const useSyncStore = defineStore('sync', () => {
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   function _bearerHeader(): HeadersInit {
-    // In production, the Bearer token is a short-lived JWT issued by the Worker
-    // after OAuth, stored in the vault metadata (access-token-echoed form).
-    // Implementation: read from vault metadata → schwabTokenMeta → accessToken.
-    // For now, stub with an empty Authorization header.
-    return { Authorization: 'Bearer ', 'Content-Type': 'application/json' }
+    return { Accept: 'application/json' }
   }
 
   async function _workerGet(url: string): Promise<Response> {
@@ -317,14 +368,18 @@ export const useSyncStore = defineStore('sync', () => {
     tokenStatus,
     lastSyncSummary,
     lastError,
+    callbackMessage,
     accessTokenSecondsRemaining,
     refreshTokenSecondsRemaining,
     isSyncing,
     requiresReauth,
     expirationWarning,
     pollTokenStatus,
+    consumeAuthCallbackFromQuery,
+    clearCallbackMessage,
     refreshAccessToken,
     initiateOAuthFlow,
+    syncSchwabWithAuth,
     syncSchwab,
     importCsv,
   }

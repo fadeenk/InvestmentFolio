@@ -4,6 +4,7 @@ import { ref } from 'vue'
 export const useUiStore = defineStore('ui', () => {
   const sidebarOpen = ref(false)
   const activeModal = ref<string | null>(null)
+  const banner = ref<{ type: 'success' | 'error'; message: string } | null>(null)
 
   function toggleSidebar() {
     sidebarOpen.value = !sidebarOpen.value
@@ -17,5 +18,22 @@ export const useUiStore = defineStore('ui', () => {
     activeModal.value = null
   }
 
-  return { sidebarOpen, activeModal, toggleSidebar, openModal, closeModal }
+  function setBanner(type: 'success' | 'error', message: string) {
+    banner.value = { type, message }
+  }
+
+  function clearBanner() {
+    banner.value = null
+  }
+
+  return {
+    sidebarOpen,
+    activeModal,
+    banner,
+    toggleSidebar,
+    openModal,
+    closeModal,
+    setBanner,
+    clearBanner,
+  }
 })

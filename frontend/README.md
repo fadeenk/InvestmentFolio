@@ -1,60 +1,99 @@
-# Nuxt Starter Template
+# InvestmentFolio Frontend
 
-[![Nuxt UI](https://img.shields.io/badge/Made%20with-Nuxt%20UI-00DC82?logo=nuxt&labelColor=020420)](https://ui.nuxt.com)
+Nuxt 4 single-page frontend for InvestmentFolio.
 
-Use this template to get started with [Nuxt UI](https://ui.nuxt.com) quickly.
+## Purpose
 
-- [Live demo](https://starter-template.nuxt.dev/)
-- [Documentation](https://ui.nuxt.com/docs/getting-started/installation/nuxt)
+The frontend is responsible for:
 
-<a href="https://starter-template.nuxt.dev/" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png">
-    <img alt="Nuxt Starter Template" src="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png" width="830" height="466">
-  </picture>
-</a>
+- Local encrypted vault lifecycle (create, open, save, lock)
+- Portfolio UI (dashboard cards/charts/tables)
+- Auth workflow UX for Schwab OAuth (connect, status, re-authorize)
+- Coordinating sync requests through the Cloudflare Worker
 
-> The starter template for Vue is on https://github.com/nuxt-ui-templates/starter-vue.
+Portfolio data remains local to the browser vault. The worker is used only for OAuth/token relay and Schwab API proxying.
 
-## Quick Start
+## Runtime Configuration
 
-```bash [Terminal]
-npm create nuxt@latest -- -t ui
+The frontend reads the worker base URL from Nuxt public runtime config:
+
+- `NUXT_PUBLIC_WORKER_URL`
+
+Configured in `nuxt.config.ts` as:
+
+- `runtimeConfig.public.workerUrl`
+
+Example `.env` value:
+
+```bash
+NUXT_PUBLIC_WORKER_URL=http://localhost:8787
 ```
 
-## Setup
+## Auth UX Behavior
 
-Make sure to install the dependencies:
+Auth controls are available in two places:
+
+- Dashboard auth card
+- Header settings modal
+
+OAuth callback behavior:
+
+- Worker redirects back with query params:
+  - `auth=connected`
+  - `auth=error&reason=...`
+- Frontend reads the params, displays a banner, and clears callback params from the URL.
+
+Sync behavior:
+
+- If disconnected, sync intent auto-starts OAuth login.
+- If connected, sync proceeds through the normal orchestration path.
+
+## Development
+
+Install dependencies from monorepo root:
 
 ```bash
 npm install
 ```
 
-## Development Server
-
-Start the development server on `http://localhost:3000`:
+Run frontend dev server:
 
 ```bash
-npm dev
+npm run frontend
 ```
 
-## Production
-
-Build the application for production:
+Or run directly in workspace:
 
 ```bash
-npm build
+npm --workspace=frontend run dev
 ```
 
-Locally preview production build:
+## Scripts
+
+From repository root:
+
+- `npm run frontend` - start Nuxt dev server
+- `npm run test:frontend` - frontend tests
+
+From `frontend` workspace:
+
+- `npm run dev`
+- `npm run build`
+- `npm run preview`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run test:run`
+
+## Testing Notes
+
+Store tests for auth workflow live under:
+
+- `test/unit/stores/sync.test.ts`
+- `test/unit/stores/ui.test.ts`
+
+Typical targeted run:
 
 ```bash
-npm preview
+npm --workspace=frontend run test:run -- test/unit/stores/sync.test.ts test/unit/stores/ui.test.ts
 ```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
-
-## Renovate integration
-
-Install [Renovate GitHub app](https://github.com/apps/renovate/installations/select_target) on your repository and you are good to go.

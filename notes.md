@@ -11,7 +11,7 @@ folio/
 │       ├── ci.yml             # Lint + test on every PR
 │       ├── deploy-frontend.yml # Build + publish to GitHub Pages on main
 │       └── deploy-worker.yml  # Deploy Cloudflare Worker on main
-├── frontend/                  # Nuxt 3 SPA
+├── frontend/                  # Nuxt 4 SPA
 │   ├── assets/
 │   ├── components/
 │   ├── composables/           # useVault, useSync, useCrypto, etc.
@@ -24,18 +24,19 @@ folio/
 │   │   ├── nuxt/              # Component & page tests (Nuxt env)
 │   │   └── e2e/               # End-to-end flows with Playwright
 │   ├── nuxt.config.ts
-│   ├── vitest.config.ts
+│   ├── vitest.config.mts
 │   ├── tsconfig.json
 │   └── package.json
 ├── worker/                    # Cloudflare Worker (TypeScript)
 │   ├── src/
-│   │   ├── index.ts           # Route handler entry point
-│   │   ├── auth.ts            # OAuth token exchange / refresh
-│   │   ├── proxy.ts           # Schwab API proxy logic
-│   │   └── crypto.ts          # Token encryption (AES-GCM)
+│   │   ├── index.ts                 # Route handler entry point
+│   │   ├── controllers/             # Auth route handlers
+│   │   ├── services/                # OAuth, KV, crypto services
+│   │   ├── types/                   # Worker auth contracts
+│   │   └── utils/                   # HTTP helpers
 │   ├── test/
 │   │   └── *.test.ts          # Vitest + @cloudflare/vitest-pool-workers
-│   ├── wrangler.toml
+│   ├── wrangler.jsonc
 │   ├── vitest.config.ts
 │   ├── tsconfig.json
 │   └── package.json
@@ -67,12 +68,12 @@ All data models live under `frontend/types/`, `worker/types/`, and are **never**
 - [ ] Schwab Developer Portal app created and approved
 - [ ] Cloudflare account created (free tier)
 - [ ] KV namespace created: wrangler kv:namespace create TOKENS
-- [ ] wrangler.toml updated with real KV namespace IDs
+- [ ] worker/wrangler.jsonc updated with real KV namespace IDs
 - [ ] Worker secrets set via wrangler secret put (3 secrets)
 - [ ] GitHub repo created, CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID secrets added
 - [ ] Worker deployed: cd worker && npx wrangler deploy
 - [ ] Worker URL noted and set as WORKER_URL GitHub Actions variable
-- [ ] Frontend .env.production updated with Worker URL
+- [ ] Frontend env updated with NUXT_PUBLIC_WORKER_URL
 - [ ] Frontend deployed: GitHub Actions workflow triggered on push to main
 - [ ] GitHub Pages enabled in repo Settings → Pages → gh-pages branch
 - [ ] App opened in Chrome, vault created, Schwab OAuth completed, data synced

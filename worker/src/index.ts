@@ -1,19 +1,60 @@
-/**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
- *
- * Bind resources to your worker in `wrangler.jsonc`. After adding bindings, a type definition for the
- * `Env` object can be regenerated with `npm run cf-typegen`.
- *
- * Learn more at https://developers.cloudflare.com/workers/
- */
-/* eslint-disable */
-// @ts-nocheck
+import {
+	handleAuthCallback,
+	handleAuthLogin,
+	handleAuthRefresh,
+	handleAuthStatus,
+} from './controllers/auth.controller'
+import { corsPreflight, jsonError, withCors } from './utils/http'
+
+function isAuthPath(pathname: string): boolean {
+	return pathname.startsWith('/auth/')
+}
+
+function withAuthCors(request: Request, env: Env, response: Response): Response {
+	if (!isAuthPath(new URL(request.url).pathname)) {
+		return response
+	}
+
+	return withCors(request, response, env.FRONTEND_ORIGIN ?? '')
+}
+
 export default {
-	async fetch(request, env, ctx): Promise<Response> {
-		return new Response('Hello World!')
+	async fetch(request: Request, env: Env): Promise<Response> {
+		const url = new URL(request.url)
+		const method = request.method.toUpperCase()
+
+		if (method === 'OPTIONS' && isAuthPath(url.pathname)) {
+			return corsPreflight(request, env.FRONTEND_ORIGIN ?? '')
+		}
+
+		if (url.pathname === '/auth/login') {
+			if (method !== 'GET') {
+				return withAuthCors(request, env, jsonError('Method not allowed', 405))
+			}
+			return withAuthCors(request, env, await handleAuthLogin(request, env))
+		}
+
+		if (url.pathname === '/auth/callback') {
+			if (method !== 'GET') {
+				return withAuthCors(request, env, jsonError('Method not allowed', 405))
+			}
+			return withAuthCors(request, env, await handleAuthCallback(request, env))
+		}
+
+		if (url.pathname === '/auth/refresh') {
+			if (method !== 'POST') {
+				return withAuthCors(request, env, jsonError('Method not allowed', 405))
+			}
+			return withAuthCors(request, env, await handleAuthRefresh(env))
+		}
+
+		if (url.pathname === '/auth/status') {
+			if (method !== 'GET') {
+				return withAuthCors(request, env, jsonError('Method not allowed', 405))
+			}
+			return withAuthCors(request, env, await handleAuthStatus(env))
+		}
+
+		return jsonError('Not found', 404)
 	},
 } satisfies ExportedHandler<Env>

@@ -22,12 +22,7 @@
     "prettier-plugin-tailwindcss": "^0.8.0"
   },
   "lint-staged": {
-    "*.{ts,tsx,vue}": [
-      "eslint --fix --max-warnings=0",
-      "npm run typecheck",
-      "prettier --write"
-    ],
-    "*.{json,md,yml,yaml}": [
+    "*.{ts,tsx,vue,json,md,yml,yaml}": [
       "prettier --write"
     ]
   }

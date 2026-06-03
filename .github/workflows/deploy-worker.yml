@@ -19,6 +19,6 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-      - run: npm --workspace=worker ci
+      - run: npm ci
       - name: Deploy with Wrangler
         run: npm --workspace=worker run deploy

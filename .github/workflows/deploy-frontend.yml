@@ -21,9 +21,9 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-      - run: npm --workspace=frontend ci
+      - run: npm ci
       - name: Generate static site
-        run: npm --workspace=frontend run generate
+        run: npm --workspace=frontend run build
         env:
           NUXT_PUBLIC_WORKER_URL: ${{ vars.WORKER_URL }}
       - name: Deploy to gh-pages
@@ -31,4 +31,4 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: frontend/.output/public
-          cname: folio.yourdomain.com # remove if not using custom domain
+          cname: ifolio.mrkannah.com # remove if not using custom domain

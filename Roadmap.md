@@ -46,11 +46,10 @@ Set up the project scaffold, encrypted vault, and Cloudflare Worker. Nothing wor
 
 ### Cloudflare Worker skeleton `Backend`
 
-- [ ] Create `/worker` project with Wrangler CLI + TypeScript
-- [ ] Implement route stubs: `GET /auth/login`, `/auth/callback`, `POST /auth/refresh`, `GET /api/*`, `GET /auth/status`
-- [ ] Configure Workers KV namespace `TOKENS`
-- [ ] Set `SCHWAB_APP_KEY`, `SCHWAB_APP_SECRET`, `TOKEN_ENCRYPTION_KEY` as Worker secrets
-- [ ] Add CORS headers to all proxied responses
+- [x] Create `/worker` project with Wrangler CLI + TypeScript
+- [x] Implement route stubs: `GET /auth/login`, `/auth/callback`, `POST /auth/refresh`, `GET /api/*`, `GET /auth/status`
+- [x] Configure Workers KV namespace `TOKENS`
+- [x] Set `CLIENT_ID`, `CLIENT_SECRET`, `TOKEN_ENCRYPTION_KEY` as Worker secrets
 
 ### Deploy
 
@@ -63,7 +62,7 @@ Wire up OAuth 2.0, token lifecycle, and all Schwab API endpoints. This is the hi
 
 ### OAuth 2.0 flow `Auth`
 
-- [ ] Register Schwab developer app, select Accounts & Trading + Market Data production _(approval takes 1–3 business days — submit at the start of this phase)_
+- [x] Register Schwab developer app, select Accounts & Trading + Market Data production _(approval takes 1–3 business days — submit at the start of this phase)_
 - [ ] Implement `/auth/login` redirect to Schwab consent page
 - [ ] Implement `/auth/callback`: exchange code → tokens, AES-GCM encrypt tokens, store in KV
 - [ ] Implement `/auth/refresh`: swap refresh token for new access token, update KV

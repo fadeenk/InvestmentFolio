@@ -104,21 +104,38 @@ export async function fetchAccountsWithPositions(env: WorkerEnv, fields: string 
 
 export interface FetchAccountTransactionsParams {
 	accountHash: string
-	fromDate: string | null
-	toDate: string | null
+	startDate: string | null
+	endDate: string | null
 	types: string | null
+	symbol: string | null
 }
+
+const DEFAULT_TRANSACTION_TYPES =
+	'TRADE,RECEIVE_AND_DELIVER,DIVIDEND_OR_INTEREST,ACH_RECEIPT,ACH_DISBURSEMENT,CASH_RECEIPT,CASH_DISBURSEMENT,ELECTRONIC_FUND,WIRE_OUT,WIRE_IN,JOURNAL,MEMORANDUM,MARGIN_CALL,MONEY_MARKET,SMA_ADJUSTMENT'
 
 export async function fetchAccountTransactions(env: WorkerEnv, params: FetchAccountTransactionsParams): Promise<SchwabTransactionsResponse> {
 	const query = new URLSearchParams()
-	if (params.fromDate) {
-		query.set('fromDate', params.fromDate)
+	if (params.startDate) {
+		query.set('startDate', params.startDate)
 	}
-	if (params.toDate) {
-		query.set('toDate', params.toDate)
+	if (params.endDate) {
+		query.set('endDate', params.endDate)
 	}
-	if (params.types) {
-		query.set('types', params.types)
+	if (params.symbol) {
+		query.set('symbol', params.symbol)
+	}
+
+	query.set('types', params.types ?? DEFAULT_TRANSACTION_TYPES)
+
+	if (params.startDate && params.endDate) {
+		const startMs = new Date(params.startDate).getTime()
+		const endMs = new Date(params.endDate).getTime()
+		if (Number.isFinite(startMs) && Number.isFinite(endMs) && endMs > startMs) {
+			const oneYearMs = 366 * 24 * 60 * 60 * 1000
+			if (endMs - startMs > oneYearMs) {
+				throw new TraderApiError('startDate and endDate must be within 1 year', 400)
+			}
+		}
 	}
 
 	const path = `/trader/v1/accounts/${encodeURIComponent(params.accountHash)}/transactions${query.size > 0 ? `?${query.toString()}` : ''}`

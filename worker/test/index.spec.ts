@@ -326,8 +326,9 @@ describe('auth worker', () => {
 			const requestUrl = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
 			if (
 				requestUrl.includes('/trader/v1/accounts/hash-123/transactions') &&
-				requestUrl.includes('fromDate=2026-05-01T00%3A00%3A00.000Z') &&
-				requestUrl.includes('toDate=2026-06-03T23%3A59%3A59.000Z')
+				requestUrl.includes('startDate=2026-05-01T00%3A00%3A00.000Z') &&
+				requestUrl.includes('endDate=2026-06-03T23%3A59%3A59.000Z') &&
+				requestUrl.includes('types=TRADE')
 			) {
 				return Promise.resolve(
 					new Response(
@@ -356,7 +357,7 @@ describe('auth worker', () => {
 
 		try {
 			const request = new IncomingRequest(
-				'http://example.com/api/accounts/hash-123/transactions?fromDate=2026-05-01T00:00:00.000Z&toDate=2026-06-03T23:59:59.000Z',
+				'http://example.com/api/accounts/hash-123/transactions?startDate=2026-05-01T00:00:00.000Z&endDate=2026-06-03T23:59:59.000Z&types=TRADE',
 			)
 			const response = await worker.fetch(request, env as unknown as Env)
 

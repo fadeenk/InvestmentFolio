@@ -27,6 +27,9 @@ import type { Position } from '@/types/vault'
 import { SyncStatus, TokenStatus } from '@/types/vault'
 import { buildSchwabHashMaps, mapSchwabAccountsToVaultDrafts, mapSchwabTransactionsToVaultDrafts } from '@/utils/schwab-mapper'
 
+const SCHWAB_TRANSACTION_TYPES =
+  'TRADE,RECEIVE_AND_DELIVER,DIVIDEND_OR_INTEREST,ACH_RECEIPT,ACH_DISBURSEMENT,CASH_RECEIPT,CASH_DISBURSEMENT,ELECTRONIC_FUND,WIRE_OUT,WIRE_IN,JOURNAL,MEMORANDUM,MARGIN_CALL,MONEY_MARKET,SMA_ADJUSTMENT'
+
 // ---------------------------------------------------------------------------
 // Worker URL — injected at build time via Nuxt runtimeConfig
 // ---------------------------------------------------------------------------
@@ -323,15 +326,19 @@ export const useSyncStore = defineStore('sync', () => {
       const mappedAccounts = mapSchwabAccountsToVaultDrafts(accountsData, hashMaps.byFullNumber, snapshotAt)
 
       const nextPositions: Array<Omit<Position, 'id'>> = []
-      const syncWindowTargets: Array<{ accountId: string; accountHash: string; fromDate: string }> = []
-      const toDate = new Date().toISOString()
+      const syncWindowTargets: Array<{
+        accountId: string
+        accountHash: string
+        startDate: string
+      }> = []
+      const endDate = new Date().toISOString()
 
       for (const mapped of mappedAccounts) {
         const previousUpdatedAt =
           (mapped.accountHash ? existingAccountsByHash.get(mapped.accountHash) : null) ??
           existingAccountsByLast4.get(mapped.accountLast4) ??
           vaultStore.payload?.lastSyncedAt ??
-          defaultSyncWindowStart(toDate)
+          defaultSyncWindowStart(endDate)
 
         const upserted = accountsStore.upsertSchwabAccount({
           accountNumber: mapped.accountNumber,
@@ -351,7 +358,7 @@ export const useSyncStore = defineStore('sync', () => {
           syncWindowTargets.push({
             accountId: upserted.id,
             accountHash: mapped.accountHash,
-            fromDate: previousUpdatedAt,
+            startDate: clampStartDate(previousUpdatedAt, endDate),
           })
         }
 
@@ -381,7 +388,7 @@ export const useSyncStore = defineStore('sync', () => {
 
       // 3. Fetch transactions for each Schwab account hash.
       for (const target of syncWindowTargets) {
-        const endpoint = `${base}/api/accounts/${encodeURIComponent(target.accountHash)}/transactions?fromDate=${encodeURIComponent(target.fromDate)}&toDate=${encodeURIComponent(toDate)}`
+        const endpoint = `${base}/api/accounts/${encodeURIComponent(target.accountHash)}/transactions?startDate=${encodeURIComponent(target.startDate)}&endDate=${encodeURIComponent(endDate)}&types=${encodeURIComponent(SCHWAB_TRANSACTION_TYPES)}`
         let txResp = await _workerGet(endpoint)
 
         if (!txResp.ok) {
@@ -495,6 +502,21 @@ export const useSyncStore = defineStore('sync', () => {
     const start = new Date(end)
     start.setUTCDate(start.getUTCDate() - 90)
     return start.toISOString()
+  }
+
+  function clampStartDate(startDateIso: string, endDateIso: string): string {
+    const startMs = new Date(startDateIso).getTime()
+    const endMs = new Date(endDateIso).getTime()
+    if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || startMs >= endMs) {
+      return defaultSyncWindowStart(endDateIso)
+    }
+
+    const oneYearMs = 366 * 24 * 60 * 60 * 1000
+    if (endMs - startMs > oneYearMs) {
+      return new Date(endMs - oneYearMs).toISOString()
+    }
+
+    return startDateIso
   }
 
   // ── Return ─────────────────────────────────────────────────────────────────

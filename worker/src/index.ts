@@ -127,9 +127,10 @@ export default {
 						JSON.stringify(
 							await fetchAccountTransactions(env, {
 								accountHash,
-								fromDate: url.searchParams.get('fromDate'),
-								toDate: url.searchParams.get('toDate'),
+								startDate: url.searchParams.get('startDate') ?? url.searchParams.get('fromDate'),
+								endDate: url.searchParams.get('endDate') ?? url.searchParams.get('toDate'),
 								types: url.searchParams.get('types'),
+								symbol: url.searchParams.get('symbol'),
 							}),
 						),
 						{

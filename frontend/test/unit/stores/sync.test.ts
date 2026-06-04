@@ -258,7 +258,9 @@ describe('sync store auth workflow', () => {
     expect(vaultStore.payload?.metadata.schwabAccountHashesByFullNumber['12345678']).toBe('hash-1234')
     expect(vaultStore.payload?.accounts).toHaveLength(1)
     expect(vaultStore.payload?.positions).toHaveLength(1)
-    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/api/accounts/hash-1234/transactions?fromDate='), expect.anything())
+    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/api/accounts/hash-1234/transactions?startDate='), expect.anything())
+    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('&endDate='), expect.anything())
+    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('&types=TRADE%2CRECEIVE_AND_DELIVER'), expect.anything())
   })
 
   it('does not sync when unlock/auth helper sees reauth required', async () => {
@@ -287,7 +289,6 @@ describe('sync store auth workflow', () => {
         },
         schwabAccountHashes: {},
         schwabAccountHashesByFullNumber: {},
-        schwabTokenMeta: null,
         costBasisMethodByAccount: {},
         lastSavedAt: null,
       },

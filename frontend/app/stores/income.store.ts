@@ -131,9 +131,7 @@ export const useIncomeStore = defineStore('income', () => {
    */
   function insertMany(incoming: Omit<IncomeRecord, 'id'>[]): number {
     const existingTxIds = new Set(all.value.map((d) => d.transactionId))
-    const toInsert = incoming
-      .filter((r) => !existingTxIds.has(r.transactionId))
-      .map((r) => ({ ...r, id: randomUUID() }))
+    const toInsert = incoming.filter((r) => !existingTxIds.has(r.transactionId)).map((r) => ({ ...r, id: randomUUID() }))
 
     if (toInsert.length === 0) return 0
 

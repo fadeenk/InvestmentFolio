@@ -83,8 +83,7 @@ describe('auth worker', () => {
 
 		const originalFetch = globalThis.fetch
 		globalThis.fetch = (input: RequestInfo | URL) => {
-			const requestUrl =
-				typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+			const requestUrl = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
 			if (requestUrl.includes('/oauth/token')) {
 				return Promise.resolve(
 					new Response(
@@ -118,18 +117,10 @@ describe('auth worker', () => {
 
 			const keySeed = new TextEncoder().encode(env.TOKEN_ENCRYPTION_KEY)
 			const digest = await crypto.subtle.digest('SHA-256', keySeed)
-			const key = await crypto.subtle.importKey(
-				'raw',
-				digest,
-				{ name: 'AES-GCM', length: 256 },
-				false,
-				['encrypt'],
-			)
+			const key = await crypto.subtle.importKey('raw', digest, { name: 'AES-GCM', length: 256 }, false, ['encrypt'])
 			const iv = crypto.getRandomValues(new Uint8Array(12))
 			const encoded = new TextEncoder().encode(JSON.stringify(plaintext))
-			const ciphertext = new Uint8Array(
-				await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded),
-			)
+			const ciphertext = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded))
 
 			const toBase64Url = (bytes: Uint8Array): string => {
 				let binary = ''

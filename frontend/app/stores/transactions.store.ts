@@ -82,23 +82,14 @@ export const useTransactionsStore = defineStore('transactions', () => {
   })
 
   /** Quick-access tab subsets used by the Transactions view tabs. */
-  const trades = computed(() =>
-    all.value.filter((t) => t.type === TransactionType.Buy || t.type === TransactionType.Sell),
-  )
+  const trades = computed(() => all.value.filter((t) => t.type === TransactionType.Buy || t.type === TransactionType.Sell))
 
   const dividends = computed(() => all.value.filter((t) => t.type === TransactionType.Dividend))
 
   const interest = computed(() => all.value.filter((t) => t.type === TransactionType.Interest))
 
   const transfers = computed(() =>
-    all.value.filter((t) =>
-      [
-        TransactionType.DEPOSIT,
-        TransactionType.WITHDRAWAL,
-        TransactionType.TRANSFER_IN,
-        TransactionType.TRANSFER_OUT,
-      ].includes(t.type),
-    ),
+    all.value.filter((t) => [TransactionType.DEPOSIT, TransactionType.WITHDRAWAL, TransactionType.TRANSFER_IN, TransactionType.TRANSFER_OUT].includes(t.type)),
   )
 
   const manual = computed(() => all.value.filter((t) => t.importSource === ImportSource.MANUAL))
@@ -131,13 +122,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
    * combination already exists (no external ID available).
    */
   function isCsvDuplicate(date: string, quantity: number | null, type: TransactionType): boolean {
-    return all.value.some(
-      (t) =>
-        t.date === date &&
-        t.quantity === quantity &&
-        t.type === type &&
-        t.importSource !== ImportSource.MANUAL,
-    )
+    return all.value.some((t) => t.date === date && t.quantity === quantity && t.type === type && t.importSource !== ImportSource.MANUAL)
   }
 
   // ── Mutations ──────────────────────────────────────────────────────────────
@@ -170,9 +155,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
    * Add a single manually-entered transaction.
    * Returns the generated transaction ID.
    */
-  function addManual(
-    input: Omit<Transaction, 'id' | 'importedAt' | 'importSource' | 'externalId' | 'matchedLotIds'>,
-  ): string {
+  function addManual(input: Omit<Transaction, 'id' | 'importedAt' | 'importSource' | 'externalId' | 'matchedLotIds'>): string {
     const id = randomUUID()
     const now = new Date().toISOString()
 
@@ -198,20 +181,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
    */
   function updateTransaction(
     id: string,
-    updates: Partial<
-      Pick<
-        Transaction,
-        | 'date'
-        | 'type'
-        | 'symbol'
-        | 'description'
-        | 'quantity'
-        | 'price'
-        | 'quantity'
-        | 'fees'
-        | 'notes'
-      >
-    >,
+    updates: Partial<Pick<Transaction, 'date' | 'type' | 'symbol' | 'description' | 'quantity' | 'price' | 'quantity' | 'fees' | 'notes'>>,
   ): void {
     vaultStore.mutatePayload((p) => {
       const tx = p.transactions.find((t) => t.id === id)

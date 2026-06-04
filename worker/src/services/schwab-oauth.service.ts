@@ -36,10 +36,7 @@ function readOptionalNumber(data: Record<string, unknown>, key: string): number 
 	return typeof value === 'number' ? value : undefined
 }
 
-async function requestToken(
-	env: WorkerEnv,
-	params: RequestTokenParams,
-): Promise<SchwabTokenResponse> {
+async function requestToken(env: WorkerEnv, params: RequestTokenParams): Promise<SchwabTokenResponse> {
 	const body = new URLSearchParams()
 	body.set('grant_type', params.grantType)
 
@@ -125,11 +122,7 @@ export function buildAuthorizeUrl(env: WorkerEnv, state: string, redirectUri: st
 	return url.toString()
 }
 
-export async function exchangeCodeForTokens(
-	env: WorkerEnv,
-	code: string,
-	redirectUri: string,
-): Promise<SchwabTokenResponse> {
+export async function exchangeCodeForTokens(env: WorkerEnv, code: string, redirectUri: string): Promise<SchwabTokenResponse> {
 	return requestToken(env, {
 		grantType: 'authorization_code',
 		code,
@@ -137,10 +130,7 @@ export async function exchangeCodeForTokens(
 	})
 }
 
-export async function refreshAccessToken(
-	env: WorkerEnv,
-	refreshToken: string,
-): Promise<SchwabTokenResponse> {
+export async function refreshAccessToken(env: WorkerEnv, refreshToken: string): Promise<SchwabTokenResponse> {
 	return requestToken(env, {
 		grantType: 'refresh_token',
 		refreshToken,

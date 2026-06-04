@@ -3,21 +3,13 @@ import type { OAuthStateRecord, WorkerEnv } from '../types/auth'
 const SHARED_TOKEN_KEY = 'schwab:tokens:shared'
 const STATE_PREFIX = 'schwab:oauth:state:'
 
-export async function putOAuthState(
-	env: WorkerEnv,
-	state: string,
-	payload: OAuthStateRecord,
-	ttlSeconds: number,
-): Promise<void> {
+export async function putOAuthState(env: WorkerEnv, state: string, payload: OAuthStateRecord, ttlSeconds: number): Promise<void> {
 	await env.TOKENS.put(`${STATE_PREFIX}${state}`, JSON.stringify(payload), {
 		expirationTtl: ttlSeconds,
 	})
 }
 
-export async function consumeOAuthState(
-	env: WorkerEnv,
-	state: string,
-): Promise<OAuthStateRecord | null> {
+export async function consumeOAuthState(env: WorkerEnv, state: string): Promise<OAuthStateRecord | null> {
 	const key = `${STATE_PREFIX}${state}`
 	const raw = await env.TOKENS.get(key)
 

@@ -121,10 +121,7 @@ describe('deriveKey / encryptPayload / decryptPayload', () => {
   // We test with a real CryptoKey by stubbing crypto.subtle if available,
   // or we let the test fail early with a clear message when Web Crypto is
   // unavailable (jsdom / older Node).
-  const hasWebCrypto =
-    typeof crypto !== 'undefined' &&
-    typeof crypto.subtle !== 'undefined' &&
-    typeof crypto.subtle.importKey === 'function'
+  const hasWebCrypto = typeof crypto !== 'undefined' && typeof crypto.subtle !== 'undefined' && typeof crypto.subtle.importKey === 'function'
 
   it('deriveKey returns a non-extractable CryptoKey', async () => {
     if (!hasWebCrypto) {

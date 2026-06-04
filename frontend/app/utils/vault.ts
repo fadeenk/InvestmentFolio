@@ -28,20 +28,10 @@ export function randomIV(): Uint8Array {
 
 // ── Key derivation ─────────────────────────────────────────────────────────────
 
-export async function deriveKey(
-  passphrase: string,
-  salt: Uint8Array,
-  iterations: number = PBKDF2_ITERATIONS,
-): Promise<CryptoKey> {
+export async function deriveKey(passphrase: string, salt: Uint8Array, iterations: number = PBKDF2_ITERATIONS): Promise<CryptoKey> {
   const enc = new TextEncoder()
   const passphraseBytes = enc.encode(passphrase)
-  const baseKey = await crypto.subtle.importKey(
-    'raw',
-    passphraseBytes.buffer as ArrayBuffer,
-    'PBKDF2',
-    false,
-    ['deriveKey'],
-  )
+  const baseKey = await crypto.subtle.importKey('raw', passphraseBytes.buffer as ArrayBuffer, 'PBKDF2', false, ['deriveKey'])
   return crypto.subtle.deriveKey(
     { name: 'PBKDF2', salt: salt.buffer as ArrayBuffer, iterations, hash: 'SHA-256' },
     baseKey,
@@ -53,31 +43,15 @@ export async function deriveKey(
 
 // ── Encrypt / Decrypt ─────────────────────────────────────────────────────────
 
-export async function encryptPayload(
-  data: VaultPayload,
-  key: CryptoKey,
-  iv?: Uint8Array,
-): Promise<{ iv: Uint8Array; ciphertext: ArrayBuffer }> {
+export async function encryptPayload(data: VaultPayload, key: CryptoKey, iv?: Uint8Array): Promise<{ iv: Uint8Array; ciphertext: ArrayBuffer }> {
   const nonce = iv ?? crypto.getRandomValues(new Uint8Array(IV_LENGTH))
   const plaintext = new TextEncoder().encode(JSON.stringify(data))
-  const ciphertext = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv: nonce.buffer as ArrayBuffer },
-    key,
-    plaintext.buffer as ArrayBuffer,
-  )
+  const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce.buffer as ArrayBuffer }, key, plaintext.buffer as ArrayBuffer)
   return { iv: nonce, ciphertext }
 }
 
-export async function decryptPayload(
-  ciphertext: ArrayBuffer,
-  iv: Uint8Array,
-  key: CryptoKey,
-): Promise<VaultPayload> {
-  const plaintext = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv: iv.buffer as ArrayBuffer },
-    key,
-    ciphertext,
-  )
+export async function decryptPayload(ciphertext: ArrayBuffer, iv: Uint8Array, key: CryptoKey): Promise<VaultPayload> {
+  const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv.buffer as ArrayBuffer }, key, ciphertext)
   return JSON.parse(new TextDecoder().decode(plaintext)) as VaultPayload
 }
 
@@ -90,23 +64,11 @@ export async function decryptPayload(
  * The AES-GCM auth tag (16 bytes) is appended by SubtleCrypto as the last
  * 16 bytes of the ciphertext buffer; we don't manage it separately.
  */
-export function buildVaultBuffer(
-  salt: Uint8Array,
-  iv: Uint8Array,
-  ciphertext: ArrayBuffer,
-): ArrayBuffer {
+export function buildVaultBuffer(salt: Uint8Array, iv: Uint8Array, ciphertext: ArrayBuffer): ArrayBuffer {
   const iterBytes = new Uint8Array(4)
   new DataView(iterBytes.buffer).setUint32(0, PBKDF2_ITERATIONS, false)
 
-  const parts = [
-    MAGIC_BYTES,
-    new Uint8Array([FORMAT_VERSION]),
-    iterBytes,
-    salt,
-    new Uint8Array([ALGO_BYTE]),
-    iv,
-    new Uint8Array(ciphertext),
-  ]
+  const parts = [MAGIC_BYTES, new Uint8Array([FORMAT_VERSION]), iterBytes, salt, new Uint8Array([ALGO_BYTE]), iv, new Uint8Array(ciphertext)]
 
   const total = parts.reduce((acc, p) => acc + p.byteLength, 0)
   const buffer = new Uint8Array(total)

@@ -43,10 +43,8 @@ const authStatusTone = computed<'success' | 'warning' | 'error'>(() => {
 })
 
 const authStatusClasses = computed(() => {
-  if (authStatusTone.value === 'success')
-    return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
-  if (authStatusTone.value === 'warning')
-    return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
+  if (authStatusTone.value === 'success') return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
+  if (authStatusTone.value === 'warning') return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
   return 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200'
 })
 
@@ -225,8 +223,8 @@ onMounted(async () => {
       class="mb-6 flex items-center justify-between rounded-lg border p-3 text-sm"
       :class="
         ui.banner.type === 'success'
-          ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200'
-          : 'border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-200'
+          ? ['border-emerald-200 bg-emerald-50 text-emerald-800', 'dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200'].join(' ')
+          : ['border-red-200 bg-red-50 text-red-800 dark:border-red-800', 'dark:bg-red-950/30 dark:text-red-200'].join(' ')
       "
     >
       <span>{{ ui.banner.message }}</span>
@@ -243,9 +241,7 @@ onMounted(async () => {
             </div>
           </div>
           <h1 class="text-3xl font-bold">Folio</h1>
-          <p class="text-(--ui-text-muted)">
-            Your private portfolio tracker. All data encrypted at rest.
-          </p>
+          <p class="text-(--ui-text-muted)">Your private portfolio tracker. All data encrypted at rest.</p>
         </div>
 
         <div v-if="vault.lastError" class="rounded-lg bg-(--ui-error) p-3 text-sm text-white">
@@ -253,24 +249,11 @@ onMounted(async () => {
         </div>
 
         <div class="mx-auto flex max-w-xs flex-col gap-3">
-          <UButton
-            label="Open existing vault"
-            color="primary"
-            size="xl"
-            @click="showOpenDialog = true"
-          />
-          <UButton
-            label="Create new vault"
-            color="neutral"
-            variant="outline"
-            size="xl"
-            @click="showCreateDialog = true"
-          />
+          <UButton label="Open existing vault" color="primary" size="xl" @click="showOpenDialog = true" />
+          <UButton label="Create new vault" color="neutral" variant="outline" size="xl" @click="showCreateDialog = true" />
         </div>
 
-        <p class="mt-8 text-xs text-(--ui-text-muted)">
-          Supports Chrome, Edge, Firefox, and Safari
-        </p>
+        <p class="mt-8 text-xs text-(--ui-text-muted)">Supports Chrome, Edge, Firefox, and Safari</p>
       </div>
     </template>
 
@@ -284,9 +267,7 @@ onMounted(async () => {
     </template>
 
     <!-- SAVING STATE + UNLOCKED STATE -->
-    <template
-      v-else-if="vault.status === VaultStatus.UNLOCKED || vault.status === VaultStatus.SAVING"
-    >
+    <template v-else-if="vault.status === VaultStatus.UNLOCKED || vault.status === VaultStatus.SAVING">
       <div class="space-y-8">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
@@ -294,24 +275,13 @@ onMounted(async () => {
             <h2 class="text-xl font-bold">Vault unlocked</h2>
           </div>
           <div class="flex items-center gap-2">
-            <span
-              v-if="vault.status === VaultStatus.SAVING"
-              class="flex items-center gap-1 text-sm text-(--ui-text-muted)"
-            >
+            <span v-if="vault.status === VaultStatus.SAVING" class="flex items-center gap-1 text-sm text-(--ui-text-muted)">
               <UIcon name="i-lucide-loader-circle" class="h-3 w-3 animate-spin" />
               Saving...
             </span>
-            <span v-else-if="vault.hasUnsavedChanges" class="text-sm text-amber-500">
-              Unsaved changes
-            </span>
+            <span v-else-if="vault.hasUnsavedChanges" class="text-sm text-amber-500"> Unsaved changes </span>
             <span v-else class="text-sm text-(--ui-text-muted)"> Saved </span>
-            <UButton
-              v-if="vault.hasUnsavedChanges"
-              label="Save"
-              size="sm"
-              color="primary"
-              @click="handleSave"
-            />
+            <UButton v-if="vault.hasUnsavedChanges" label="Save" size="sm" color="primary" @click="handleSave" />
             <UButton label="Lock" size="sm" color="neutral" variant="outline" @click="handleLock" />
           </div>
         </div>
@@ -330,11 +300,7 @@ onMounted(async () => {
               <p class="text-sm text-(--ui-text-muted)">Last saved</p>
             </template>
             <p class="text-2xl font-bold">
-              {{
-                vault.payload?.metadata.lastSavedAt
-                  ? new Date(vault.payload.metadata.lastSavedAt).toLocaleString()
-                  : '—'
-              }}
+              {{ vault.payload?.metadata.lastSavedAt ? new Date(vault.payload.metadata.lastSavedAt).toLocaleString() : '—' }}
             </p>
           </UCard>
         </div>
@@ -355,50 +321,22 @@ onMounted(async () => {
           <div class="space-y-3">
             <p class="text-sm text-(--ui-text-muted)">
               Refresh token:
-              <strong class="font-semibold text-(--ui-text-highlighted)">{{
-                refreshExpiryLabel
-              }}</strong>
+              <strong class="font-semibold text-(--ui-text-highlighted)">{{ refreshExpiryLabel }}</strong>
             </p>
 
-            <div
-              v-if="sync.expirationWarning"
-              class="rounded-md bg-amber-500/15 p-2 text-sm text-amber-700 dark:text-amber-200"
-            >
+            <div v-if="sync.expirationWarning" class="rounded-md bg-amber-500/15 p-2 text-sm text-amber-700 dark:text-amber-200">
               Re-authorization is recommended within 24 hours to avoid interruptions.
             </div>
 
-            <div
-              v-if="sync.lastError"
-              class="rounded-md bg-red-500/15 p-2 text-sm text-red-700 dark:text-red-200"
-            >
+            <div v-if="sync.lastError" class="rounded-md bg-red-500/15 p-2 text-sm text-red-700 dark:text-red-200">
               {{ sync.lastError }}
             </div>
 
             <div class="flex flex-wrap gap-2">
-              <UButton
-                :label="sync.requiresReauth ? 'Connect Schwab' : 'Re-authorize Schwab'"
-                color="primary"
-                @click="connectSchwab"
-              />
-              <UButton
-                label="Refresh status"
-                color="neutral"
-                variant="outline"
-                @click="refreshAuthStatus"
-              />
-              <UButton
-                label="Auth settings"
-                color="neutral"
-                variant="ghost"
-                @click="openAuthSettings"
-              />
-              <UButton
-                :label="actionLabel"
-                color="neutral"
-                variant="soft"
-                :loading="sync.isSyncing"
-                @click="handleSyncIntent"
-              />
+              <UButton :label="sync.requiresReauth ? 'Connect Schwab' : 'Re-authorize Schwab'" color="primary" @click="connectSchwab" />
+              <UButton label="Refresh status" color="neutral" variant="outline" @click="refreshAuthStatus" />
+              <UButton label="Auth settings" color="neutral" variant="ghost" @click="openAuthSettings" />
+              <UButton :label="actionLabel" color="neutral" variant="soft" :loading="sync.isSyncing" @click="handleSyncIntent" />
             </div>
           </div>
         </UCard>
@@ -406,30 +344,16 @@ onMounted(async () => {
     </template>
 
     <!-- CREATE DIALOG -->
-    <UModal
-      v-model:open="showCreateDialog"
-      title="Create new vault"
-      :ui="{ footer: 'justify-end' }"
-    >
+    <UModal v-model:open="showCreateDialog" title="Create new vault" :ui="{ footer: 'justify-end' }">
       <template #body>
         <div class="space-y-4">
           <div>
             <label class="mb-1 block text-sm font-medium">Passphrase</label>
-            <UInput
-              v-model="passphrase"
-              type="password"
-              placeholder="Enter a strong passphrase (min 8 characters)"
-              size="lg"
-            />
+            <UInput v-model="passphrase" type="password" placeholder="Enter a strong passphrase (min 8 characters)" size="lg" />
           </div>
           <div>
             <label class="mb-1 block text-sm font-medium">Confirm passphrase</label>
-            <UInput
-              v-model="passphraseConfirm"
-              type="password"
-              placeholder="Re-enter passphrase"
-              size="lg"
-            />
+            <UInput v-model="passphraseConfirm" type="password" placeholder="Re-enter passphrase" size="lg" />
           </div>
           <p v-if="passphraseError" class="text-sm text-(--ui-error)">
             {{ passphraseError }}
@@ -444,25 +368,13 @@ onMounted(async () => {
     </UModal>
 
     <!-- OPEN DIALOG -->
-    <UModal
-      v-model:open="showOpenDialog"
-      title="Open existing vault"
-      :ui="{ footer: 'justify-end' }"
-    >
+    <UModal v-model:open="showOpenDialog" title="Open existing vault" :ui="{ footer: 'justify-end' }">
       <template #body>
         <div class="space-y-4">
-          <p class="text-sm text-(--ui-text-muted)">
-            After clicking &quot;Open vault&quot;, select your <code>.foli</code> file.
-          </p>
+          <p class="text-sm text-(--ui-text-muted)">After clicking &quot;Open vault&quot;, select your <code>.foli</code> file.</p>
           <div>
             <label class="mb-1 block text-sm font-medium">Passphrase</label>
-            <UInput
-              v-model="passphrase"
-              type="password"
-              placeholder="Enter your vault passphrase"
-              size="lg"
-              @keydown.enter="handleOpen"
-            />
+            <UInput v-model="passphrase" type="password" placeholder="Enter your vault passphrase" size="lg" @keydown.enter="handleOpen" />
           </div>
           <p v-if="passphraseError" class="text-sm text-(--ui-error)">
             {{ passphraseError }}

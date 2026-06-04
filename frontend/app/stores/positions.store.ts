@@ -9,12 +9,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { useVaultStore } from './vault.store'
-import type {
-  Position,
-  PortfolioSummary,
-  AllocationSlice,
-  PortfolioValuePoint,
-} from '@/types/vault'
+import type { Position, PortfolioSummary, AllocationSlice, PortfolioValuePoint } from '@/types/vault'
 import { AssetType, TimeRange, TransactionType } from '@/types/enums'
 import { randomUUID } from '@/utils/crypto'
 
@@ -75,15 +70,12 @@ export const usePositionsStore = defineStore('positions', () => {
     const totalDayGainLoss = positions.reduce((s, p) => s + p.dayGainLoss, 0)
 
     const unrealizedPct = totalCostBasis > 0 ? (totalUnrealizedGainLoss / totalCostBasis) * 100 : 0
-    const dayPct =
-      totalCostBasis > 0 ? (totalDayGainLoss / (totalMarketValue - totalDayGainLoss)) * 100 : 0
+    const dayPct = totalCostBasis > 0 ? (totalDayGainLoss / (totalMarketValue - totalDayGainLoss)) * 100 : 0
 
     // Cash balances — pulled from accounts
     const accounts = payload?.accounts ?? []
     const accountFilter = selectedAccountId.value
-    const relevantAccounts = accountFilter
-      ? accounts.filter((a) => a.id === accountFilter)
-      : accounts.filter((a) => a.isActive)
+    const relevantAccounts = accountFilter ? accounts.filter((a) => a.id === accountFilter) : accounts.filter((a) => a.isActive)
     const totalCashBalance = relevantAccounts.reduce((s, a) => s + a.cashBalance, 0)
 
     // Realized G/L and income for current calendar year

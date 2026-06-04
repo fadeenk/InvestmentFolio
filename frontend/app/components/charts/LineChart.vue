@@ -37,7 +37,5 @@ const chartData = computed(() => {
       <Line :x="(d: chartPoint) => d.x" :y="(d: chartPoint) => d.y" :color="`var(${color})`" />
     </SingleContainer>
   </div>
-  <div v-else class="flex h-64 w-full items-center justify-center text-gray-500">
-    No data available
-  </div>
+  <div v-else class="flex h-64 w-full items-center justify-center text-gray-500">No data available</div>
 </template>

@@ -3,14 +3,7 @@ import { ref, computed } from 'vue'
 import type { VaultPayload, Account, DisplayPreferences } from '@/types/vault'
 import { VaultStatus } from '@/types/vault'
 import { CostBasisMethod, Theme, DateFormat } from '@/types/enums'
-import {
-  deriveKey,
-  randomSalt,
-  encryptPayload,
-  decryptPayload,
-  buildVaultBuffer,
-  parseVaultBuffer,
-} from '@/utils/vault'
+import { deriveKey, randomSalt, encryptPayload, decryptPayload, buildVaultBuffer, parseVaultBuffer } from '@/utils/vault'
 
 function createDefaultPayload(): VaultPayload {
   const now = new Date().toISOString()
@@ -64,9 +57,7 @@ export const useVaultStore = defineStore('vault', () => {
   const accounts = computed<Account[]>(() => payload.value?.accounts ?? [])
   const activeAccounts = computed(() => accounts.value.filter((a) => a.isActive))
 
-  const displayPreferences = computed<DisplayPreferences | null>(
-    () => payload.value?.metadata.displayPreferences ?? null,
-  )
+  const displayPreferences = computed<DisplayPreferences | null>(() => payload.value?.metadata.displayPreferences ?? null)
 
   async function createVault(passphrase: string): Promise<void> {
     lastError.value = null
@@ -114,8 +105,7 @@ export const useVaultStore = defineStore('vault', () => {
       _sessionSalt.value = null
       payload.value = null
 
-      const msg =
-        err instanceof Error ? (err.message !== '' ? err.message : (err.stack ?? '')) : String(err)
+      const msg = err instanceof Error ? (err.message !== '' ? err.message : (err.stack ?? '')) : String(err)
       if (msg.toLowerCase().includes('operation failed') || msg.toLowerCase().includes('decrypt')) {
         lastError.value = 'Incorrect passphrase or corrupted vault file'
       } else {

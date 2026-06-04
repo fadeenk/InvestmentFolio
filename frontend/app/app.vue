@@ -75,41 +75,17 @@ function connectSchwab() {
 
         <template #right>
           <UColorModeButton />
-          <UButton
-            icon="i-lucide-settings"
-            size="xs"
-            color="neutral"
-            variant="ghost"
-            aria-label="Open auth settings"
-            @click="openAuthSettings"
-          />
+          <UButton icon="i-lucide-settings" size="xs" color="neutral" variant="ghost" aria-label="Open auth settings" @click="openAuthSettings" />
 
           <div class="flex items-center gap-2">
-            <span
-              v-if="vault.isSaving"
-              class="flex items-center gap-1 text-xs text-(--ui-text-muted)"
-            >
+            <span v-if="vault.isSaving" class="flex items-center gap-1 text-xs text-(--ui-text-muted)">
               <UIcon name="i-lucide-loader-circle" class="h-3 w-3 animate-spin" />
               Saving...
             </span>
-            <span v-else-if="vault.hasUnsavedChanges" class="text-xs text-amber-500">
-              Unsaved
-            </span>
+            <span v-else-if="vault.hasUnsavedChanges" class="text-xs text-amber-500"> Unsaved </span>
             <span v-else class="text-xs text-(--ui-text-muted)"> Saved </span>
-            <UButton
-              v-if="vault.hasUnsavedChanges"
-              label="Save"
-              size="xs"
-              color="primary"
-              @click="vault.saveVault()"
-            />
-            <UButton
-              label="Lock"
-              size="xs"
-              color="neutral"
-              variant="ghost"
-              @click="vault.lockVault()"
-            />
+            <UButton v-if="vault.hasUnsavedChanges" label="Save" size="xs" color="primary" @click="vault.saveVault()" />
+            <UButton label="Lock" size="xs" color="neutral" variant="ghost" @click="vault.lockVault()" />
           </div>
         </template>
       </UHeader>
@@ -119,12 +95,7 @@ function connectSchwab() {
       <NuxtPage />
     </UMain>
 
-    <UModal
-      v-model:open="settingsOpen"
-      title="Settings"
-      description="Authentication"
-      :ui="{ footer: 'justify-end' }"
-    >
+    <UModal v-model:open="settingsOpen" title="Settings" description="Authentication" :ui="{ footer: 'justify-end' }">
       <template #body>
         <div class="space-y-4">
           <div class="rounded-lg border border-(--ui-border) p-3">
@@ -134,31 +105,17 @@ function connectSchwab() {
             </p>
           </div>
 
-          <p class="text-sm text-(--ui-text-muted)">
-            Use this panel to reconnect or verify token health before running sync.
-          </p>
+          <p class="text-sm text-(--ui-text-muted)">Use this panel to reconnect or verify token health before running sync.</p>
 
-          <p
-            v-if="sync.lastError"
-            class="rounded-md bg-red-500/15 p-2 text-sm text-red-700 dark:text-red-200"
-          >
+          <p v-if="sync.lastError" class="rounded-md bg-red-500/15 p-2 text-sm text-red-700 dark:text-red-200">
             {{ sync.lastError }}
           </p>
         </div>
       </template>
 
       <template #footer>
-        <UButton
-          label="Refresh status"
-          color="neutral"
-          variant="outline"
-          @click="sync.pollTokenStatus"
-        />
-        <UButton
-          :label="sync.requiresReauth ? 'Connect Schwab' : 'Re-authorize Schwab'"
-          color="primary"
-          @click="connectSchwab"
-        />
+        <UButton label="Refresh status" color="neutral" variant="outline" @click="sync.pollTokenStatus" />
+        <UButton :label="sync.requiresReauth ? 'Connect Schwab' : 'Re-authorize Schwab'" color="primary" @click="connectSchwab" />
       </template>
     </UModal>
 
@@ -166,9 +123,7 @@ function connectSchwab() {
       <USeparator icon="i-lucide-lock" />
       <UFooter>
         <template #left>
-          <p class="text-sm text-(--ui-text-muted)">
-            Encrypted at rest &bull; {{ new Date().getFullYear() }}
-          </p>
+          <p class="text-sm text-(--ui-text-muted)">Encrypted at rest &bull; {{ new Date().getFullYear() }}</p>
         </template>
       </UFooter>
     </template>

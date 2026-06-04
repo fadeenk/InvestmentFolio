@@ -51,9 +51,7 @@
       class="-mb-[6px] truncate rounded-full font-semibold"
       :class="[open && 'bg-primary/15']"
       :ui="{
-        trailingIcon: ['transition-transform duration-200', open ? 'rotate-180' : undefined]
-          .filter(Boolean)
-          .join(' '),
+        trailingIcon: ['transition-transform duration-200', open ? 'rotate-180' : undefined].filter(Boolean).join(' '),
       }"
     />
   </UDropdownMenu>

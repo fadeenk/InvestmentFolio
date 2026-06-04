@@ -65,10 +65,7 @@ export const useAccountsStore = defineStore('accounts', () => {
    * Returns the generated account ID.
    */
   function addAccount(
-    input: Omit<
-      Account,
-      'id' | 'syncMethod' | 'currentBalance' | 'cashBalance' | 'lastUpdatedAt' | 'isActive'
-    > & {
+    input: Omit<Account, 'id' | 'syncMethod' | 'currentBalance' | 'cashBalance' | 'lastUpdatedAt' | 'isActive'> & {
       initialBalance?: number
     },
   ): string {
@@ -100,12 +97,7 @@ export const useAccountsStore = defineStore('accounts', () => {
    * Update editable fields on an existing account.
    * Partial update — only provided fields are changed.
    */
-  function updateAccount(
-    id: string,
-    updates: Partial<
-      Pick<Account, 'displayName' | 'accountNumber' | 'isActive' | 'currentBalance' | 'cashBalance'>
-    >,
-  ): void {
+  function updateAccount(id: string, updates: Partial<Pick<Account, 'displayName' | 'accountNumber' | 'isActive' | 'currentBalance' | 'cashBalance'>>): void {
     vaultStore.mutatePayload((p) => {
       const account = p.accounts.find((a) => a.id === id)
       if (!account) throw new Error(`Account ${id} not found`)

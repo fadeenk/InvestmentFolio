@@ -1,14 +1,5 @@
-import {
-	consumeOAuthState,
-	getEncryptedTokens,
-	putEncryptedTokens,
-	putOAuthState,
-} from '../services/auth-kv.service'
-import {
-	exchangeCodeForTokens,
-	buildAuthorizeUrl,
-	refreshAccessToken,
-} from '../services/schwab-oauth.service'
+import { consumeOAuthState, getEncryptedTokens, putEncryptedTokens, putOAuthState } from '../services/auth-kv.service'
+import { exchangeCodeForTokens, buildAuthorizeUrl, refreshAccessToken } from '../services/schwab-oauth.service'
 import { decryptTokenEnvelope, encryptTokenEnvelope } from '../services/token-crypto.service'
 import type { AuthStatusResponse, RefreshResponse, TokenEnvelope, WorkerEnv } from '../types/auth'
 import { jsonResponse, redirectResponse } from '../utils/http'
@@ -40,11 +31,7 @@ function getFrontendRedirect(env: WorkerEnv): string {
 	return env.FRONTEND_ORIGIN ?? '/'
 }
 
-function buildFrontendRedirect(
-	env: WorkerEnv,
-	auth: 'connected' | 'error',
-	reason?: string,
-): string {
+function buildFrontendRedirect(env: WorkerEnv, auth: 'connected' | 'error', reason?: string): string {
 	const target = new URL(getFrontendRedirect(env))
 	target.searchParams.set('auth', auth)
 	if (reason) {
@@ -57,9 +44,7 @@ function buildFrontendRedirect(
 function buildStatusFromEnvelope(envelope: TokenEnvelope): AuthStatusResponse {
 	const now = Date.now()
 	const accessExpiry = Date.parse(envelope.accessTokenExpiresAt)
-	const refreshExpiry = envelope.refreshTokenExpiresAt
-		? Date.parse(envelope.refreshTokenExpiresAt)
-		: null
+	const refreshExpiry = envelope.refreshTokenExpiresAt ? Date.parse(envelope.refreshTokenExpiresAt) : null
 	const refreshValid = refreshExpiry === null || refreshExpiry > now
 	const accessValid = Number.isFinite(accessExpiry) && accessExpiry > now
 
@@ -103,24 +88,18 @@ export async function handleAuthCallback(request: Request, env: Env): Promise<Re
 	}
 
 	if (!code || !state) {
-		return redirectResponse(
-			buildFrontendRedirect(workerEnv, 'error', 'Missing required callback parameters'),
-		)
+		return redirectResponse(buildFrontendRedirect(workerEnv, 'error', 'Missing required callback parameters'))
 	}
 
 	const stateRecord = await consumeOAuthState(workerEnv, state)
 	if (stateRecord === null) {
-		return redirectResponse(
-			buildFrontendRedirect(workerEnv, 'error', 'Invalid or expired authorization state'),
-		)
+		return redirectResponse(buildFrontendRedirect(workerEnv, 'error', 'Invalid or expired authorization state'))
 	}
 
 	try {
 		const tokenResult = await exchangeCodeForTokens(workerEnv, code, stateRecord.redirectUri)
 		if (!tokenResult.refresh_token) {
-			return redirectResponse(
-				buildFrontendRedirect(workerEnv, 'error', 'Missing refresh token in callback response'),
-			)
+			return redirectResponse(buildFrontendRedirect(workerEnv, 'error', 'Missing refresh token in callback response'))
 		}
 
 		const nowIso = new Date().toISOString()
@@ -128,10 +107,7 @@ export async function handleAuthCallback(request: Request, env: Env): Promise<Re
 			accessToken: tokenResult.access_token,
 			refreshToken: tokenResult.refresh_token,
 			accessTokenExpiresAt: addSecondsToIso(nowIso, tokenResult.expires_in),
-			refreshTokenExpiresAt:
-				tokenResult.refresh_token_expires_in !== undefined
-					? addSecondsToIso(nowIso, tokenResult.refresh_token_expires_in)
-					: null,
+			refreshTokenExpiresAt: tokenResult.refresh_token_expires_in !== undefined ? addSecondsToIso(nowIso, tokenResult.refresh_token_expires_in) : null,
 			tokenType: tokenResult.token_type ?? null,
 			scope: tokenResult.scope ?? null,
 			lastRefreshedAt: nowIso,
@@ -143,9 +119,7 @@ export async function handleAuthCallback(request: Request, env: Env): Promise<Re
 
 		return redirectResponse(buildFrontendRedirect(workerEnv, 'connected'))
 	} catch {
-		return redirectResponse(
-			buildFrontendRedirect(workerEnv, 'error', 'Failed to complete OAuth callback'),
-		)
+		return redirectResponse(buildFrontendRedirect(workerEnv, 'error', 'Failed to complete OAuth callback'))
 	}
 }
 
@@ -180,9 +154,7 @@ export async function handleAuthRefresh(env: Env): Promise<Response> {
 			refreshToken: refreshed.refresh_token ?? current.refreshToken,
 			accessTokenExpiresAt: addSecondsToIso(nowIso, refreshed.expires_in),
 			refreshTokenExpiresAt:
-				refreshed.refresh_token_expires_in !== undefined
-					? addSecondsToIso(nowIso, refreshed.refresh_token_expires_in)
-					: current.refreshTokenExpiresAt,
+				refreshed.refresh_token_expires_in !== undefined ? addSecondsToIso(nowIso, refreshed.refresh_token_expires_in) : current.refreshTokenExpiresAt,
 			tokenType: refreshed.token_type ?? current.tokenType,
 			scope: refreshed.scope ?? current.scope,
 			lastRefreshedAt: nowIso,

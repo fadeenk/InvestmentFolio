@@ -65,16 +65,10 @@ export const useTaxLotsStore = defineStore('taxLots', () => {
     // a subsequent composable; stubs provided here for type correctness).
     const shortTermGainLoss = 0
     const longTermGainLoss = 0
-    const washSaleDisallowedLosses = allLots.value
-      .filter((l) => !l.isOpen && l.isWashSale)
-      .reduce((s, l) => s + l.washSaleDisallowedLoss, 0)
+    const washSaleDisallowedLosses = allLots.value.filter((l) => !l.isOpen && l.isWashSale).reduce((s, l) => s + l.washSaleDisallowedLoss, 0)
 
-    const filteredDividends = income
-      .filter((d) => d.incomeType === TransactionType.Dividend)
-      .reduce((s, d) => s + d.amount, 0)
-    const interest = income
-      .filter((d) => d.incomeType === TransactionType.Interest)
-      .reduce((s, d) => s + d.amount, 0)
+    const filteredDividends = income.filter((d) => d.incomeType === TransactionType.Dividend).reduce((s, d) => s + d.amount, 0)
+    const interest = income.filter((d) => d.incomeType === TransactionType.Interest).reduce((s, d) => s + d.amount, 0)
 
     return {
       taxYear,
@@ -105,9 +99,7 @@ export const useTaxLotsStore = defineStore('taxLots', () => {
   const washSaleLots = computed(() => allLots.value.filter((l) => l.isWashSale))
 
   /** Total disallowed losses across all wash sale lots. */
-  const totalWashSaleDisallowed = computed(() =>
-    washSaleLots.value.reduce((s, l) => s + l.washSaleDisallowedLoss, 0),
-  )
+  const totalWashSaleDisallowed = computed(() => washSaleLots.value.reduce((s, l) => s + l.washSaleDisallowedLoss, 0))
 
   // ── Mutations ──────────────────────────────────────────────────────────────
 
@@ -164,11 +156,8 @@ export const useTaxLotsStore = defineStore('taxLots', () => {
 
         const currentValue = lot.remainingQuantity * currentPrice
         const unrealizedGainLoss = currentValue - lot.adjustedCostBasis
-        const unrealizedGainLossPct =
-          lot.adjustedCostBasis > 0 ? (unrealizedGainLoss / lot.adjustedCostBasis) * 100 : 0
-        const daysHeld = Math.floor(
-          (today.getTime() - new Date(lot.acquiredDate).getTime()) / (1000 * 60 * 60 * 24),
-        )
+        const unrealizedGainLossPct = lot.adjustedCostBasis > 0 ? (unrealizedGainLoss / lot.adjustedCostBasis) * 100 : 0
+        const daysHeld = Math.floor((today.getTime() - new Date(lot.acquiredDate).getTime()) / (1000 * 60 * 60 * 24))
 
         lot.currentValue = currentValue
         lot.unrealizedGainLoss = unrealizedGainLoss
@@ -196,19 +185,14 @@ export const useTaxLotsStore = defineStore('taxLots', () => {
       const lot = p.taxLots.find((l) => l.id === lotId)
       if (!lot || !lot.isOpen) throw new Error(`Open lot ${lotId} not found`)
       if (quantitySold > lot.remainingQuantity) {
-        throw new Error(
-          `Cannot sell ${quantitySold} from lot with ${lot.remainingQuantity} remaining`,
-        )
+        throw new Error(`Cannot sell ${quantitySold} from lot with ${lot.remainingQuantity} remaining`)
       }
 
       const costPerShare = lot.adjustedCostBasis / lot.remainingQuantity
       const costBasisClosed = costPerShare * quantitySold
       const proceeds = salePrice * quantitySold
       const realizedGainLoss = proceeds - costBasisClosed
-      const daysHeld = Math.floor(
-        (new Date(soldDate).getTime() - new Date(lot.acquiredDate).getTime()) /
-          (1000 * 60 * 60 * 24),
-      )
+      const daysHeld = Math.floor((new Date(soldDate).getTime() - new Date(lot.acquiredDate).getTime()) / (1000 * 60 * 60 * 24))
       const termType = daysHeld >= 366 ? TermType.LONG_TERM : TermType.SHORT_TERM
 
       result = { realizedGainLoss, termType }
@@ -242,15 +226,8 @@ export const useTaxLotsStore = defineStore('taxLots', () => {
    * Select which lots to sell when using Specific Identification.
    * Returns the lot IDs in the order they should be matched against the sale.
    */
-  function selectLotsForSale(
-    accountId: string,
-    symbol: string,
-    method: CostBasisMethod,
-    quantityNeeded: number,
-  ): TaxLot[] {
-    const candidates = openLots.value.filter(
-      (l) => l.accountId === accountId && l.symbol === symbol,
-    )
+  function selectLotsForSale(accountId: string, symbol: string, method: CostBasisMethod, quantityNeeded: number): TaxLot[] {
+    const candidates = openLots.value.filter((l) => l.accountId === accountId && l.symbol === symbol)
 
     switch (method) {
       case CostBasisMethod.FIFO:

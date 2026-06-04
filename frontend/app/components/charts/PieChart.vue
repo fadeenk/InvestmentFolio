@@ -17,14 +17,8 @@ const props = withDefaults(
 <template>
   <div v-if="data.length > 0" class="h-64 w-full p-4">
     <VisSingleContainer :data="data">
-      <VisDonut
-        :value="(d: any) => d.value"
-        :color="(d: any, i: number) => props.color?.(d.value, i) ?? '#6B7280'"
-        :inner-radius="innerRadius"
-      />
+      <VisDonut :value="(d: any) => d.value" :color="(d: any, i: number) => props.color?.(d.value, i) ?? '#6B7280'" :inner-radius="innerRadius" />
     </VisSingleContainer>
   </div>
-  <div v-else class="flex h-64 w-full items-center justify-center text-gray-500">
-    No data available
-  </div>
+  <div v-else class="flex h-64 w-full items-center justify-center text-gray-500">No data available</div>
 </template>

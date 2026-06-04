@@ -13,13 +13,7 @@ async function getCryptoKey(env: WorkerEnv): Promise<CryptoKey> {
 
 	const seed = encoder.encode(env.TOKEN_ENCRYPTION_KEY)
 	const digest = await crypto.subtle.digest('SHA-256', seed)
-	const key = await crypto.subtle.importKey(
-		'raw',
-		digest,
-		{ name: 'AES-GCM', length: 256 },
-		false,
-		['encrypt', 'decrypt'],
-	)
+	const key = await crypto.subtle.importKey('raw', digest, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt'])
 
 	cachedKeyMaterial = env.TOKEN_ENCRYPTION_KEY
 	cachedCryptoKey = key
@@ -49,10 +43,7 @@ function fromBase64Url(input: string): Uint8Array {
 	return bytes
 }
 
-export async function encryptTokenEnvelope(
-	env: WorkerEnv,
-	envelope: TokenEnvelope,
-): Promise<string> {
+export async function encryptTokenEnvelope(env: WorkerEnv, envelope: TokenEnvelope): Promise<string> {
 	const key = await getCryptoKey(env)
 	const iv = crypto.getRandomValues(new Uint8Array(12))
 	const payload = encoder.encode(JSON.stringify(envelope))
@@ -70,10 +61,7 @@ export async function encryptTokenEnvelope(
 	return JSON.stringify(record)
 }
 
-export async function decryptTokenEnvelope(
-	env: WorkerEnv,
-	recordJson: string,
-): Promise<TokenEnvelope> {
+export async function decryptTokenEnvelope(env: WorkerEnv, recordJson: string): Promise<TokenEnvelope> {
 	let record: EncryptedTokenRecord
 
 	try {

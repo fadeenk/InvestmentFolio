@@ -1,9 +1,4 @@
-import {
-	handleAuthCallback,
-	handleAuthLogin,
-	handleAuthRefresh,
-	handleAuthStatus,
-} from './controllers/auth.controller'
+import { handleAuthCallback, handleAuthLogin, handleAuthRefresh, handleAuthStatus } from './controllers/auth.controller'
 import { corsPreflight, jsonError, withCors } from './utils/http'
 
 function isAuthPath(pathname: string): boolean {

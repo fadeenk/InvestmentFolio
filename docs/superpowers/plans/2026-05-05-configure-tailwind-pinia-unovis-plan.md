@@ -680,16 +680,9 @@ const chartData = computed(() => {
 
 <template>
   <div v-if="chartData.length > 0" class="h-64 w-full p-4">
-    <Line
-      :data="chartData"
-      :x="(d: { x: Date }) => d.x"
-      :y="(d: { y: number }) => d.y"
-      :color="`var(${color})`"
-    />
+    <Line :data="chartData" :x="(d: { x: Date }) => d.x" :y="(d: { y: number }) => d.y" :color="`var(${color})`" />
   </div>
-  <div v-else class="flex h-64 w-full items-center justify-center text-gray-500">
-    No data available
-  </div>
+  <div v-else class="flex h-64 w-full items-center justify-center text-gray-500">No data available</div>
 </template>
 ```
 
@@ -774,17 +767,9 @@ const props = withDefaults(
 
 <template>
   <div v-if="data.length > 0" class="h-64 w-full p-4">
-    <Pie
-      :data="data"
-      :value="(d: { value: number }) => d.value"
-      :label="(d: { label: string }) => d.label"
-      :innerRadius="innerRadius"
-      :colors="colors"
-    />
+    <Pie :data="data" :value="(d: { value: number }) => d.value" :label="(d: { label: string }) => d.label" :innerRadius="innerRadius" :colors="colors" />
   </div>
-  <div v-else class="flex h-64 w-full items-center justify-center text-gray-500">
-    No data available
-  </div>
+  <div v-else class="flex h-64 w-full items-center justify-center text-gray-500">No data available</div>
 </template>
 ```
 
@@ -867,16 +852,9 @@ const props = withDefaults(
 
 <template>
   <div v-if="data.length > 0" class="h-64 w-full p-4">
-    <Bar
-      :data="data"
-      :value="(d: { value: number }) => d.value"
-      :label="(d: { category: string }) => d.category"
-      :orientation="orientation"
-    />
+    <Bar :data="data" :value="(d: { value: number }) => d.value" :label="(d: { category: string }) => d.category" :orientation="orientation" />
   </div>
-  <div v-else class="flex h-64 w-full items-center justify-center text-gray-500">
-    No data available
-  </div>
+  <div v-else class="flex h-64 w-full items-center justify-center text-gray-500">No data available</div>
 </template>
 ```
 
@@ -1117,17 +1095,11 @@ onMounted(() => {
     <div class="mb-6 flex items-center justify-between">
       <h1 class="text-text text-2xl font-bold">Investment Dashboard</h1>
       <div class="flex items-center gap-4">
-        <USelect
-          :modelValue="preferences.currency"
-          @update:modelValue="preferences.setCurrency($event)"
-          :items="['USD', 'EUR', 'GBP']"
-        />
+        <USelect :modelValue="preferences.currency" @update:modelValue="preferences.setCurrency($event)" :items="['USD', 'EUR', 'GBP']" />
         <UButton @click="preferences.toggleDarkMode()">
           {{ preferences.darkMode ? 'Light Mode' : 'Dark Mode' }}
         </UButton>
-        <span class="text-sm text-gray-500">
-          Sidebar: {{ ui.sidebarOpen ? 'Open' : 'Closed' }}
-        </span>
+        <span class="text-sm text-gray-500"> Sidebar: {{ ui.sidebarOpen ? 'Open' : 'Closed' }} </span>
       </div>
     </div>
 
@@ -1136,9 +1108,7 @@ onMounted(() => {
         <template #header>
           <h2 class="text-lg font-semibold">Total Portfolio Value</h2>
         </template>
-        <p class="text-primary text-3xl font-bold">
-          {{ portfolio.totalValue.toLocaleString() }} {{ preferences.currency }}
-        </p>
+        <p class="text-primary text-3xl font-bold">{{ portfolio.totalValue.toLocaleString() }} {{ preferences.currency }}</p>
       </UCard>
     </div>
 

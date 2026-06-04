@@ -69,9 +69,7 @@ describe('sync store auth workflow', () => {
   it('marks token as expired when refresh endpoint fails', async () => {
     const store = useSyncStore()
 
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ success: false }), { status: 401 }),
-    )
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ success: false }), { status: 401 }))
 
     const refreshed = await store.refreshAccessToken()
 

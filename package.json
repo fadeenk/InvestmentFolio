@@ -6,6 +6,7 @@
     "worker"
   ],
   "scripts": {
+    "audit": "fallow audit",
     "frontend": "npm --workspace=frontend run dev",
     "worker": "npm --workspace=worker run dev",
     "test": "npm --workspace=frontend run test && npm --workspace=worker run test",
@@ -16,6 +17,7 @@
     "prepare": "husky"
   },
   "devDependencies": {
+    "fallow": "^2.88.2",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.3",

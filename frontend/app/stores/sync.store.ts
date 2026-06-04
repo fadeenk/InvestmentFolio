@@ -68,6 +68,8 @@ export interface SyncSummary {
 
 export const useSyncStore = defineStore('sync', () => {
   const vaultStore = useVaultStore()
+  const accountsStore = useAccountsStore()
+  const positionsStore = usePositionsStore()
 
   // ── State ──────────────────────────────────────────────────────────────────
 
@@ -86,11 +88,17 @@ export const useSyncStore = defineStore('sync', () => {
   const isSyncing = computed(() => syncStatus.value === SyncStatus.IN_PROGRESS)
 
   /** True when the user should be prompted to re-authorize with Schwab. */
-  const requiresReauth = computed(() => tokenStatus.value === TokenStatus.EXPIRED || tokenStatus.value === TokenStatus.NOT_CONNECTED)
+  const requiresReauth = computed(
+    () =>
+      tokenStatus.value === TokenStatus.EXPIRED || tokenStatus.value === TokenStatus.NOT_CONNECTED,
+  )
 
   /** True when the refresh token expires within 24 hours. */
   const expirationWarning = computed(
-    () => refreshTokenSecondsRemaining.value !== null && refreshTokenSecondsRemaining.value < 86_400 && refreshTokenSecondsRemaining.value > 0,
+    () =>
+      refreshTokenSecondsRemaining.value !== null &&
+      refreshTokenSecondsRemaining.value < 86_400 &&
+      refreshTokenSecondsRemaining.value > 0,
   )
 
   // ── Token lifecycle ────────────────────────────────────────────────────────
@@ -303,7 +311,10 @@ export const useSyncStore = defineStore('sync', () => {
    *
    * Returns an import summary (records added, duplicates skipped).
    */
-  async function importCsv(_file: File, _accountId: string): Promise<{ added: number; duplicates: number; errors: string[] }> {
+  async function importCsv(
+    _file: File,
+    _accountId: string,
+  ): Promise<{ added: number; duplicates: number; errors: string[] }> {
     // Wiring point:
     // 1. Detect institution from file format (Optum vs Schwab historical)
     // 2. Route to correct parser composable

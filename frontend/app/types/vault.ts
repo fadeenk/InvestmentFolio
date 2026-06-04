@@ -1,4 +1,12 @@
-import type { Bank, AccountType, TransactionType, AssetType, CostBasisMethod, SyncMethod, ImportSource } from './enums'
+import type {
+  Bank,
+  AccountType,
+  TransactionType,
+  AssetType,
+  CostBasisMethod,
+  SyncMethod,
+  ImportSource,
+} from './enums'
 /**
  * Top-level decrypted JSON payload stored inside the .foli vault file.
  * Every field written here will be AES-256-GCM encrypted at rest.

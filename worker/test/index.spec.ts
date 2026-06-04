@@ -70,18 +70,10 @@ async function putEncryptedTestTokens(env: TestEnv): Promise<void> {
 
 	const keySeed = new TextEncoder().encode(env.TOKEN_ENCRYPTION_KEY)
 	const digest = await crypto.subtle.digest('SHA-256', keySeed)
-	const key = await crypto.subtle.importKey(
-		'raw',
-		digest,
-		{ name: 'AES-GCM', length: 256 },
-		false,
-		['encrypt'],
-	)
+	const key = await crypto.subtle.importKey('raw', digest, { name: 'AES-GCM', length: 256 }, false, ['encrypt'])
 	const iv = crypto.getRandomValues(new Uint8Array(12))
 	const encoded = new TextEncoder().encode(JSON.stringify(plaintext))
-	const ciphertext = new Uint8Array(
-		await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded),
-	)
+	const ciphertext = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded))
 
 	const toBase64Url = (bytes: Uint8Array): string => {
 		let binary = ''
@@ -132,8 +124,7 @@ describe('auth worker', () => {
 
 		const originalFetch = globalThis.fetch
 		globalThis.fetch = (input: RequestInfo | URL) => {
-			const requestUrl =
-				typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+			const requestUrl = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
 			if (requestUrl.includes('/oauth/token')) {
 				return Promise.resolve(
 					new Response(
@@ -167,18 +158,10 @@ describe('auth worker', () => {
 
 			const keySeed = new TextEncoder().encode(env.TOKEN_ENCRYPTION_KEY)
 			const digest = await crypto.subtle.digest('SHA-256', keySeed)
-			const key = await crypto.subtle.importKey(
-				'raw',
-				digest,
-				{ name: 'AES-GCM', length: 256 },
-				false,
-				['encrypt'],
-			)
+			const key = await crypto.subtle.importKey('raw', digest, { name: 'AES-GCM', length: 256 }, false, ['encrypt'])
 			const iv = crypto.getRandomValues(new Uint8Array(12))
 			const encoded = new TextEncoder().encode(JSON.stringify(plaintext))
-			const ciphertext = new Uint8Array(
-				await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded),
-			)
+			const ciphertext = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded))
 
 			const toBase64Url = (bytes: Uint8Array): string => {
 				let binary = ''
@@ -264,8 +247,7 @@ describe('auth worker', () => {
 
 		const originalFetch = globalThis.fetch
 		globalThis.fetch = (input: RequestInfo | URL) => {
-			const requestUrl =
-				typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+			const requestUrl = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
 			if (requestUrl.includes('/trader/v1/accounts/accountNumbers')) {
 				return Promise.resolve(
 					new Response(JSON.stringify([{ accountNumber: '123456789', hashValue: 'hash-1' }]), {
@@ -295,8 +277,7 @@ describe('auth worker', () => {
 
 		const originalFetch = globalThis.fetch
 		globalThis.fetch = (input: RequestInfo | URL) => {
-			const requestUrl =
-				typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+			const requestUrl = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
 			if (requestUrl.includes('/trader/v1/accounts?fields=positions')) {
 				return Promise.resolve(
 					new Response(
@@ -334,6 +315,81 @@ describe('auth worker', () => {
 		} finally {
 			globalThis.fetch = originalFetch
 		}
+	})
+
+	it('proxies /api/accounts/{hash}/transactions with date query params', async () => {
+		const env = createEnv()
+		await putEncryptedTestTokens(env)
+
+		const originalFetch = globalThis.fetch
+		globalThis.fetch = (input: RequestInfo | URL) => {
+			const requestUrl = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+			if (
+				requestUrl.includes('/trader/v1/accounts/hash-123/transactions') &&
+				requestUrl.includes('fromDate=2026-05-01T00%3A00%3A00.000Z') &&
+				requestUrl.includes('toDate=2026-06-03T23%3A59%3A59.000Z')
+			) {
+				return Promise.resolve(
+					new Response(
+						JSON.stringify([
+							{
+								activityId: 101,
+								time: '2026-06-01T10:00:00.000Z',
+								description: 'Dividend payment',
+								accountNumber: '12345678',
+								type: 'DIVIDEND_OR_INTEREST',
+								status: 'VALID',
+								subAccount: 'CASH',
+								tradeDate: '2026-06-01',
+								netAmount: 42.5,
+								activityType: 'DIVIDEND_OR_INTEREST',
+								transferItems: [],
+							},
+						]),
+						{ status: 200, headers: { 'content-type': 'application/json' } },
+					),
+				)
+			}
+
+			throw new Error(`Unexpected fetch URL in test: ${requestUrl}`)
+		}
+
+		try {
+			const request = new IncomingRequest(
+				'http://example.com/api/accounts/hash-123/transactions?fromDate=2026-05-01T00:00:00.000Z&toDate=2026-06-03T23:59:59.000Z',
+			)
+			const response = await worker.fetch(request, env as unknown as Env)
+
+			expect(response.status).toBe(200)
+			expect(await response.json()).toEqual({
+				transactions: [
+					{
+						activityId: 101,
+						time: '2026-06-01T10:00:00.000Z',
+						description: 'Dividend payment',
+						accountNumber: '12345678',
+						type: 'DIVIDEND_OR_INTEREST',
+						status: 'VALID',
+						subAccount: 'CASH',
+						tradeDate: '2026-06-01',
+						netAmount: 42.5,
+						activityType: 'DIVIDEND_OR_INTEREST',
+						transferItems: [],
+					},
+				],
+			})
+		} finally {
+			globalThis.fetch = originalFetch
+		}
+	})
+
+	it('returns 401 for /api/accounts/{hash}/transactions when no token is connected', async () => {
+		const request = new IncomingRequest('http://example.com/api/accounts/hash-123/transactions')
+		const env = createEnv()
+		const response = await worker.fetch(request, env as unknown as Env)
+
+		expect(response.status).toBe(401)
+		expect(await response.json()).toEqual({ error: 'Not connected' })
 	})
 
 	it('handles API preflight requests with CORS headers', async () => {

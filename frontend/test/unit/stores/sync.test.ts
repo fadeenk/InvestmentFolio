@@ -71,9 +71,7 @@ describe('sync store auth workflow', () => {
   it('marks token as expired when refresh endpoint fails', async () => {
     const store = useSyncStore()
 
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ success: false }), { status: 401 }),
-    )
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ success: false }), { status: 401 }))
 
     const refreshed = await store.refreshAccessToken()
 
@@ -244,16 +242,73 @@ describe('sync store auth workflow', () => {
           { status: 200, headers: { 'content-type': 'application/json' } },
         ),
       )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ transactions: [] }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      )
 
     const result = await store.syncSchwab()
 
     expect(result.accountsSynced).toBe(1)
     expect(result.positionsUpdated).toBe(1)
+    expect(result.transactionsAdded).toBe(0)
     expect(vaultStore.payload?.metadata.schwabAccountHashes['5678']).toBe('hash-1234')
-    expect(vaultStore.payload?.metadata.schwabAccountHashesByFullNumber['12345678']).toBe(
-      'hash-1234',
-    )
+    expect(vaultStore.payload?.metadata.schwabAccountHashesByFullNumber['12345678']).toBe('hash-1234')
     expect(vaultStore.payload?.accounts).toHaveLength(1)
     expect(vaultStore.payload?.positions).toHaveLength(1)
+    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/api/accounts/hash-1234/transactions?fromDate='), expect.anything())
+  })
+
+  it('does not sync when unlock/auth helper sees reauth required', async () => {
+    const store = useSyncStore()
+    const vaultStore = useVaultStore()
+    const now = new Date().toISOString()
+
+    vaultStore.payload = {
+      schemaVersion: 1,
+      createdAt: now,
+      lastSyncedAt: null,
+      accounts: [],
+      transactions: [],
+      positions: [],
+      taxLots: [],
+      dividends: [],
+      priceHistory: {},
+      metadata: {
+        displayPreferences: {
+          theme: Theme.SYSTEM,
+          currencyFormat: 'USD',
+          dateFormat: DateFormat.MM_DD_YYYY,
+          defaultAccountFilter: null,
+          defaultCostBasisMethod: CostBasisMethod.FIFO,
+          defaultTimeRange: 'YTD',
+        },
+        schwabAccountHashes: {},
+        schwabAccountHashesByFullNumber: {},
+        schwabTokenMeta: null,
+        costBasisMethodByAccount: {},
+        lastSavedAt: null,
+      },
+    }
+
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          isConnected: false,
+          accessTokenExpiresAt: null,
+          refreshTokenExpiresAt: null,
+          connectedAccountCount: 0,
+          lastRefreshedAt: null,
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
+    )
+
+    await store.ensureSyncedAfterUnlockOrAuth()
+
+    expect(store.requiresReauth).toBe(true)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 })

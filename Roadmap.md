@@ -80,10 +80,11 @@ Wire up OAuth 2.0, token lifecycle, and all Schwab API endpoints. This is the hi
 
 ### Transaction sync & mapping `API`
 
-- [ ] `GET /trader/v1/accounts/{hash}/transactions` for up to 1 year per account
-- [ ] Map all Schwab transaction types to Folio categories (`TRADE`, `DIVIDEND`, `REINVEST_DIVIDEND`, `CASH_IN_OR_CASH_OUT`, `JOURNAL`, `RECEIVE_AND_DELIVER`, `CORPORATE_ACTION`)
-- [ ] Deduplication by transaction ID before merging into vault
-- [ ] Tag imported transactions with `importSource: API`
+- [x] `GET /trader/v1/accounts/{hash}/transactions` for every account since lastupdated till now
+- [x] Map all Schwab transaction types to Folio categories
+- [x] Deduplication by transaction ID before merging into vault
+- [x] Tag imported transactions with `importSource: API`
+- [x] Ensure on unlock and successful authentication it triggers syncing of accounts possitions and transactions
 - [ ] Handle `CORPORATE_ACTION`: surface user notification, flag lots for manual review
 
 > **Depends on:** Account & position sync

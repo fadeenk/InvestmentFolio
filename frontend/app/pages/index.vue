@@ -161,6 +161,8 @@ async function applyAuthCallbackStateFromQuery() {
   const auth = route.query.auth
   if (!auth) return
 
+  const authConnected = auth === 'connected'
+
   sync.consumeAuthCallbackFromQuery(queryToSearchParams())
   if (sync.callbackMessage) {
     ui.setBanner(sync.callbackMessage.type, sync.callbackMessage.text)
@@ -183,6 +185,10 @@ async function applyAuthCallbackStateFromQuery() {
   }
 
   await router.replace({ query: nextQuery })
+
+  if (authConnected && vault.status === VaultStatus.UNLOCKED) {
+    await sync.ensureSyncedAfterUnlockOrAuth()
+  }
 }
 
 function closeCreateDialog() {
@@ -201,9 +207,6 @@ watch(
     if (vault.status === VaultStatus.LOCKED) {
       resetForm()
     }
-    if (vault.status === VaultStatus.UNLOCKED) {
-      await sync.pollTokenStatus()
-    }
   },
 )
 
@@ -211,7 +214,7 @@ onMounted(async () => {
   await applyAuthCallbackStateFromQuery()
 
   if (vault.status === VaultStatus.UNLOCKED) {
-    await sync.pollTokenStatus()
+    await sync.ensureSyncedAfterUnlockOrAuth()
   }
 })
 </script>

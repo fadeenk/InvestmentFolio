@@ -15,15 +15,17 @@ import { ref, computed } from 'vue'
 import { useVaultStore } from './vault.store'
 import { useAccountsStore } from './accounts.store'
 import { usePositionsStore } from './positions.store'
+import { useTransactionsStore } from './transactions.store'
 import type {
   SchwabAccountNumbersResponse,
   SchwabAccountsResponse,
   SchwabAuthStatusResponse,
   SchwabRefreshResponse,
+  SchwabTransactionsResponse,
 } from '@/types/schwab'
 import type { Position } from '@/types/vault'
 import { SyncStatus, TokenStatus } from '@/types/vault'
-import { buildSchwabHashMaps, mapSchwabAccountsToVaultDrafts } from '@/utils/schwab-mapper'
+import { buildSchwabHashMaps, mapSchwabAccountsToVaultDrafts, mapSchwabTransactionsToVaultDrafts } from '@/utils/schwab-mapper'
 
 // ---------------------------------------------------------------------------
 // Worker URL — injected at build time via Nuxt runtimeConfig
@@ -79,6 +81,7 @@ export const useSyncStore = defineStore('sync', () => {
   const vaultStore = useVaultStore()
   const accountsStore = useAccountsStore()
   const positionsStore = usePositionsStore()
+  const transactionsStore = useTransactionsStore()
 
   // ── State ──────────────────────────────────────────────────────────────────
 
@@ -97,17 +100,11 @@ export const useSyncStore = defineStore('sync', () => {
   const isSyncing = computed(() => syncStatus.value === SyncStatus.IN_PROGRESS)
 
   /** True when the user should be prompted to re-authorize with Schwab. */
-  const requiresReauth = computed(
-    () =>
-      tokenStatus.value === TokenStatus.EXPIRED || tokenStatus.value === TokenStatus.NOT_CONNECTED,
-  )
+  const requiresReauth = computed(() => tokenStatus.value === TokenStatus.EXPIRED || tokenStatus.value === TokenStatus.NOT_CONNECTED)
 
   /** True when the refresh token expires within 24 hours. */
   const expirationWarning = computed(
-    () =>
-      refreshTokenSecondsRemaining.value !== null &&
-      refreshTokenSecondsRemaining.value < 86_400 &&
-      refreshTokenSecondsRemaining.value > 0,
+    () => refreshTokenSecondsRemaining.value !== null && refreshTokenSecondsRemaining.value < 86_400 && refreshTokenSecondsRemaining.value > 0,
   )
 
   // ── Token lifecycle ────────────────────────────────────────────────────────
@@ -224,6 +221,23 @@ export const useSyncStore = defineStore('sync', () => {
     return syncSchwab()
   }
 
+  async function ensureSyncedAfterUnlockOrAuth(): Promise<void> {
+    if (isSyncing.value || !vaultStore.payload) {
+      return
+    }
+
+    await pollTokenStatus()
+    if (requiresReauth.value || isSyncing.value) {
+      return
+    }
+
+    try {
+      await syncSchwab()
+    } catch {
+      // Error state is already captured by sync status + lastError.
+    }
+  }
+
   // ── Schwab API Sync ────────────────────────────────────────────────────────
 
   /**
@@ -268,8 +282,7 @@ export const useSyncStore = defineStore('sync', () => {
           const refreshed = await refreshAccessToken()
           if (!refreshed) throw new Error('Token refresh failed — re-authorization required')
           accountNumbersResp = await _workerGet(`${base}/api/accountNumbers`)
-          if (!accountNumbersResp.ok)
-            throw new Error(`Account numbers API error: ${accountNumbersResp.status}`)
+          if (!accountNumbersResp.ok) throw new Error(`Account numbers API error: ${accountNumbersResp.status}`)
         } else {
           throw new Error(`Account numbers API error: ${accountNumbersResp.status}`)
         }
@@ -298,15 +311,28 @@ export const useSyncStore = defineStore('sync', () => {
 
       const accountsData: SchwabAccountsResponse = await accountsResp.json()
       const snapshotAt = new Date().toISOString()
-      const mappedAccounts = mapSchwabAccountsToVaultDrafts(
-        accountsData,
-        hashMaps.byFullNumber,
-        snapshotAt,
-      )
+      const existingAccountsByHash = new Map<string, string>()
+      const existingAccountsByLast4 = new Map<string, string>()
+      for (const account of accountsStore.all) {
+        if (account.accountHash) {
+          existingAccountsByHash.set(account.accountHash, account.lastUpdatedAt)
+        }
+        existingAccountsByLast4.set(account.accountNumber, account.lastUpdatedAt)
+      }
+
+      const mappedAccounts = mapSchwabAccountsToVaultDrafts(accountsData, hashMaps.byFullNumber, snapshotAt)
 
       const nextPositions: Array<Omit<Position, 'id'>> = []
+      const syncWindowTargets: Array<{ accountId: string; accountHash: string; fromDate: string }> = []
+      const toDate = new Date().toISOString()
 
       for (const mapped of mappedAccounts) {
+        const previousUpdatedAt =
+          (mapped.accountHash ? existingAccountsByHash.get(mapped.accountHash) : null) ??
+          existingAccountsByLast4.get(mapped.accountLast4) ??
+          vaultStore.payload?.lastSyncedAt ??
+          defaultSyncWindowStart(toDate)
+
         const upserted = accountsStore.upsertSchwabAccount({
           accountNumber: mapped.accountNumber,
           accountHash: mapped.accountHash,
@@ -319,6 +345,14 @@ export const useSyncStore = defineStore('sync', () => {
         summary.accountsSynced += 1
         if (!upserted.created) {
           summary.deduplicatedCount += 1
+        }
+
+        if (mapped.accountHash) {
+          syncWindowTargets.push({
+            accountId: upserted.id,
+            accountHash: mapped.accountHash,
+            fromDate: previousUpdatedAt,
+          })
         }
 
         for (const position of mapped.positions) {
@@ -345,8 +379,35 @@ export const useSyncStore = defineStore('sync', () => {
       }
       summary.positionsUpdated = nextPositions.length
 
-      // 3. Fetch transactions for each Schwab account hash
-      // Wiring point: iterate vault schwabAccountHashes, call /api/accounts/{hash}/transactions
+      // 3. Fetch transactions for each Schwab account hash.
+      for (const target of syncWindowTargets) {
+        const endpoint = `${base}/api/accounts/${encodeURIComponent(target.accountHash)}/transactions?fromDate=${encodeURIComponent(target.fromDate)}&toDate=${encodeURIComponent(toDate)}`
+        let txResp = await _workerGet(endpoint)
+
+        if (!txResp.ok) {
+          if (txResp.status === 401) {
+            const refreshed = await refreshAccessToken()
+            if (!refreshed) throw new Error('Token refresh failed — re-authorization required')
+            txResp = await _workerGet(endpoint)
+            if (!txResp.ok) {
+              throw new Error(`Transactions API error (${target.accountHash}): ${txResp.status}`)
+            }
+          } else if (txResp.status === 429) {
+            const retryAfter = txResp.headers.get('Retry-After') ?? '60'
+            syncStatus.value = SyncStatus.RATE_LIMITED
+            throw new Error(`Rate limited — retry after ${retryAfter}s`)
+          } else {
+            throw new Error(`Transactions API error (${target.accountHash}): ${txResp.status}`)
+          }
+        }
+
+        const transactionsData: SchwabTransactionsResponse = await txResp.json()
+        const mappedTransactions = mapSchwabTransactionsToVaultDrafts(transactionsData, target.accountId)
+        const inserted = transactionsStore.insertMany(mappedTransactions)
+
+        summary.transactionsAdded += inserted
+        summary.deduplicatedCount += mappedTransactions.length - inserted
+      }
 
       // 4. Fetch quotes for all held symbols
       // Wiring point: collect symbols from positions, call /api/marketdata/quotes
@@ -380,10 +441,7 @@ export const useSyncStore = defineStore('sync', () => {
    *
    * Returns an import summary (records added, duplicates skipped).
    */
-  async function importCsv(
-    _file: File,
-    _accountId: string,
-  ): Promise<{ added: number; duplicates: number; errors: string[] }> {
+  async function importCsv(_file: File, _accountId: string): Promise<{ added: number; duplicates: number; errors: string[] }> {
     // Wiring point:
     // 1. Detect institution from file format (Optum vs Schwab historical)
     // 2. Route to correct parser composable
@@ -432,6 +490,13 @@ export const useSyncStore = defineStore('sync', () => {
     tokenStatus.value = TokenStatus.VALID
   }
 
+  function defaultSyncWindowStart(toDateIso: string): string {
+    const end = new Date(toDateIso)
+    const start = new Date(end)
+    start.setUTCDate(start.getUTCDate() - 90)
+    return start.toISOString()
+  }
+
   // ── Return ─────────────────────────────────────────────────────────────────
 
   return {
@@ -451,6 +516,7 @@ export const useSyncStore = defineStore('sync', () => {
     refreshAccessToken,
     initiateOAuthFlow,
     syncSchwabWithAuth,
+    ensureSyncedAfterUnlockOrAuth,
     syncSchwab,
     importCsv,
   }

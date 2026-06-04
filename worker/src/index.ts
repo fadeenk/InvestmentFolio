@@ -1,14 +1,5 @@
-import {
-	handleAuthCallback,
-	handleAuthLogin,
-	handleAuthRefresh,
-	handleAuthStatus,
-} from './controllers/auth.controller'
-import {
-	fetchAccountNumbers,
-	fetchAccountsWithPositions,
-	TraderApiError,
-} from './services/schwab-trader.service'
+import { handleAuthCallback, handleAuthLogin, handleAuthRefresh, handleAuthStatus } from './controllers/auth.controller'
+import { fetchAccountTransactions, fetchAccountNumbers, fetchAccountsWithPositions, TraderApiError } from './services/schwab-trader.service'
 import { corsPreflight, jsonError, withCors } from './utils/http'
 
 function isAuthPath(pathname: string): boolean {
@@ -108,6 +99,46 @@ export default {
 							'content-type': 'application/json; charset=utf-8',
 						},
 					}),
+				)
+			} catch (error) {
+				if (error instanceof TraderApiError) {
+					return withAuthCors(request, env, jsonError(error.message, error.status))
+				}
+				return withAuthCors(request, env, jsonError('Unexpected worker error', 500))
+			}
+		}
+
+		const transactionsPathMatch = url.pathname.match(/^\/api\/accounts\/([^/]+)\/transactions$/)
+		if (transactionsPathMatch) {
+			if (method !== 'GET') {
+				return withAuthCors(request, env, jsonError('Method not allowed', 405))
+			}
+
+			try {
+				const accountHash = decodeURIComponent(transactionsPathMatch[1] ?? '')
+				if (!accountHash) {
+					return withAuthCors(request, env, jsonError('Missing account hash', 400))
+				}
+
+				return withAuthCors(
+					request,
+					env,
+					new Response(
+						JSON.stringify(
+							await fetchAccountTransactions(env, {
+								accountHash,
+								fromDate: url.searchParams.get('fromDate'),
+								toDate: url.searchParams.get('toDate'),
+								types: url.searchParams.get('types'),
+							}),
+						),
+						{
+							status: 200,
+							headers: {
+								'content-type': 'application/json; charset=utf-8',
+							},
+						},
+					),
 				)
 			} catch (error) {
 				if (error instanceof TraderApiError) {

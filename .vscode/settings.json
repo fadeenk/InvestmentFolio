@@ -5,6 +5,12 @@
     "npm run --workspace=worker test": true,
     "npm run --workspace=frontend typecheck": true,
     "npm run --workspace=frontend lint": true,
-    "npm run --workspace=frontend test": true
+    "npm run --workspace=frontend test": true,
+    "npm --workspace=worker run test": true,
+    "npm --workspace=frontend run test": true,
+    "npm --workspace=worker run typecheck": true,
+    "npm --workspace=frontend run typecheck": true,
+    "npm --workspace=worker run lint": true,
+    "npm --workspace=frontend run lint": true
   }
 }

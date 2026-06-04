@@ -1,7 +1,7 @@
 import { getEncryptedTokens } from './auth-kv.service'
 import { decryptTokenEnvelope } from './token-crypto.service'
 import type { WorkerEnv } from '../types/auth'
-import type { SchwabAccountNumbersResponse, SchwabAccountsResponse } from '../types/trader'
+import type { SchwabAccountNumbersResponse, SchwabAccountsResponse, SchwabTransactionsResponse } from '../types/trader'
 
 const DEFAULT_API_BASE_URL = 'https://api.schwabapi.com'
 
@@ -67,6 +67,21 @@ function normalizeAccountsPayload(payload: unknown): SchwabAccountsResponse {
 	throw new TraderApiError('Invalid accounts response shape', 502)
 }
 
+function normalizeTransactionsPayload(payload: unknown): SchwabTransactionsResponse {
+	if (Array.isArray(payload)) {
+		return { transactions: payload as SchwabTransactionsResponse['transactions'] }
+	}
+
+	if (payload && typeof payload === 'object') {
+		const record = payload as Record<string, unknown>
+		if (Array.isArray(record.transactions)) {
+			return { transactions: record.transactions as SchwabTransactionsResponse['transactions'] }
+		}
+	}
+
+	throw new TraderApiError('Invalid transactions response shape', 502)
+}
+
 export async function fetchAccountNumbers(env: WorkerEnv): Promise<SchwabAccountNumbersResponse> {
 	const payload = await fetchTraderJson(env, '/trader/v1/accounts/accountNumbers')
 	if (!Array.isArray(payload)) {
@@ -76,10 +91,7 @@ export async function fetchAccountNumbers(env: WorkerEnv): Promise<SchwabAccount
 	return payload as SchwabAccountNumbersResponse
 }
 
-export async function fetchAccountsWithPositions(
-	env: WorkerEnv,
-	fields: string | null,
-): Promise<SchwabAccountsResponse> {
+export async function fetchAccountsWithPositions(env: WorkerEnv, fields: string | null): Promise<SchwabAccountsResponse> {
 	const query = new URLSearchParams()
 	if (fields) {
 		query.set('fields', fields)
@@ -88,4 +100,28 @@ export async function fetchAccountsWithPositions(
 	const path = `/trader/v1/accounts${query.size > 0 ? `?${query.toString()}` : ''}`
 	const payload = await fetchTraderJson(env, path)
 	return normalizeAccountsPayload(payload)
+}
+
+export interface FetchAccountTransactionsParams {
+	accountHash: string
+	fromDate: string | null
+	toDate: string | null
+	types: string | null
+}
+
+export async function fetchAccountTransactions(env: WorkerEnv, params: FetchAccountTransactionsParams): Promise<SchwabTransactionsResponse> {
+	const query = new URLSearchParams()
+	if (params.fromDate) {
+		query.set('fromDate', params.fromDate)
+	}
+	if (params.toDate) {
+		query.set('toDate', params.toDate)
+	}
+	if (params.types) {
+		query.set('types', params.types)
+	}
+
+	const path = `/trader/v1/accounts/${encodeURIComponent(params.accountHash)}/transactions${query.size > 0 ? `?${query.toString()}` : ''}`
+	const payload = await fetchTraderJson(env, path)
+	return normalizeTransactionsPayload(payload)
 }

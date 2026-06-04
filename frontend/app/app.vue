@@ -49,7 +49,7 @@ watch(
   () => vault.status,
   async () => {
     if (vault.status === VaultStatus.UNLOCKED) {
-      await sync.pollTokenStatus()
+      await sync.ensureSyncedAfterUnlockOrAuth()
     }
   },
 )

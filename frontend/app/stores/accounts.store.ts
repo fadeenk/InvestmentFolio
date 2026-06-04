@@ -65,10 +65,7 @@ export const useAccountsStore = defineStore('accounts', () => {
    * Returns the generated account ID.
    */
   function addAccount(
-    input: Omit<
-      Account,
-      'id' | 'syncMethod' | 'currentBalance' | 'cashBalance' | 'lastUpdatedAt' | 'isActive'
-    > & {
+    input: Omit<Account, 'id' | 'syncMethod' | 'currentBalance' | 'cashBalance' | 'lastUpdatedAt' | 'isActive'> & {
       initialBalance?: number
     },
   ): string {
@@ -100,12 +97,7 @@ export const useAccountsStore = defineStore('accounts', () => {
    * Update editable fields on an existing account.
    * Partial update — only provided fields are changed.
    */
-  function updateAccount(
-    id: string,
-    updates: Partial<
-      Pick<Account, 'displayName' | 'accountNumber' | 'isActive' | 'currentBalance' | 'cashBalance'>
-    >,
-  ): void {
+  function updateAccount(id: string, updates: Partial<Pick<Account, 'displayName' | 'accountNumber' | 'isActive' | 'currentBalance' | 'cashBalance'>>): void {
     vaultStore.mutatePayload((p) => {
       const account = p.accounts.find((a) => a.id === id)
       if (!account) throw new Error(`Account ${id} not found`)
@@ -130,10 +122,7 @@ export const useAccountsStore = defineStore('accounts', () => {
   /**
    * Merge Schwab hash maps from /accounts/accountNumbers into vault metadata.
    */
-  function mergeSchwabHashMaps(
-    byFullNumber: Record<string, string>,
-    byLast4: Record<string, string>,
-  ): void {
+  function mergeSchwabHashMaps(byFullNumber: Record<string, string>, byLast4: Record<string, string>): void {
     vaultStore.mutatePayload((p) => {
       p.metadata.schwabAccountHashesByFullNumber = {
         ...p.metadata.schwabAccountHashesByFullNumber,
@@ -160,10 +149,7 @@ export const useAccountsStore = defineStore('accounts', () => {
 
     vaultStore.mutatePayload((p) => {
       const existing = p.accounts.find(
-        (a) =>
-          a.bank === Bank.SCHWAB &&
-          ((input.accountHash && a.accountHash === input.accountHash) ||
-            a.accountNumber === accountLast4),
+        (a) => a.bank === Bank.SCHWAB && ((input.accountHash && a.accountHash === input.accountHash) || a.accountNumber === accountLast4),
       )
 
       if (existing) {

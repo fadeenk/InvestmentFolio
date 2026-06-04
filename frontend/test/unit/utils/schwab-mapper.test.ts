@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { AssetType, AccountType } from '~/types/enums'
-import type {
-  SchwabAccountsResponse,
-  SchwabBalances,
-  SchwabPosition,
-  SchwabSecuritiesAccount,
-} from '~/types/schwab'
-import { buildSchwabHashMaps, mapSchwabAccountsToVaultDrafts } from '~/utils/schwab-mapper'
+import { AssetType, AccountType, ImportSource, TransactionType } from '~/types/enums'
+import type { SchwabAccountsResponse, SchwabBalances, SchwabPosition, SchwabSecuritiesAccount, SchwabTransactionsResponse } from '~/types/schwab'
+import { buildSchwabHashMaps, mapSchwabAccountsToVaultDrafts, mapSchwabTransactionsToVaultDrafts } from '~/utils/schwab-mapper'
 
 function balances(overrides: Partial<SchwabBalances> = {}): SchwabBalances {
   return {
@@ -150,13 +145,76 @@ describe('schwab mapper edge cases', () => {
       ],
     }
 
-    const mapped = mapSchwabAccountsToVaultDrafts(
-      response,
-      { '12345678': 'hash-1' },
-      '2026-06-03T10:00:00.000Z',
-    )
+    const mapped = mapSchwabAccountsToVaultDrafts(response, { '12345678': 'hash-1' }, '2026-06-03T10:00:00.000Z')
 
     expect(mapped[0].positions[0].currentPrice).toBe(0)
     expect(Number.isFinite(mapped[0].positions[0].unrealizedGainLossPct)).toBe(true)
+  })
+
+  it('maps dividend transactions and tags source as API', () => {
+    const response: SchwabTransactionsResponse = {
+      transactions: [
+        {
+          activityId: 1001,
+          time: '2026-06-01T10:00:00.000Z',
+          description: 'Quarterly dividend',
+          accountNumber: '12345678',
+          type: 'DIVIDEND_OR_INTEREST',
+          status: 'VALID',
+          subAccount: 'CASH',
+          tradeDate: '2026-06-01',
+          settlementDate: '2026-06-02',
+          netAmount: 12.34,
+          activityType: 'DIVIDEND_OR_INTEREST',
+          transferItems: [],
+        },
+      ],
+    }
+
+    const mapped = mapSchwabTransactionsToVaultDrafts(response, 'acct-1')
+
+    expect(mapped).toHaveLength(1)
+    expect(mapped[0].externalId).toBe('1001')
+    expect(mapped[0].type).toBe(TransactionType.Dividend)
+    expect(mapped[0].importSource).toBe(ImportSource.SCHWAB_API)
+    expect(mapped[0].accountId).toBe('acct-1')
+  })
+
+  it('maps unknown transaction types using net amount fallback', () => {
+    const response: SchwabTransactionsResponse = {
+      transactions: [
+        {
+          activityId: 2001,
+          time: '2026-06-02T10:00:00.000Z',
+          description: 'Unknown credit',
+          accountNumber: '12345678',
+          type: 'UNCLASSIFIED',
+          status: 'VALID',
+          subAccount: 'CASH',
+          tradeDate: '2026-06-02',
+          netAmount: 5,
+          activityType: 'MYSTERY_EVENT',
+          transferItems: [],
+        },
+        {
+          activityId: 2002,
+          time: '2026-06-03T10:00:00.000Z',
+          description: 'Unknown debit',
+          accountNumber: '12345678',
+          type: 'UNCLASSIFIED',
+          status: 'VALID',
+          subAccount: 'CASH',
+          tradeDate: '2026-06-03',
+          netAmount: -7,
+          activityType: 'MYSTERY_EVENT',
+          transferItems: [],
+        },
+      ],
+    }
+
+    const mapped = mapSchwabTransactionsToVaultDrafts(response, 'acct-1')
+
+    expect(mapped[0].type).toBe(TransactionType.DEPOSIT)
+    expect(mapped[1].type).toBe(TransactionType.WITHDRAWAL)
   })
 })

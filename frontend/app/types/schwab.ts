@@ -6,8 +6,6 @@
 // changes to the Schwab API surface don't bleed into the core vault types.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import type { TransactionType } from './enums'
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Auth / Token (Cloudflare Worker relay responses)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -171,7 +169,7 @@ export interface SchwabTransaction {
   user?: SchwabTransactionUser
   description: string
   accountNumber: string
-  type: TransactionType
+  type: string
   status: 'VALID' | 'INVALID' | 'PENDING' | 'UNKNOWN'
   subAccount: string
   tradeDate: string // ISO 8601

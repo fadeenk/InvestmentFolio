@@ -13,8 +13,17 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useVaultStore } from './vault.store'
-import type { SchwabAuthStatusResponse, SchwabRefreshResponse } from '@/types/schwab'
+import { useAccountsStore } from './accounts.store'
+import { usePositionsStore } from './positions.store'
+import type {
+  SchwabAccountNumbersResponse,
+  SchwabAccountsResponse,
+  SchwabAuthStatusResponse,
+  SchwabRefreshResponse,
+} from '@/types/schwab'
+import type { Position } from '@/types/vault'
 import { SyncStatus, TokenStatus } from '@/types/vault'
+import { buildSchwabHashMaps, mapSchwabAccountsToVaultDrafts } from '@/utils/schwab-mapper'
 
 // ---------------------------------------------------------------------------
 // Worker URL — injected at build time via Nuxt runtimeConfig
@@ -253,14 +262,31 @@ export const useSyncStore = defineStore('sync', () => {
       }
 
       // 2. Fetch all accounts + positions
-      const accountsResp = await _workerGet(`${base}/api/accounts?fields=positions`)
+      let accountNumbersResp = await _workerGet(`${base}/api/accountNumbers`)
+      if (!accountNumbersResp.ok) {
+        if (accountNumbersResp.status === 401) {
+          const refreshed = await refreshAccessToken()
+          if (!refreshed) throw new Error('Token refresh failed — re-authorization required')
+          accountNumbersResp = await _workerGet(`${base}/api/accountNumbers`)
+          if (!accountNumbersResp.ok)
+            throw new Error(`Account numbers API error: ${accountNumbersResp.status}`)
+        } else {
+          throw new Error(`Account numbers API error: ${accountNumbersResp.status}`)
+        }
+      }
+
+      const accountNumbersData: SchwabAccountNumbersResponse = await accountNumbersResp.json()
+      const hashMaps = buildSchwabHashMaps(accountNumbersData)
+      accountsStore.mergeSchwabHashMaps(hashMaps.byFullNumber, hashMaps.byLast4)
+
+      let accountsResp = await _workerGet(`${base}/api/accounts?fields=positions`)
       if (!accountsResp.ok) {
         if (accountsResp.status === 401) {
           const refreshed = await refreshAccessToken()
           if (!refreshed) throw new Error('Token refresh failed — re-authorization required')
           // Retry once
-          const retry = await _workerGet(`${base}/api/accounts?fields=positions`)
-          if (!retry.ok) throw new Error(`Accounts API error: ${retry.status}`)
+          accountsResp = await _workerGet(`${base}/api/accounts?fields=positions`)
+          if (!accountsResp.ok) throw new Error(`Accounts API error: ${accountsResp.status}`)
         } else if (accountsResp.status === 429) {
           const retryAfter = accountsResp.headers.get('Retry-After') ?? '60'
           syncStatus.value = SyncStatus.RATE_LIMITED
@@ -270,11 +296,54 @@ export const useSyncStore = defineStore('sync', () => {
         }
       }
 
-      // Mapper wiring point:
-      // const accountsData: SchwabAccountsResponse = await accountsResp.json()
-      // const { accountsSynced, positionsUpdated } = await mapper.applyAccounts(accountsData)
-      // summary.accountsSynced = accountsSynced
-      // summary.positionsUpdated = positionsUpdated
+      const accountsData: SchwabAccountsResponse = await accountsResp.json()
+      const snapshotAt = new Date().toISOString()
+      const mappedAccounts = mapSchwabAccountsToVaultDrafts(
+        accountsData,
+        hashMaps.byFullNumber,
+        snapshotAt,
+      )
+
+      const nextPositions: Array<Omit<Position, 'id'>> = []
+
+      for (const mapped of mappedAccounts) {
+        const upserted = accountsStore.upsertSchwabAccount({
+          accountNumber: mapped.accountNumber,
+          accountHash: mapped.accountHash,
+          displayName: mapped.displayName,
+          type: mapped.type,
+          currentBalance: mapped.currentBalance,
+          cashBalance: mapped.cashBalance,
+        })
+
+        summary.accountsSynced += 1
+        if (!upserted.created) {
+          summary.deduplicatedCount += 1
+        }
+
+        for (const position of mapped.positions) {
+          nextPositions.push({
+            accountId: upserted.id,
+            symbol: position.symbol,
+            assetType: position.assetType,
+            quantity: position.quantity,
+            avgCost: position.avgCost,
+            currentPrice: position.currentPrice,
+            marketValue: position.marketValue,
+            unrealizedGainLoss: position.unrealizedGainLoss,
+            unrealizedGainLossPct: position.unrealizedGainLossPct,
+            dayGainLoss: position.dayGainLoss,
+            dayGainLossPct: position.dayGainLossPct,
+            costBasisMethod: position.costBasisMethod,
+            snapshotAt: position.snapshotAt,
+          })
+        }
+      }
+
+      if (nextPositions.length > 0) {
+        positionsStore.upsertSnapshots(nextPositions)
+      }
+      summary.positionsUpdated = nextPositions.length
 
       // 3. Fetch transactions for each Schwab account hash
       // Wiring point: iterate vault schwabAccountHashes, call /api/accounts/{hash}/transactions

@@ -6,6 +6,7 @@ export interface WorkerEnv {
 	SCHWAB_REDIRECT_URI?: string
 	SCHWAB_AUTH_URL?: string
 	SCHWAB_TOKEN_URL?: string
+	SCHWAB_API_BASE_URL?: string
 	SCHWAB_SCOPE?: string
 	FRONTEND_ORIGIN?: string
 }

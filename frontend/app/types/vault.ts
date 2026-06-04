@@ -42,6 +42,11 @@ export interface VaultMetadata {
    */
   schwabAccountHashes: Record<string, string>
   /**
+   * Full accountNumber → Schwab hash string.
+   * This is the canonical map used during sync merges.
+   */
+  schwabAccountHashesByFullNumber: Record<string, string>
+  /**
    * Cached Schwab OAuth token metadata (not the raw tokens — those live
    * in Cloudflare Worker KV). Expiry timestamps are stored here so the
    * frontend can warn the user without hitting the Worker.

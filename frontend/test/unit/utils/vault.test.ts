@@ -36,6 +36,7 @@ function makeTestPayload(): VaultPayload {
         defaultTimeRange: 'YTD',
       },
       schwabAccountHashes: {},
+      schwabAccountHashesByFullNumber: {},
       schwabTokenMeta: null,
       costBasisMethodByAccount: {},
       lastSavedAt: null,

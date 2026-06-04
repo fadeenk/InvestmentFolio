@@ -70,11 +70,11 @@ Wire up OAuth 2.0, token lifecycle, and all Schwab API endpoints. This is the hi
 
 ### Account & position sync `API`
 
-- [ ] `GET /trader/v1/accounts/accountNumbers` → store account hashes in vault metadata
-- [ ] `GET /trader/v1/accounts?fields=positions` → balances, positions, cash
-- [ ] Map Schwab account shapes to internal `Account` and `Position` interfaces
-- [ ] Merge new positions into vault state; track `lastUpdatedAt` per account
-- [ ] Display account selector pills in dashboard
+- [x] `GET /trader/v1/accounts/accountNumbers` → store account hashes in vault metadata
+- [x] `GET /trader/v1/accounts?fields=positions` → balances, positions, cash
+- [x] Map Schwab account shapes to internal `Account` and `Position` interfaces
+- [x] Merge new positions into vault state; track `lastUpdatedAt` per account
+- [x] Display accounts and positions in dashboard
 
 > **Depends on:** OAuth 2.0 flow
 

@@ -275,6 +275,7 @@ onMounted(async () => {
             <h2 class="text-xl font-bold">Vault unlocked</h2>
           </div>
           <div class="flex items-center gap-2">
+            <UButton label="Dashboard" size="sm" color="primary" variant="soft" to="/dashboard" />
             <span v-if="vault.status === VaultStatus.SAVING" class="flex items-center gap-1 text-sm text-(--ui-text-muted)">
               <UIcon name="i-lucide-loader-circle" class="h-3 w-3 animate-spin" />
               Saving...

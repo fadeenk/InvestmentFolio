@@ -68,9 +68,13 @@ function connectSchwab() {
     <template v-if="isUnlocked">
       <UHeader>
         <template #left>
-          <NuxtLink to="/">
-            <AppLogo class="h-6 w-auto shrink-0" />
-          </NuxtLink>
+          <div class="flex items-center gap-3">
+            <NuxtLink to="/">
+              <AppLogo class="h-6 w-auto shrink-0" />
+            </NuxtLink>
+            <UButton label="Home" to="/" size="xs" color="neutral" variant="ghost" />
+            <UButton label="Dashboard" to="/dashboard" size="xs" color="neutral" variant="ghost" />
+          </div>
         </template>
 
         <template #right>

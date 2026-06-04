@@ -197,14 +197,32 @@ export const usePositionsStore = defineStore('positions', () => {
    */
   function upsertSnapshots(incoming: Omit<Position, 'id'>[]): void {
     const now = new Date().toISOString()
-    const snapshots: Position[] = incoming.map((p) => ({
+    const incomingSnapshots: Array<Omit<Position, 'id'>> = incoming.map((p) => ({
       ...p,
-      id: randomUUID(),
       snapshotAt: p.snapshotAt || now,
     }))
 
     vaultStore.mutatePayload((p) => {
-      p.positions.push(...snapshots)
+      const seen = new Set<string>()
+      for (const existing of p.positions) {
+        seen.add(_snapshotFingerprint(existing))
+      }
+
+      const unique: Position[] = []
+      for (const snapshot of incomingSnapshots) {
+        const fingerprint = _snapshotFingerprint(snapshot)
+        if (seen.has(fingerprint)) {
+          continue
+        }
+
+        seen.add(fingerprint)
+        unique.push({
+          ...snapshot,
+          id: randomUUID(),
+        })
+      }
+
+      p.positions.push(...unique)
     })
   }
 
@@ -289,4 +307,22 @@ function _cutoffDate(range: TimeRange): string {
     default:
       return '1970-01-01'
   }
+}
+
+function _snapshotFingerprint(position: Omit<Position, 'id'> | Position): string {
+  return [
+    position.accountId,
+    position.symbol,
+    position.assetType,
+    position.quantity,
+    position.avgCost,
+    position.currentPrice,
+    position.marketValue,
+    position.unrealizedGainLoss,
+    position.unrealizedGainLossPct,
+    position.dayGainLoss,
+    position.dayGainLossPct,
+    position.costBasisMethod,
+    position.snapshotAt,
+  ].join('|')
 }

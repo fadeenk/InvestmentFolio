@@ -122,8 +122,87 @@ export const useAccountsStore = defineStore('accounts', () => {
       const account = p.accounts.find((a) => a.id === id)
       if (!account) throw new Error(`Account ${id} not found`)
       account.accountHash = hash
+      p.metadata.schwabAccountHashes[account.accountNumber] = hash
       account.lastUpdatedAt = new Date().toISOString()
     })
+  }
+
+  /**
+   * Merge Schwab hash maps from /accounts/accountNumbers into vault metadata.
+   */
+  function mergeSchwabHashMaps(
+    byFullNumber: Record<string, string>,
+    byLast4: Record<string, string>,
+  ): void {
+    vaultStore.mutatePayload((p) => {
+      p.metadata.schwabAccountHashesByFullNumber = {
+        ...p.metadata.schwabAccountHashesByFullNumber,
+        ...byFullNumber,
+      }
+      p.metadata.schwabAccountHashes = {
+        ...p.metadata.schwabAccountHashes,
+        ...byLast4,
+      }
+    })
+  }
+
+  function upsertSchwabAccount(input: {
+    accountNumber: string
+    accountHash: string | null
+    displayName: string
+    type: AccountType
+    currentBalance: number
+    cashBalance: number
+  }): { id: string; created: boolean } {
+    const now = new Date().toISOString()
+    const accountLast4 = input.accountNumber.slice(-4)
+    let result: { id: string; created: boolean } | null = null
+
+    vaultStore.mutatePayload((p) => {
+      const existing = p.accounts.find(
+        (a) =>
+          a.bank === Bank.SCHWAB &&
+          ((input.accountHash && a.accountHash === input.accountHash) ||
+            a.accountNumber === accountLast4),
+      )
+
+      if (existing) {
+        existing.type = input.type
+        existing.displayName = input.displayName
+        existing.accountNumber = accountLast4
+        existing.accountHash = input.accountHash ?? existing.accountHash
+        existing.currentBalance = input.currentBalance
+        existing.cashBalance = input.cashBalance
+        existing.syncMethod = SyncMethod.SchwabAPI
+        existing.isActive = true
+        existing.lastUpdatedAt = now
+        result = { id: existing.id, created: false }
+        return
+      }
+
+      const created: Account = {
+        id: randomUUID(),
+        bank: Bank.SCHWAB,
+        type: input.type,
+        displayName: input.displayName,
+        accountNumber: accountLast4,
+        accountHash: input.accountHash,
+        syncMethod: SyncMethod.SchwabAPI,
+        currentBalance: input.currentBalance,
+        cashBalance: input.cashBalance,
+        lastUpdatedAt: now,
+        isActive: true,
+      }
+
+      p.accounts.push(created)
+      result = { id: created.id, created: true }
+    })
+
+    if (!result) {
+      throw new Error('Unable to upsert Schwab account')
+    }
+
+    return result
   }
 
   /**
@@ -178,6 +257,8 @@ export const useAccountsStore = defineStore('accounts', () => {
     addAccount,
     updateAccount,
     setSchwabAccountHash,
+    mergeSchwabHashMaps,
+    upsertSchwabAccount,
     updateBalance,
     deactivateAccount,
     reactivateAccount,

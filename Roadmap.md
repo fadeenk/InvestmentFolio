@@ -53,8 +53,7 @@ Set up the project scaffold, encrypted vault, and Cloudflare Worker. Nothing wor
 
 ### Deploy
 
-- [ ] Set up GitHub Pages deploy pipeline via `gh-pages` branch
-- [ ] Deploy worker
+- [x] Deploy worker
 
 ## Phase 2 — Schwab Integration · Weeks 5–8
 
@@ -63,10 +62,9 @@ Wire up OAuth 2.0, token lifecycle, and all Schwab API endpoints. This is the hi
 ### OAuth 2.0 flow `Auth`
 
 - [x] Register Schwab developer app, select Accounts & Trading + Market Data production _(approval takes 1–3 business days — submit at the start of this phase)_
-- [ ] Implement `/auth/login` redirect to Schwab consent page
-- [ ] Implement `/auth/callback`: exchange code → tokens, AES-GCM encrypt tokens, store in KV
-- [ ] Implement `/auth/refresh`: swap refresh token for new access token, update KV
-- [ ] Frontend: detect token expiry, call `/auth/refresh` silently before API calls
+- [x] Implement `/auth/login` redirect to Schwab consent page
+- [x] Implement `/auth/callback`: exchange code → tokens, AES-GCM encrypt tokens, store in KV
+- [x] Implement `/auth/refresh`: swap refresh token for new access token, update KV
 
 > **Depends on:** Cloudflare Worker skeleton
 
@@ -219,6 +217,19 @@ Add manual account entry (Other/CASH accounts) and Optum CSV import. Unblocks no
 ## Phase 5 — Polish & Launch · Weeks 17–20
 
 Error handling, edge cases, mobile QA, performance, and final deployment.
+
+### FE Deployment
+
+- [ ] Set up GitHub Pages deploy pipeline via `gh-pages` branch
+- [ ] Worker URL noted and set as WORKER_URL GitHub Actions variable
+- [ ] Frontend env updated with NUXT_PUBLIC_WORKER_URL
+- [ ] Frontend deployed: GitHub Actions workflow triggered on push to main
+- [ ] GitHub Pages enabled in repo Settings → Pages → gh-pages branch
+- [ ] Worker allowed origin update to include production `worker\vitest.config.mts`
+
+### Cleanup
+
+- [ ] Frontend: detect token expiry, call `/auth/refresh` silently before API calls
 
 ### Error handling & edge cases `Reliability`
 

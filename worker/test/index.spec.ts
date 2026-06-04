@@ -393,6 +393,50 @@ describe('auth worker', () => {
 		expect(await response.json()).toEqual({ error: 'Not connected' })
 	})
 
+	it('defaults startDate to one year before endDate when startDate is omitted', async () => {
+		const env = createEnv()
+		await putEncryptedTestTokens(env)
+
+		const originalFetch = globalThis.fetch
+		globalThis.fetch = (input: RequestInfo | URL) => {
+			const requestUrl = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+			if (requestUrl.includes('/trader/v1/accounts/hash-123/transactions')) {
+				const parsed = new URL(requestUrl)
+				const start = parsed.searchParams.get('startDate')
+				const end = parsed.searchParams.get('endDate')
+				const types = parsed.searchParams.get('types')
+
+				expect(start).toBeTruthy()
+				expect(end).toBe('2026-06-03T23:59:59.000Z')
+				expect(types).toContain('TRADE')
+
+				const startMs = new Date(start!).getTime()
+				const endMs = new Date(end!).getTime()
+				const oneYearMs = 365 * 24 * 60 * 60 * 1000
+				expect(endMs - startMs).toBe(oneYearMs)
+
+				return Promise.resolve(
+					new Response(JSON.stringify([]), {
+						status: 200,
+						headers: { 'content-type': 'application/json' },
+					}),
+				)
+			}
+
+			throw new Error(`Unexpected fetch URL in test: ${requestUrl}`)
+		}
+
+		try {
+			const request = new IncomingRequest('http://example.com/api/accounts/hash-123/transactions?endDate=2026-06-03T23:59:59.000Z&types=TRADE')
+			const response = await worker.fetch(request, env as unknown as Env)
+
+			expect(response.status).toBe(200)
+			expect(await response.json()).toEqual({ transactions: [] })
+		} finally {
+			globalThis.fetch = originalFetch
+		}
+	})
+
 	it('handles API preflight requests with CORS headers', async () => {
 		const request = new IncomingRequest('http://example.com/api/accounts', {
 			method: 'OPTIONS',

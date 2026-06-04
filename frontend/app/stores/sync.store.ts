@@ -500,7 +500,7 @@ export const useSyncStore = defineStore('sync', () => {
   function defaultSyncWindowStart(toDateIso: string): string {
     const end = new Date(toDateIso)
     const start = new Date(end)
-    start.setUTCDate(start.getUTCDate() - 90)
+    start.setUTCDate(start.getUTCDate() - 365)
     return start.toISOString()
   }
 
@@ -511,7 +511,7 @@ export const useSyncStore = defineStore('sync', () => {
       return defaultSyncWindowStart(endDateIso)
     }
 
-    const oneYearMs = 366 * 24 * 60 * 60 * 1000
+    const oneYearMs = 365 * 24 * 60 * 60 * 1000
     if (endMs - startMs > oneYearMs) {
       return new Date(endMs - oneYearMs).toISOString()
     }

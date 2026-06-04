@@ -65,17 +65,18 @@ All data models live under `frontend/types/`, `worker/types/`, and are **never**
 
 ## 3. First-Time Deployment Checklist
 
-- [ ] Schwab Developer Portal app created and approved
-- [ ] Cloudflare account created (free tier)
-- [ ] KV namespace created: wrangler kv:namespace create TOKENS
-- [ ] worker/wrangler.jsonc updated with real KV namespace IDs
-- [ ] Worker secrets set via wrangler secret put (3 secrets)
-- [ ] GitHub repo created, CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID secrets added
-- [ ] Worker deployed: cd worker && npx wrangler deploy
+- [x] Schwab Developer Portal app created and approved
+- [x] Cloudflare account created (free tier)
+- [x] KV namespace created: wrangler kv:namespace create TOKENS
+- [x] worker/wrangler.jsonc updated with real KV namespace IDs
+- [x] Worker secrets set via wrangler secret put (3 secrets)
+- [x] GitHub repo created, CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID secrets added
+- [x] Worker deployed: cd worker && npx wrangler deploy
 - [ ] Worker URL noted and set as WORKER_URL GitHub Actions variable
 - [ ] Frontend env updated with NUXT_PUBLIC_WORKER_URL
 - [ ] Frontend deployed: GitHub Actions workflow triggered on push to main
 - [ ] GitHub Pages enabled in repo Settings → Pages → gh-pages branch
+- [ ] Worker allowed origin update to include production `worker\vitest.config.mts`
 - [ ] App opened in Chrome, vault created, Schwab OAuth completed, data synced
 
 ## 4. Development Workflow

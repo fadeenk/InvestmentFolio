@@ -161,7 +161,8 @@ function mapAssetType(raw: SchwabAssetTypeRaw): AssetType {
 
 function mapTransaction(transaction: SchwabTransaction, accountId: string): SchwabMappedTransactionDraft {
   const normalizedType = mapTransactionType(transaction)
-  const primaryTransferItem = transaction.transferItems.find((item) => !!item.instrument?.symbol)
+  const transferItems = transaction.transferItems ?? []
+  const primaryTransferItem = transferItems.find((item) => !!item.instrument?.symbol)
   const primaryInstrument = primaryTransferItem?.instrument
   const quantity = getTransactionQuantity(transaction)
   const price = getTransactionPrice(transaction)
@@ -186,8 +187,8 @@ function mapTransaction(transaction: SchwabTransaction, accountId: string): Schw
 }
 
 function mapTransactionType(transaction: SchwabTransaction): TransactionType {
-  const rawType = transaction.type.toUpperCase()
-  const rawActivity = transaction.activityType.toUpperCase()
+  const rawType = uppercaseOrEmpty(transaction.type)
+  const rawActivity = uppercaseOrEmpty(transaction.activityType)
   const combined = `${rawType} ${rawActivity}`
 
   if (combined.includes('DIVIDEND')) {
@@ -230,7 +231,7 @@ function isLikelyBuy(transaction: SchwabTransaction, combined: string): boolean 
     return true
   }
 
-  const openingTransfer = transaction.transferItems.some((item) => item.positionEffect === 'OPENING' && numberOrZero(item.amount) > 0)
+  const openingTransfer = (transaction.transferItems ?? []).some((item) => item.positionEffect === 'OPENING' && numberOrZero(item.amount) > 0)
   return openingTransfer && transaction.netAmount < 0
 }
 
@@ -239,12 +240,12 @@ function isLikelySell(transaction: SchwabTransaction, combined: string): boolean
     return true
   }
 
-  const closingTransfer = transaction.transferItems.some((item) => item.positionEffect === 'CLOSING' && numberOrZero(item.amount) > 0)
+  const closingTransfer = (transaction.transferItems ?? []).some((item) => item.positionEffect === 'CLOSING' && numberOrZero(item.amount) > 0)
   return closingTransfer && transaction.netAmount > 0
 }
 
 function getTransactionQuantity(transaction: SchwabTransaction): number | null {
-  const transferQuantity = transaction.transferItems.reduce((sum, item) => {
+  const transferQuantity = (transaction.transferItems ?? []).reduce((sum, item) => {
     if (typeof item.amount !== 'number' || !Number.isFinite(item.amount)) {
       return sum
     }
@@ -259,7 +260,9 @@ function getTransactionQuantity(transaction: SchwabTransaction): number | null {
 }
 
 function getTransactionPrice(transaction: SchwabTransaction): number {
-  const prices = transaction.transferItems.map((item) => item.price).filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
+  const prices = (transaction.transferItems ?? [])
+    .map((item) => item.price)
+    .filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
 
   if (prices.length === 0) {
     return 0
@@ -269,7 +272,7 @@ function getTransactionPrice(transaction: SchwabTransaction): number {
 }
 
 function getTransactionFees(transaction: SchwabTransaction): number {
-  return transaction.transferItems.reduce((sum, item) => {
+  return (transaction.transferItems ?? []).reduce((sum, item) => {
     if (!item.feeType) {
       return sum
     }
@@ -279,7 +282,7 @@ function getTransactionFees(transaction: SchwabTransaction): number {
 
 function normalizeTransactionDate(transaction: SchwabTransaction): string {
   if (transaction.tradeDate) {
-    return transaction.tradeDate
+    return transaction.tradeDate.slice(0, 10)
   }
 
   if (transaction.time) {
@@ -303,4 +306,8 @@ function last4(accountNumber: string): string {
 
 function numberOrZero(value: number | undefined): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : 0
+}
+
+function uppercaseOrEmpty(value: unknown): string {
+  return typeof value === 'string' ? value.toUpperCase() : ''
 }

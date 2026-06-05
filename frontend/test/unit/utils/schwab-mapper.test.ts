@@ -217,4 +217,48 @@ describe('schwab mapper edge cases', () => {
     expect(mapped[0].type).toBe(TransactionType.DEPOSIT)
     expect(mapped[1].type).toBe(TransactionType.WITHDRAWAL)
   })
+
+  it('handles trade transactions without activityType', () => {
+    const response: SchwabTransactionsResponse = {
+      transactions: [
+        {
+          activityId: 121064368565,
+          time: '2026-06-05T06:33:41+0000',
+          description: 'System transfer',
+          accountNumber: '82327960',
+          type: 'TRADE',
+          status: 'VALID',
+          subAccount: 'CASH',
+          tradeDate: '2026-06-05T06:33:41+0000',
+          positionId: 3350013749,
+          netAmount: 0,
+          transferItems: [
+            {
+              instrument: {
+                assetType: 'COLLECTIVE_INVESTMENT',
+                status: 'ACTIVE',
+                symbol: 'VOO',
+                uniformSymbol: 'VOO',
+                description: 'VANGUARD S&P 500 ETF',
+                instrumentId: 5230530,
+                closingPrice: 696.06,
+                type: 'EXCHANGE_TRADED_FUND',
+              },
+              amount: 22,
+              cost: 9950.149999999,
+              price: 452.2795454545,
+            },
+          ],
+        } as SchwabTransactionsResponse['transactions'][number],
+      ],
+    }
+
+    const mapped = mapSchwabTransactionsToVaultDrafts(response, 'acct-1')
+
+    expect(mapped).toHaveLength(1)
+    expect(mapped[0].externalId).toBe('121064368565')
+    expect(mapped[0].symbol).toBe('VOO')
+    expect(mapped[0].quantity).toBe(22)
+    expect(mapped[0].date).toBe('2026-06-05')
+  })
 })

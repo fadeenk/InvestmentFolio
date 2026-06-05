@@ -177,7 +177,7 @@ export interface SchwabTransaction {
   positionId?: number
   orderId?: number
   netAmount: number
-  activityType: string
+  activityType?: string
   transferItems: SchwabTransferItem[]
 }
 

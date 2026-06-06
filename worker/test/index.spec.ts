@@ -55,7 +55,19 @@ function createEnv(overrides: Partial<TestEnv> = {}): TestEnv {
 	}
 }
 
-async function putEncryptedTestTokens(env: TestEnv): Promise<void> {
+async function putEncryptedTestTokens(
+	env: TestEnv,
+	overrides: Partial<{
+		accessToken: string
+		refreshToken: string
+		accessTokenExpiresAt: string
+		refreshTokenExpiresAt: string | null
+		tokenType: string
+		scope: string
+		lastRefreshedAt: string
+		connectedAccountCount: number
+	}> = {},
+): Promise<void> {
 	const now = new Date().toISOString()
 	const plaintext = {
 		accessToken: 'worker-access-token',
@@ -66,6 +78,7 @@ async function putEncryptedTestTokens(env: TestEnv): Promise<void> {
 		scope: 'readonly',
 		lastRefreshedAt: now,
 		connectedAccountCount: 0,
+		...overrides,
 	}
 
 	const keySeed = new TextEncoder().encode(env.TOKEN_ENCRYPTION_KEY)
@@ -219,6 +232,82 @@ describe('auth worker', () => {
 		expect(response.headers.get('Access-Control-Allow-Methods')).toContain('OPTIONS')
 	})
 
+	it('returns enriched auth status payload with expiry metadata and live connected account count', async () => {
+		const env = createEnv()
+		await putEncryptedTestTokens(env, {
+			connectedAccountCount: 0,
+			refreshTokenExpiresAt: new Date(Date.now() + 5 * 24 * 60 * 60_000).toISOString(),
+		})
+
+		const originalFetch = globalThis.fetch
+		globalThis.fetch = (input: RequestInfo | URL) => {
+			const requestUrl = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+			if (requestUrl.includes('/trader/v1/accounts/accountNumbers')) {
+				return Promise.resolve(
+					new Response(
+						JSON.stringify([
+							{ accountNumber: '123456789', hashValue: 'hash-1' },
+							{ accountNumber: '987654321', hashValue: 'hash-2' },
+						]),
+						{
+							status: 200,
+							headers: { 'content-type': 'application/json' },
+						},
+					),
+				)
+			}
+
+			throw new Error('Unexpected fetch URL in test: ' + requestUrl)
+		}
+
+		try {
+			const request = new IncomingRequest('http://example.com/auth/status')
+			const response = await worker.fetch(request, env as unknown as Env)
+			const body = await response.json()
+
+			expect(response.status).toBe(200)
+			expect(body.isConnected).toBe(true)
+			expect(typeof body.accessTokenExpiresAt).toBe('string')
+			expect(typeof body.refreshTokenExpiresAt).toBe('string')
+			expect(typeof body.accessTokenSecondsRemaining).toBe('number')
+			expect(typeof body.refreshTokenSecondsRemaining).toBe('number')
+			expect(body.isRefreshTokenExpiringSoon).toBe(false)
+			expect(body.warning).toBeNull()
+			expect(body.connectedAccountCount).toBe(2)
+		} finally {
+			globalThis.fetch = originalFetch
+		}
+	})
+
+	it('flags refresh-token expiry warning within 24 hours', async () => {
+		const env = createEnv()
+		await putEncryptedTestTokens(env, {
+			refreshTokenExpiresAt: new Date(Date.now() + 6 * 60 * 60_000).toISOString(),
+		})
+
+		const originalFetch = globalThis.fetch
+		globalThis.fetch = (input: RequestInfo | URL) => {
+			const requestUrl = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+			if (requestUrl.includes('/trader/v1/accounts/accountNumbers')) {
+				return Promise.resolve(new Response(JSON.stringify([]), { status: 200, headers: { 'content-type': 'application/json' } }))
+			}
+
+			throw new Error('Unexpected fetch URL in test: ' + requestUrl)
+		}
+
+		try {
+			const request = new IncomingRequest('http://example.com/auth/status')
+			const response = await worker.fetch(request, env as unknown as Env)
+			const body = await response.json()
+
+			expect(response.status).toBe(200)
+			expect(body.isConnected).toBe(true)
+			expect(body.isRefreshTokenExpiringSoon).toBe(true)
+			expect(body.warning).toContain('24 hours')
+		} finally {
+			globalThis.fetch = originalFetch
+		}
+	})
 	it('adds CORS headers to auth responses', async () => {
 		const request = new IncomingRequest('http://example.com/auth/status', {
 			headers: {

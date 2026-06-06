@@ -47,7 +47,7 @@ function makeMockFile(): File {
   const buf = new Uint8Array(54 + 32)
   buf.set(header)
 
-  return new File([buf.buffer], 'folio.foli', { type: 'application/octet-stream' })
+  return new File([buf.buffer], 'ifolio.foli', { type: 'application/octet-stream' })
 }
 
 function mockCryptoAPI() {
@@ -248,14 +248,14 @@ describe('vault store', () => {
 
     it('handles corrupted vault file', async () => {
       vi.spyOn(vaultUtils, 'parseVaultBuffer').mockImplementation(() => {
-        throw new Error('Not a valid Folio vault file')
+        throw new Error('Not a valid iFolio vault file')
       })
 
       const store = useVaultStore()
       const badFile = new File(['garbage'], 'bad.foli', { type: 'application/octet-stream' })
       await expect(store.openVault(badFile, 'any')).rejects.toThrow()
       expect(store.status).toBe(VaultStatus.LOCKED)
-      expect(store.lastError).toBe('Not a valid Folio vault file')
+      expect(store.lastError).toBe('Not a valid iFolio vault file')
     })
   })
 
@@ -520,7 +520,7 @@ describe('vault store', () => {
   describe('setFileHandle', () => {
     it('stores the file handle', () => {
       const store = useVaultStore()
-      const handle = { name: 'folio.foli' } as unknown as FileSystemFileHandle
+      const handle = { name: 'ifolio.foli' } as unknown as FileSystemFileHandle
       store.setFileHandle(handle)
       expect(store.fileHandle).toStrictEqual(handle)
     })

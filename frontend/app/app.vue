@@ -3,13 +3,13 @@ import { computed, watch } from 'vue'
 import { useSyncStore } from '~/stores/sync.store'
 import { useUiStore } from '~/stores/ui'
 import { useVaultStore } from '~/stores/vault.store'
-import { TokenStatus, VaultStatus } from '~/types/vault'
+import { VaultStatus } from '~/types/vault'
 
 const vault = useVaultStore()
 const sync = useSyncStore()
 const ui = useUiStore()
 
-const title = 'Folio'
+const title = 'iFolio'
 const description = 'Private portfolio tracker — all data encrypted at rest'
 
 useSeoMeta({
@@ -33,16 +33,9 @@ const settingsOpen = computed({
 })
 
 const authStatusLabel = computed(() => {
-  switch (sync.tokenStatus) {
-    case TokenStatus.VALID:
-      return 'Connected'
-    case TokenStatus.EXPIRING_SOON:
-      return 'Expiring soon'
-    case TokenStatus.EXPIRED:
-      return 'Expired'
-    default:
-      return 'Not connected'
-  }
+  if (sync.isSyncing) return 'Importing'
+  if (sync.lastSyncSummary) return 'Ready'
+  return 'Idle'
 })
 
 const bannerClasses = computed(() => {
@@ -59,9 +52,6 @@ const bannerClasses = computed(() => {
   return ['border-red-200 bg-red-50 text-red-800', 'dark:border-red-800 dark:bg-red-950/30 dark:text-red-200'].join(' ')
 })
 
-const refreshExpiryLabel = computed(() => formatRemaining(sync.refreshTokenSecondsRemaining))
-const accessExpiryLabel = computed(() => formatRemaining(sync.accessTokenSecondsRemaining))
-
 watch(
   () => vault.status,
   async () => {
@@ -75,27 +65,12 @@ function openAuthSettings() {
   ui.openModal('auth-settings')
 }
 
-function connectSchwab() {
-  sync.initiateOAuthFlow()
+function openImportSettings() {
+  navigateTo('/settings')
 }
 
 function dismissBanner() {
   ui.clearBanner()
-}
-
-function formatRemaining(secondsRemaining: number | null): string {
-  if (secondsRemaining === null) return 'Unknown'
-
-  if (secondsRemaining <= 0) {
-    return 'Expired'
-  }
-
-  const hours = Math.floor(secondsRemaining / 3600)
-  if (hours < 1) return 'Less than 1 hour'
-  if (hours < 24) return `${hours}h remaining`
-
-  const days = Math.floor(hours / 24)
-  return `${days}d remaining`
 }
 </script>
 
@@ -146,44 +121,44 @@ function formatRemaining(secondsRemaining: number | null): string {
       <NuxtPage />
     </UMain>
 
-    <UModal v-model:open="settingsOpen" title="Settings" description="Authentication" :ui="{ footer: 'justify-end' }">
+    <UModal v-model:open="settingsOpen" title="Settings" description="Import status" :ui="{ footer: 'justify-end' }">
       <template #body>
         <div class="space-y-4">
           <div class="grid gap-3 sm:grid-cols-2">
             <div class="rounded-lg border border-(--ui-border) p-3">
-              <p class="text-sm text-(--ui-text-muted)">Schwab status</p>
+              <p class="text-sm text-(--ui-text-muted)">Import status</p>
               <p class="text-base font-semibold">
                 {{ authStatusLabel }}
               </p>
             </div>
 
             <div class="rounded-lg border border-(--ui-border) p-3">
-              <p class="text-sm text-(--ui-text-muted)">Connected accounts</p>
+              <p class="text-sm text-(--ui-text-muted)">Imported records</p>
               <p class="text-base font-semibold">
-                {{ sync.connectedAccountCount }}
+                {{ sync.lastSyncSummary?.transactionsAdded ?? 0 }}
               </p>
             </div>
 
             <div class="rounded-lg border border-(--ui-border) p-3">
-              <p class="text-sm text-(--ui-text-muted)">Access token</p>
+              <p class="text-sm text-(--ui-text-muted)">Last import</p>
               <p class="text-base font-semibold">
-                {{ accessExpiryLabel }}
+                {{ sync.lastSyncSummary?.completedAt ? new Date(sync.lastSyncSummary.completedAt).toLocaleString() : 'Never' }}
               </p>
             </div>
 
             <div class="rounded-lg border border-(--ui-border) p-3">
-              <p class="text-sm text-(--ui-text-muted)">Refresh token</p>
+              <p class="text-sm text-(--ui-text-muted)">Deduplicated</p>
               <p class="text-base font-semibold">
-                {{ refreshExpiryLabel }}
+                {{ sync.lastSyncSummary?.deduplicatedCount ?? 0 }}
               </p>
             </div>
           </div>
 
           <div v-if="sync.expirationWarning" class="rounded-md bg-amber-500/15 p-2 text-sm text-amber-700 dark:text-amber-200">
-            Re-authorization is recommended within 24 hours to avoid interruptions.
+            Import is currently in progress.
           </div>
 
-          <p class="text-sm text-(--ui-text-muted)">Use this panel to reconnect or verify token health before running sync.</p>
+          <p class="text-sm text-(--ui-text-muted)">Use settings to import transaction files and manage accounts.</p>
 
           <p v-if="sync.lastError" class="rounded-md bg-red-500/15 p-2 text-sm text-red-700 dark:text-red-200">
             {{ sync.lastError }}
@@ -192,8 +167,8 @@ function formatRemaining(secondsRemaining: number | null): string {
       </template>
 
       <template #footer>
-        <UButton label="Refresh status" color="neutral" variant="outline" @click="sync.pollTokenStatus" />
-        <UButton :label="sync.requiresReauth ? 'Connect Schwab' : 'Re-authorize Schwab'" color="primary" @click="connectSchwab" />
+        <UButton label="Open settings" color="neutral" variant="outline" @click="openImportSettings" />
+        <UButton label="Import transactions" color="primary" @click="openImportSettings" />
       </template>
     </UModal>
 

@@ -156,7 +156,9 @@ function gainLossClass(value: number): string {
           <p class="text-2xl font-bold" :class="gainLossClass(totals.ytdRealizedGainLossTotal)">
             {{ formatCurrency(totals.ytdRealizedGainLossTotal) }}
           </p>
-          <p class="text-xs text-(--ui-text-muted)">Short {{ formatCurrency(totals.ytdRealizedGainLossShortTerm) }} / Long {{ formatCurrency(totals.ytdRealizedGainLossLongTerm) }}</p>
+          <p class="text-xs text-(--ui-text-muted)">
+            Short {{ formatCurrency(totals.ytdRealizedGainLossShortTerm) }} / Long {{ formatCurrency(totals.ytdRealizedGainLossLongTerm) }}
+          </p>
         </UCard>
 
         <UCard>
@@ -184,7 +186,7 @@ function gainLossClass(value: number): string {
             </div>
 
             <div class="space-y-2">
-              <p class="text-xs font-medium uppercase tracking-wide text-(--ui-text-muted)">Account</p>
+              <p class="text-xs font-medium tracking-wide text-(--ui-text-muted) uppercase">Account</p>
               <div class="flex flex-wrap gap-2">
                 <UButton
                   v-for="option in accountOptions"
@@ -199,7 +201,7 @@ function gainLossClass(value: number): string {
             </div>
 
             <div class="space-y-2">
-              <p class="text-xs font-medium uppercase tracking-wide text-(--ui-text-muted)">Range</p>
+              <p class="text-xs font-medium tracking-wide text-(--ui-text-muted) uppercase">Range</p>
               <div class="flex flex-wrap gap-2">
                 <UButton
                   v-for="option in timeRangeOptions"

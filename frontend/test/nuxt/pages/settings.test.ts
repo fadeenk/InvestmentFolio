@@ -28,9 +28,6 @@ function createPayload(): VaultPayload {
         defaultCostBasisMethod: CostBasisMethod.FIFO,
         defaultTimeRange: 'YTD',
       },
-      schwabAccountHashes: {},
-      schwabAccountHashesByFullNumber: {},
-      schwabTokenMeta: null,
       costBasisMethodByAccount: {},
       lastSavedAt: null,
     },
@@ -67,7 +64,7 @@ describe('settings page', () => {
     const wrapper = mountPage()
     const text = wrapper.text()
 
-    expect(text).toContain('Schwab connection')
+    expect(text).toContain('Transaction import')
     expect(text).toContain('Account management')
     expect(text).toContain('Vault management')
     expect(text).toContain('Display preferences')

@@ -4,7 +4,6 @@ import { useAccountsStore } from '~/stores/accounts.store'
 import { useSyncStore } from '~/stores/sync.store'
 import { useVaultStore } from '~/stores/vault.store'
 import { AccountType, Bank, CostBasisMethod, DateFormat, Theme, TimeRange } from '~/types/enums'
-import { TokenStatus } from '~/types/vault'
 
 const vaultStore = useVaultStore()
 const syncStore = useSyncStore()
@@ -26,6 +25,9 @@ const passphraseForm = ref({
 const passphraseError = ref<string | null>(null)
 const passphraseSuccess = ref<string | null>(null)
 const passphraseSaving = ref(false)
+const importAccountId = ref<string | null>(null)
+const importFile = ref<File | null>(null)
+const importErrors = ref<string[]>([])
 
 const themeOptions = [Theme.LIGHT, Theme.DARK, Theme.SYSTEM]
 const currencyOptions = ['USD']
@@ -46,17 +48,11 @@ const displayPreferences = computed(() => {
   )
 })
 
-const tokenLabel = computed(() => {
-  switch (syncStore.tokenStatus) {
-    case TokenStatus.VALID:
-      return 'Connected'
-    case TokenStatus.EXPIRING_SOON:
-      return 'Expiring soon'
-    case TokenStatus.EXPIRED:
-      return 'Expired'
-    default:
-      return 'Not connected'
-  }
+const importStatusLabel = computed(() => {
+  if (syncStore.isSyncing) return 'Importing'
+  if (syncStore.lastError) return 'Error'
+  if (syncStore.lastSyncSummary) return 'Ready'
+  return 'Idle'
 })
 
 const orderedAccounts = computed(() => accountsStore.all)
@@ -74,18 +70,6 @@ const accountOptions = computed(() => {
   ]
 })
 
-function formatRemaining(secondsRemaining: number | null): string {
-  if (secondsRemaining === null) return 'Unknown'
-  if (secondsRemaining <= 0) return 'Expired'
-
-  const hours = Math.floor(secondsRemaining / 3600)
-  if (hours < 1) return 'Less than 1 hour'
-  if (hours < 24) return `${hours}h remaining`
-
-  const days = Math.floor(hours / 24)
-  return `${days}d remaining`
-}
-
 function updateDisplayPreference<K extends keyof typeof displayPreferences.value>(key: K, value: (typeof displayPreferences.value)[K]): void {
   vaultStore.mutatePayload((payload) => {
     payload.metadata.displayPreferences[key] = value
@@ -99,8 +83,7 @@ function addAccount(): void {
     bank: newAccount.value.bank,
     type: newAccount.value.type,
     displayName: newAccount.value.displayName,
-    accountNumber: newAccount.value.accountNumber.slice(-4),
-    accountHash: null,
+    accountNumber: newAccount.value.accountNumber,
     initialBalance: Number(newAccount.value.initialBalance) || 0,
   })
 
@@ -143,9 +126,31 @@ function exportVaultJson(): void {
   const url = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
   anchor.href = url
-  anchor.download = `folio-vault-${new Date().toISOString().slice(0, 10)}.json`
+  anchor.download = `ifolio-vault-${new Date().toISOString().slice(0, 10)}.json`
   anchor.click()
   URL.revokeObjectURL(url)
+}
+
+function onImportFileChange(event: Event): void {
+  const target = event.target as HTMLInputElement
+  importFile.value = target.files?.[0] ?? null
+}
+
+async function importTransactions(): Promise<void> {
+  importErrors.value = []
+
+  if (!importAccountId.value) {
+    importErrors.value = ['Select an account for the import.']
+    return
+  }
+
+  if (!importFile.value) {
+    importErrors.value = ['Select a CSV file to import.']
+    return
+  }
+
+  const result = await syncStore.importCsv(importFile.value, importAccountId.value)
+  importErrors.value = result.errors
 }
 
 function clearVaultData(): void {
@@ -210,45 +215,58 @@ async function changePassphrase(): Promise<void> {
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
         <h1 class="text-2xl font-bold">Settings</h1>
-        <p class="text-sm text-(--ui-text-muted)">Schwab connection, account management, vault controls, and display preferences.</p>
+        <p class="text-sm text-(--ui-text-muted)">Transaction imports, account management, vault controls, and display preferences.</p>
       </div>
       <UButton label="Dashboard" to="/dashboard" color="neutral" variant="outline" />
     </div>
 
     <UCard>
       <template #header>
-        <h2 class="text-lg font-semibold">Schwab connection</h2>
+        <h2 class="text-lg font-semibold">Transaction import</h2>
       </template>
 
       <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div class="rounded-md border border-(--ui-border) p-3">
           <p class="text-sm text-(--ui-text-muted)">Status</p>
-          <p class="text-base font-semibold">{{ tokenLabel }}</p>
+          <p class="text-base font-semibold">{{ importStatusLabel }}</p>
         </div>
 
         <div class="rounded-md border border-(--ui-border) p-3">
-          <p class="text-sm text-(--ui-text-muted)">Connected accounts</p>
-          <p class="text-base font-semibold">{{ syncStore.connectedAccountCount }}</p>
+          <p class="text-sm text-(--ui-text-muted)">Last import</p>
+          <p class="text-base font-semibold">
+            {{ syncStore.lastSyncSummary?.completedAt ? new Date(syncStore.lastSyncSummary.completedAt).toLocaleString() : 'Never' }}
+          </p>
         </div>
 
         <div class="rounded-md border border-(--ui-border) p-3">
-          <p class="text-sm text-(--ui-text-muted)">Access token</p>
-          <p class="text-base font-semibold">{{ formatRemaining(syncStore.accessTokenSecondsRemaining) }}</p>
+          <p class="text-sm text-(--ui-text-muted)">Imported rows</p>
+          <p class="text-base font-semibold">{{ syncStore.lastSyncSummary?.transactionsAdded ?? 0 }}</p>
         </div>
 
         <div class="rounded-md border border-(--ui-border) p-3">
-          <p class="text-sm text-(--ui-text-muted)">Refresh token</p>
-          <p class="text-base font-semibold">{{ formatRemaining(syncStore.refreshTokenSecondsRemaining) }}</p>
+          <p class="text-sm text-(--ui-text-muted)">Deduplicated</p>
+          <p class="text-base font-semibold">{{ syncStore.lastSyncSummary?.deduplicatedCount ?? 0 }}</p>
         </div>
       </div>
 
       <div v-if="syncStore.expirationWarning" class="mt-3 rounded-md bg-amber-500/15 p-2 text-sm text-amber-700 dark:text-amber-200">
-        Re-authorization is recommended within 24 hours to avoid sync interruptions.
+        Import currently in progress.
+      </div>
+
+      <div class="mt-3 grid gap-3 md:grid-cols-2">
+        <select v-model="importAccountId" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
+          <option :value="null">Select account</option>
+          <option v-for="account in accountsStore.active" :key="account.id" :value="account.id">{{ account.displayName }}</option>
+        </select>
+        <input type="file" accept=".csv,text/csv" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" @change="onImportFileChange" />
+      </div>
+
+      <div v-if="importErrors.length > 0" class="mt-3 rounded-md bg-red-500/15 p-2 text-sm text-red-700 dark:text-red-200">
+        {{ importErrors.join(' ') }}
       </div>
 
       <div class="mt-3 flex flex-wrap gap-2">
-        <UButton label="Refresh status" color="neutral" variant="outline" @click="syncStore.pollTokenStatus" />
-        <UButton :label="syncStore.requiresReauth ? 'Connect Schwab' : 'Re-authorize Schwab'" color="primary" @click="syncStore.initiateOAuthFlow" />
+        <UButton label="Import CSV" color="primary" :loading="syncStore.isSyncing" @click="importTransactions" />
       </div>
     </UCard>
 
@@ -263,7 +281,8 @@ async function changePassphrase(): Promise<void> {
             <div>
               <p class="font-medium">{{ account.displayName }}</p>
               <p class="text-xs text-(--ui-text-muted)">
-                {{ account.bank }} · {{ account.type }} · ••••{{ account.accountNumber }} · {{ account.isActive ? 'Active' : 'Inactive' }}
+                {{ account.bank }} · {{ account.type }} · {{ accountsStore.maskAccountNumber(account.accountNumber) }} ·
+                {{ account.isActive ? 'Active' : 'Inactive' }}
               </p>
             </div>
 
@@ -294,11 +313,14 @@ async function changePassphrase(): Promise<void> {
 
         <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
           <input v-model="newAccount.displayName" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" placeholder="Display name" />
-          <input v-model="newAccount.accountNumber" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" placeholder="Account number" />
+          <input
+            v-model="newAccount.accountNumber"
+            class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
+            placeholder="Account number"
+          />
 
           <select v-model="newAccount.bank" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
             <option :value="Bank.OTHER">OTHER</option>
-            <option :value="Bank.SCHWAB">SCHWAB</option>
             <option :value="Bank.OPTUM">OPTUM</option>
           </select>
 
@@ -414,7 +436,12 @@ async function changePassphrase(): Promise<void> {
           <select
             :value="displayPreferences.defaultAccountFilter ?? 'ALL'"
             class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
-            @change="updateDisplayPreference('defaultAccountFilter', ($event.target as HTMLSelectElement).value === 'ALL' ? null : ($event.target as HTMLSelectElement).value)"
+            @change="
+              updateDisplayPreference(
+                'defaultAccountFilter',
+                ($event.target as HTMLSelectElement).value === 'ALL' ? null : ($event.target as HTMLSelectElement).value,
+              )
+            "
           >
             <option v-for="account in accountOptions" :key="account.id" :value="account.id">{{ account.label }}</option>
           </select>

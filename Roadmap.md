@@ -1,4 +1,4 @@
-# Folio — Developer Roadmap
+# iFolio — Developer Roadmap
 
 ---
 
@@ -81,7 +81,7 @@ Wire up OAuth 2.0, token lifecycle, and all Schwab API endpoints. This is the hi
 ### Transaction sync & mapping `API`
 
 - [x] `GET /trader/v1/accounts/{hash}/transactions` for every account since lastupdated till now
-- [x] Map all Schwab transaction types to Folio categories
+- [x] Map all Schwab transaction types to iFolio categories
 - [x] Deduplication by transaction ID before merging into vault
 - [x] Tag imported transactions with `importSource: API`
 - [x] Ensure on unlock and successful authentication it triggers syncing of accounts possitions and transactions
@@ -204,7 +204,7 @@ Add manual account entry (Other/CASH accounts) and Optum CSV import. Unblocks no
 
 ### ⚠️ Open questions
 
-**Q4:** Decide if Folio computes cost basis independently of Schwab or mirrors their method — independent computation enables what-if analysis but may diverge from official records.
+**Q4:** Decide if iFolio computes cost basis independently of Schwab or mirrors their method — independent computation enables what-if analysis but may diverge from official records.
 
 **Q5:** Optum CSV format is TBD pending access to an export sample. Resolve this before building the parser — allow manual entry as a fallback in the interim.
 

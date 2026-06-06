@@ -26,9 +26,6 @@ function createDefaultPayload(): VaultPayload {
         defaultCostBasisMethod: CostBasisMethod.FIFO,
         defaultTimeRange: 'YTD',
       },
-      schwabAccountHashes: {},
-      schwabAccountHashesByFullNumber: {},
-      schwabTokenMeta: null,
       costBasisMethodByAccount: {},
       lastSavedAt: null,
     },
@@ -223,7 +220,7 @@ export const useVaultStore = defineStore('vault', () => {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'folio.foli'
+    a.download = 'ifolio.foli'
     a.click()
     URL.revokeObjectURL(url)
   }

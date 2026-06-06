@@ -3,7 +3,9 @@ import { computed, ref } from 'vue'
 import { createColumnHelper, createTable, getCoreRowModel } from '@tanstack/table-core'
 import { useAccountsStore } from '~/stores/accounts.store'
 import { useTransactionsStore } from '~/stores/transactions.store'
-import { ImportSource, TransactionType } from '~/types/enums'
+import type { ImportSource } from '~/types/enums'
+import { TransactionType } from '~/types/enums'
+import { transactionCashDelta } from '~/utils/ledger'
 
 type TransactionTab = 'ALL' | 'TRADES' | 'DIVIDENDS' | 'INTEREST' | 'TRANSFERS' | 'MANUAL'
 
@@ -164,23 +166,7 @@ const table = computed(() => {
 })
 
 function signedAmount(tx: (typeof filteredTransactions.value)[number]): number {
-  const quantity = tx.quantity ?? 0
-  const base = quantity === 0 ? tx.price : quantity * tx.price
-  const total = base + tx.fees
-
-  switch (tx.type) {
-    case TransactionType.Sell:
-    case TransactionType.Dividend:
-    case TransactionType.Interest:
-    case TransactionType.DEPOSIT:
-    case TransactionType.TRANSFER_IN:
-      return total
-    case TransactionType.Buy:
-    case TransactionType.WITHDRAWAL:
-    case TransactionType.TRANSFER_OUT:
-    default:
-      return -total
-  }
+  return transactionCashDelta(tx)
 }
 
 function formatCurrency(value: number): string {
@@ -259,12 +245,48 @@ function deleteTransaction(id: string): void {
     <UCard>
       <template #header>
         <div class="flex flex-wrap gap-2">
-          <UButton label="All" size="xs" :color="activeTab === 'ALL' ? 'primary' : 'neutral'" :variant="activeTab === 'ALL' ? 'solid' : 'outline'" @click="activeTab = 'ALL'" />
-          <UButton label="Trades" size="xs" :color="activeTab === 'TRADES' ? 'primary' : 'neutral'" :variant="activeTab === 'TRADES' ? 'solid' : 'outline'" @click="activeTab = 'TRADES'" />
-          <UButton label="Dividends" size="xs" :color="activeTab === 'DIVIDENDS' ? 'primary' : 'neutral'" :variant="activeTab === 'DIVIDENDS' ? 'solid' : 'outline'" @click="activeTab = 'DIVIDENDS'" />
-          <UButton label="Interest" size="xs" :color="activeTab === 'INTEREST' ? 'primary' : 'neutral'" :variant="activeTab === 'INTEREST' ? 'solid' : 'outline'" @click="activeTab = 'INTEREST'" />
-          <UButton label="Transfers" size="xs" :color="activeTab === 'TRANSFERS' ? 'primary' : 'neutral'" :variant="activeTab === 'TRANSFERS' ? 'solid' : 'outline'" @click="activeTab = 'TRANSFERS'" />
-          <UButton label="Manual" size="xs" :color="activeTab === 'MANUAL' ? 'primary' : 'neutral'" :variant="activeTab === 'MANUAL' ? 'solid' : 'outline'" @click="activeTab = 'MANUAL'" />
+          <UButton
+            label="All"
+            size="xs"
+            :color="activeTab === 'ALL' ? 'primary' : 'neutral'"
+            :variant="activeTab === 'ALL' ? 'solid' : 'outline'"
+            @click="activeTab = 'ALL'"
+          />
+          <UButton
+            label="Trades"
+            size="xs"
+            :color="activeTab === 'TRADES' ? 'primary' : 'neutral'"
+            :variant="activeTab === 'TRADES' ? 'solid' : 'outline'"
+            @click="activeTab = 'TRADES'"
+          />
+          <UButton
+            label="Dividends"
+            size="xs"
+            :color="activeTab === 'DIVIDENDS' ? 'primary' : 'neutral'"
+            :variant="activeTab === 'DIVIDENDS' ? 'solid' : 'outline'"
+            @click="activeTab = 'DIVIDENDS'"
+          />
+          <UButton
+            label="Interest"
+            size="xs"
+            :color="activeTab === 'INTEREST' ? 'primary' : 'neutral'"
+            :variant="activeTab === 'INTEREST' ? 'solid' : 'outline'"
+            @click="activeTab = 'INTEREST'"
+          />
+          <UButton
+            label="Transfers"
+            size="xs"
+            :color="activeTab === 'TRANSFERS' ? 'primary' : 'neutral'"
+            :variant="activeTab === 'TRANSFERS' ? 'solid' : 'outline'"
+            @click="activeTab = 'TRANSFERS'"
+          />
+          <UButton
+            label="Manual"
+            size="xs"
+            :color="activeTab === 'MANUAL' ? 'primary' : 'neutral'"
+            :variant="activeTab === 'MANUAL' ? 'solid' : 'outline'"
+            @click="activeTab = 'MANUAL'"
+          />
         </div>
       </template>
 
@@ -332,7 +354,12 @@ function deleteTransaction(id: string): void {
 
           <tbody>
             <tr v-for="row in table.getRowModel().rows" :key="row.id" class="border-b border-(--ui-border)/60">
-              <td v-for="cell in row.getVisibleCells()" :key="cell.id" class="px-3 py-2" :class="cell.column.id === 'amount' ? amountClass(row.original.rawAmount) : ''">
+              <td
+                v-for="cell in row.getVisibleCells()"
+                :key="cell.id"
+                class="px-3 py-2"
+                :class="cell.column.id === 'amount' ? amountClass(row.original.rawAmount) : ''"
+              >
                 {{ cell.getValue() }}
               </td>
               <td class="px-3 py-2 text-right">
@@ -379,7 +406,12 @@ function deleteTransaction(id: string): void {
 
           <label class="space-y-1 text-sm">
             <span class="text-(--ui-text-muted)">Quantity</span>
-            <input v-model="editForm.quantity" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="number" step="0.0001" />
+            <input
+              v-model="editForm.quantity"
+              class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
+              type="number"
+              step="0.0001"
+            />
           </label>
 
           <label class="space-y-1 text-sm">

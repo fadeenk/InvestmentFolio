@@ -1,74 +1,14 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// stores/sync.store.ts
-//
-// Orchestrates all data-update methods:
-//   - Schwab API sync (via Cloudflare Worker)
-//   - CSV import (Optum / Schwab historical)
-//   - Token lifecycle (status, refresh, re-auth warnings)
-//
-// This store calls the Worker endpoints; it does NOT parse Schwab JSON directly.
-// Parsing/mapping lives in composables/useSchwabMapper.ts (to be implemented).
-// ─────────────────────────────────────────────────────────────────────────────
-
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import { useVaultStore } from './vault.store'
-import { useUiStore } from './ui'
-import { useAccountsStore } from './accounts.store'
-import { usePositionsStore } from './positions.store'
+import { computed, ref } from 'vue'
 import { useTransactionsStore } from './transactions.store'
-import type {
-  SchwabAccountNumbersResponse,
-  SchwabAccountsResponse,
-  SchwabAuthStatusResponse,
-  SchwabRefreshResponse,
-  SchwabTransactionsResponse,
-} from '@/types/schwab'
-import type { Position } from '@/types/vault'
-import { SyncStatus, TokenStatus } from '@/types/vault'
-import { buildSchwabHashMaps, mapSchwabAccountsToVaultDrafts, mapSchwabTransactionsToVaultDrafts } from '@/utils/schwab-mapper'
-
-const SCHWAB_TRANSACTION_TYPES =
-  'TRADE,RECEIVE_AND_DELIVER,DIVIDEND_OR_INTEREST,ACH_RECEIPT,ACH_DISBURSEMENT,CASH_RECEIPT,CASH_DISBURSEMENT,ELECTRONIC_FUND,WIRE_OUT,WIRE_IN,JOURNAL,MEMORANDUM,MARGIN_CALL,MONEY_MARKET,SMA_ADJUSTMENT'
-
-// ---------------------------------------------------------------------------
-// Worker URL — injected at build time via Nuxt runtimeConfig
-// ---------------------------------------------------------------------------
-
-function getWorkerBaseUrl(): string {
-  try {
-    const config = useRuntimeConfig()
-    const runtimeUrl = config.public.workerUrl
-    if (runtimeUrl) {
-      return runtimeUrl.replace(/\/$/, '')
-    }
-  } catch {
-    // Non-Nuxt unit-test context falls back to global/window values.
-  }
-
-  if (typeof window !== 'undefined') {
-    const w = window as Window & { __FOLIO_WORKER_URL__?: string }
-    if (w.__FOLIO_WORKER_URL__) {
-      return w.__FOLIO_WORKER_URL__.replace(/\/$/, '')
-    }
-  }
-
-  if (typeof globalThis !== 'undefined') {
-    const g = globalThis as typeof globalThis & { __FOLIO_WORKER_URL__?: string }
-    if (g.__FOLIO_WORKER_URL__) {
-      return g.__FOLIO_WORKER_URL__.replace(/\/$/, '')
-    }
-  }
-
-  return ''
-}
-
-// ---------------------------------------------------------------------------
-// Sync result shape
-// ---------------------------------------------------------------------------
+import { useUiStore } from './ui'
+import { useVaultStore } from './vault.store'
+import { AssetType, ImportSource, TransactionType } from '@/types/enums'
+import { SyncStatus } from '@/types/vault'
+import type { Transaction } from '@/types/vault'
 
 export interface SyncSummary {
-  startedAt: string // ISO 8601
+  startedAt: string
   completedAt: string | null
   accountsSynced: number
   transactionsAdded: number
@@ -77,529 +17,262 @@ export interface SyncSummary {
   errors: string[]
 }
 
-// ---------------------------------------------------------------------------
-// Store
-// ---------------------------------------------------------------------------
+interface CsvRow {
+  [key: string]: string
+}
+
+const REQUIRED_COLUMNS = ['date', 'type', 'symbol', 'description', 'price']
+
+function parseCsvText(text: string): CsvRow[] {
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+
+  if (lines.length < 2) {
+    return []
+  }
+
+  const headers = splitCsvLine(lines[0] ?? '').map((h) => h.trim().toLowerCase())
+  const rows: CsvRow[] = []
+
+  for (let i = 1; i < lines.length; i += 1) {
+    const parts = splitCsvLine(lines[i] ?? '')
+    const row: CsvRow = {}
+
+    headers.forEach((header, index) => {
+      row[header] = (parts[index] ?? '').trim()
+    })
+
+    rows.push(row)
+  }
+
+  return rows
+}
+
+function splitCsvLine(line: string): string[] {
+  const values: string[] = []
+  let current = ''
+  let inQuotes = false
+
+  for (let i = 0; i < line.length; i += 1) {
+    const ch = line[i]
+
+    if (ch === '"') {
+      const next = line[i + 1]
+      if (inQuotes && next === '"') {
+        current += '"'
+        i += 1
+      } else {
+        inQuotes = !inQuotes
+      }
+      continue
+    }
+
+    if (ch === ',' && !inQuotes) {
+      values.push(current)
+      current = ''
+      continue
+    }
+
+    current += ch
+  }
+
+  values.push(current)
+  return values
+}
+
+function toTransactionType(rawType: string): TransactionType {
+  const normalized = rawType.trim().toUpperCase()
+
+  switch (normalized) {
+    case 'BUY':
+      return TransactionType.Buy
+    case 'SELL':
+      return TransactionType.Sell
+    case 'DIVIDEND':
+      return TransactionType.Dividend
+    case 'INTEREST':
+      return TransactionType.Interest
+    case 'SPLIT':
+      return TransactionType.Split
+    case 'DEPOSIT':
+      return TransactionType.DEPOSIT
+    case 'WITHDRAWAL':
+      return TransactionType.WITHDRAWAL
+    case 'TRANSFER_IN':
+      return TransactionType.TRANSFER_IN
+    case 'TRANSFER_OUT':
+      return TransactionType.TRANSFER_OUT
+    default:
+      throw new Error(`Unsupported transaction type: ${rawType}`)
+  }
+}
+
+function toAssetType(rawAssetType: string | undefined): AssetType {
+  const normalized = (rawAssetType ?? '').trim().toUpperCase()
+
+  switch (normalized) {
+    case 'BOND':
+      return AssetType.Bond
+    case 'ETF':
+      return AssetType.ETF
+    case 'MUTUALFUND':
+    case 'MUTUAL_FUND':
+      return AssetType.MutualFund
+    case 'CASH':
+      return AssetType.Cash
+    case 'CRYPTO':
+      return AssetType.Crypto
+    case 'STOCK':
+    default:
+      return AssetType.Stock
+  }
+}
+
+function toNumber(value: string | undefined, defaultValue = 0): number {
+  if (!value || value.trim() === '') {
+    return defaultValue
+  }
+
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`Invalid number: ${value}`)
+  }
+
+  return parsed
+}
+
+function normalizeDate(rawDate: string): string {
+  const date = new Date(rawDate)
+  if (Number.isNaN(date.getTime())) {
+    throw new Error(`Invalid date: ${rawDate}`)
+  }
+
+  return date.toISOString()
+}
 
 export const useSyncStore = defineStore('sync', () => {
   const vaultStore = useVaultStore()
   const uiStore = useUiStore()
-  const accountsStore = useAccountsStore()
-  const positionsStore = usePositionsStore()
   const transactionsStore = useTransactionsStore()
 
-  // ── State ──────────────────────────────────────────────────────────────────
-
   const syncStatus = ref<SyncStatus>(SyncStatus.IDLE)
-  const tokenStatus = ref<TokenStatus>(TokenStatus.NOT_CONNECTED)
   const lastSyncSummary = ref<SyncSummary | null>(null)
   const lastError = ref<string | null>(null)
   const callbackMessage = ref<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  /** Seconds until the access token expires. Updated by pollTokenStatus(). */
-  const accessTokenSecondsRemaining = ref<number | null>(null)
-  /** Cached access-token absolute expiry used for pre-request refresh checks. */
-  const accessTokenExpiresAtMs = ref<number | null>(null)
-  /** Seconds until the refresh token expires. */
-  const refreshTokenSecondsRemaining = ref<number | null>(null)
-  /** Connected account count reported by Worker /auth/status. */
-  const connectedAccountCount = ref(0)
-  /** Last warning emitted by /auth/status to avoid duplicate banners on poll. */
-  const lastStatusWarning = ref<string | null>(null)
-
-  /** True while a sync is actively running. */
   const isSyncing = computed(() => syncStatus.value === SyncStatus.IN_PROGRESS)
+  const expirationWarning = computed(() => isSyncing.value)
 
-  /** True when the user should be prompted to re-authorize with Schwab. */
-  const requiresReauth = computed(() => tokenStatus.value === TokenStatus.EXPIRED || tokenStatus.value === TokenStatus.NOT_CONNECTED)
-
-  /** True when the refresh token expires within 24 hours. */
-  const expirationWarning = computed(
-    () => refreshTokenSecondsRemaining.value !== null && refreshTokenSecondsRemaining.value < 86_400 && refreshTokenSecondsRemaining.value > 0,
-  )
-
-  // ── Token lifecycle ────────────────────────────────────────────────────────
-
-  /**
-   * Fetch token status from the Worker and update local state.
-   * Called on app startup and periodically during active sessions.
-   */
-  async function pollTokenStatus(): Promise<void> {
-    const base = getWorkerBaseUrl()
-    if (!base) return
-
-    try {
-      const resp = await fetch(`${base}/auth/status`, {
-        headers: _bearerHeader(),
-      })
-      if (!resp.ok) {
-        tokenStatus.value = TokenStatus.NOT_CONNECTED
-        connectedAccountCount.value = 0
-        accessTokenSecondsRemaining.value = null
-        accessTokenExpiresAtMs.value = null
-        refreshTokenSecondsRemaining.value = null
-        return
-      }
-
-      const data: SchwabAuthStatusResponse = await resp.json()
-      _applyTokenStatus(data)
-      _syncStatusWarningBanner(data.warning)
-
-      // Cache token meta in vault metadata for offline display
-      if (vaultStore.payload && data.isConnected) {
-        vaultStore.mutatePayload((p) => {
-          p.metadata.schwabTokenMeta = {
-            accessTokenExpiresAt: data.accessTokenExpiresAt ?? '',
-            refreshTokenExpiresAt: data.refreshTokenExpiresAt ?? '',
-            connectedAccountCount: data.connectedAccountCount,
-            lastRefreshedAt: data.lastRefreshedAt ?? new Date().toISOString(),
-          }
-        })
-      }
-    } catch {
-      tokenStatus.value = TokenStatus.NOT_CONNECTED
-      connectedAccountCount.value = 0
-      accessTokenSecondsRemaining.value = null
-      accessTokenExpiresAtMs.value = null
-      refreshTokenSecondsRemaining.value = null
-    }
-  }
-
-  function consumeAuthCallbackFromQuery(params: URLSearchParams): void {
-    const authState = params.get('auth')
-    if (!authState) {
-      callbackMessage.value = null
-      return
-    }
-
-    if (authState === 'connected') {
-      callbackMessage.value = {
-        type: 'success',
-        text: 'Schwab account connected successfully.',
-      }
-      return
-    }
-
-    const reason = params.get('reason')
-    callbackMessage.value = {
-      type: 'error',
-      text: reason ?? 'Unable to complete Schwab authorization.',
-    }
+  function consumeAuthCallbackFromQuery(_params: URLSearchParams): void {
+    callbackMessage.value = null
   }
 
   function clearCallbackMessage(): void {
     callbackMessage.value = null
   }
 
-  /**
-   * Trigger an access token refresh via the Worker.
-   * Called automatically when the frontend receives a 401 mid-sync.
-   */
-  async function refreshAccessToken(): Promise<boolean> {
-    const base = getWorkerBaseUrl()
-    if (!base) return false
-
-    try {
-      const resp = await fetch(`${base}/auth/refresh`, {
-        method: 'POST',
-        headers: _bearerHeader(),
-      })
-      if (!resp.ok) {
-        tokenStatus.value = TokenStatus.EXPIRED
-        uiStore.setBanner('warning', 'Schwab session expired. Re-authorize to continue syncing.')
-        return false
-      }
-
-      const data: SchwabRefreshResponse = await resp.json()
-      if (data.success && data.accessTokenExpiresAt) {
-        await pollTokenStatus()
-        return true
-      }
-      tokenStatus.value = TokenStatus.EXPIRED
-      uiStore.setBanner('warning', 'Schwab session expired. Re-authorize to continue syncing.')
-      return false
-    } catch {
-      uiStore.setBanner('warning', 'Could not refresh Schwab session. Re-authorize to continue syncing.')
-      return false
-    }
-  }
-
-  /**
-   * Redirect the user to the Schwab OAuth consent page.
-   * The Worker handles the callback and stores tokens in KV.
-   */
-  function initiateOAuthFlow(): void {
-    const base = getWorkerBaseUrl()
-    if (!base) throw new Error('Worker URL not configured')
-    window.location.href = `${base}/auth/login`
-  }
-
-  async function syncSchwabWithAuth(): Promise<SyncSummary | null> {
-    await pollTokenStatus()
-    if (requiresReauth.value) {
-      initiateOAuthFlow()
-      return null
-    }
-
-    return syncSchwab()
-  }
-
   async function ensureSyncedAfterUnlockOrAuth(): Promise<void> {
-    if (isSyncing.value || !vaultStore.payload) {
-      return
-    }
-
-    await pollTokenStatus()
-    if (requiresReauth.value || isSyncing.value) {
-      return
-    }
-
-    try {
-      await syncSchwab()
-    } catch {
-      // Error state is already captured by sync status + lastError.
-    }
+    return
   }
 
-  // ── Schwab API Sync ────────────────────────────────────────────────────────
+  async function importCsv(file: File, accountId: string): Promise<{ added: number; duplicates: number; errors: string[] }> {
+    if (!vaultStore.payload) {
+      return { added: 0, duplicates: 0, errors: ['Vault must be unlocked before importing transactions'] }
+    }
 
-  /**
-   * Full Schwab sync: accounts → positions → transactions → quotes.
-   * All parsing/mapping is delegated to the mapper composable.
-   * This store only handles orchestration, status tracking, and error handling.
-   *
-   * NOTE: The actual mapper calls (mapSchwabAccount, mapSchwabTransaction, etc.)
-   * will be wired in once useSchwabMapper composable is implemented.
-   */
-  async function syncSchwab(): Promise<SyncSummary> {
-    if (isSyncing.value) throw new Error('Sync already in progress')
-
-    const startedAt = new Date().toISOString()
     syncStatus.value = SyncStatus.IN_PROGRESS
     lastError.value = null
 
-    const summary: SyncSummary = {
-      startedAt,
-      completedAt: null,
-      accountsSynced: 0,
-      transactionsAdded: 0,
-      positionsUpdated: 0,
-      deduplicatedCount: 0,
-      errors: [],
-    }
+    const startedAt = new Date().toISOString()
+    const errors: string[] = []
 
     try {
-      const base = getWorkerBaseUrl()
-      if (!base) throw new Error('Worker URL not configured')
+      const text = await file.text()
+      const rows = parseCsvText(text)
 
-      // 1. Verify / refresh access token
-      await pollTokenStatus()
-      if (requiresReauth.value) {
-        throw new Error('Schwab re-authorization required')
+      if (rows.length === 0) {
+        return { added: 0, duplicates: 0, errors: ['CSV file does not contain data rows'] }
       }
 
-      // 2. Fetch all accounts + positions
-      let accountNumbersResp = await _workerGet(`${base}/api/accountNumbers`)
-      if (!accountNumbersResp.ok) {
-        if (accountNumbersResp.status === 401) {
-          const refreshed = await refreshAccessToken()
-          if (!refreshed) throw new Error('Token refresh failed — re-authorization required')
-          accountNumbersResp = await _workerGet(`${base}/api/accountNumbers`)
-          if (!accountNumbersResp.ok) throw new Error(`Account numbers API error: ${accountNumbersResp.status}`)
-        } else {
-          throw new Error(`Account numbers API error: ${accountNumbersResp.status}`)
+      const firstRow = rows[0] ?? {}
+      const missingColumns = REQUIRED_COLUMNS.filter((column) => !(column in firstRow))
+      if (missingColumns.length > 0) {
+        return {
+          added: 0,
+          duplicates: 0,
+          errors: [`Missing required CSV columns: ${missingColumns.join(', ')}`],
         }
       }
 
-      const accountNumbersData: SchwabAccountNumbersResponse = await accountNumbersResp.json()
-      const hashMaps = buildSchwabHashMaps(accountNumbersData)
-      accountsStore.mergeSchwabHashMaps(hashMaps.byFullNumber, hashMaps.byLast4)
+      const incoming: Array<Omit<Transaction, 'id' | 'importedAt'>> = []
 
-      let accountsResp = await _workerGet(`${base}/api/accounts?fields=positions`)
-      if (!accountsResp.ok) {
-        if (accountsResp.status === 401) {
-          const refreshed = await refreshAccessToken()
-          if (!refreshed) throw new Error('Token refresh failed — re-authorization required')
-          // Retry once
-          accountsResp = await _workerGet(`${base}/api/accounts?fields=positions`)
-          if (!accountsResp.ok) throw new Error(`Accounts API error: ${accountsResp.status}`)
-        } else if (accountsResp.status === 429) {
-          const retryAfter = accountsResp.headers.get('Retry-After') ?? '60'
-          syncStatus.value = SyncStatus.RATE_LIMITED
-          throw new Error(`Rate limited — retry after ${retryAfter}s`)
-        } else {
-          throw new Error(`Accounts API error: ${accountsResp.status}`)
-        }
-      }
-
-      const accountsData: SchwabAccountsResponse = await accountsResp.json()
-      const snapshotAt = new Date().toISOString()
-      const existingAccountsByHash = new Map<string, string>()
-      const existingAccountsByLast4 = new Map<string, string>()
-      for (const account of accountsStore.all) {
-        if (account.accountHash) {
-          existingAccountsByHash.set(account.accountHash, account.lastUpdatedAt)
-        }
-        existingAccountsByLast4.set(account.accountNumber, account.lastUpdatedAt)
-      }
-
-      const mappedAccounts = mapSchwabAccountsToVaultDrafts(accountsData, hashMaps.byFullNumber, snapshotAt)
-
-      const nextPositions: Array<Omit<Position, 'id'>> = []
-      const syncWindowTargets: Array<{
-        accountId: string
-        accountHash: string
-        startDate: string
-      }> = []
-      const endDate = new Date().toISOString()
-
-      for (const mapped of mappedAccounts) {
-        const previousUpdatedAt =
-          (mapped.accountHash ? existingAccountsByHash.get(mapped.accountHash) : null) ??
-          existingAccountsByLast4.get(mapped.accountLast4) ??
-          vaultStore.payload?.lastSyncedAt ??
-          defaultSyncWindowStart(endDate)
-
-        const upserted = accountsStore.upsertSchwabAccount({
-          accountNumber: mapped.accountNumber,
-          accountHash: mapped.accountHash,
-          displayName: mapped.displayName,
-          type: mapped.type,
-          currentBalance: mapped.currentBalance,
-          cashBalance: mapped.cashBalance,
-        })
-
-        summary.accountsSynced += 1
-        if (!upserted.created) {
-          summary.deduplicatedCount += 1
-        }
-
-        if (mapped.accountHash) {
-          syncWindowTargets.push({
-            accountId: upserted.id,
-            accountHash: mapped.accountHash,
-            startDate: clampStartDate(previousUpdatedAt, endDate),
+      for (const row of rows) {
+        try {
+          incoming.push({
+            externalId: row.externalid || null,
+            accountId,
+            type: toTransactionType(row.type ?? ''),
+            assetType: toAssetType(row.assettype),
+            symbol: (row.symbol ?? '').trim().toUpperCase(),
+            description: row.description ?? '',
+            quantity: row.quantity ? toNumber(row.quantity, 0) : null,
+            price: toNumber(row.price, 0),
+            date: normalizeDate(row.date ?? ''),
+            fees: toNumber(row.fees, 0),
+            importSource: ImportSource.CSV_IMPORT,
+            notes: row.notes || null,
+            matchedLotIds: [],
           })
-        }
-
-        for (const position of mapped.positions) {
-          nextPositions.push({
-            accountId: upserted.id,
-            symbol: position.symbol,
-            assetType: position.assetType,
-            quantity: position.quantity,
-            avgCost: position.avgCost,
-            currentPrice: position.currentPrice,
-            marketValue: position.marketValue,
-            unrealizedGainLoss: position.unrealizedGainLoss,
-            unrealizedGainLossPct: position.unrealizedGainLossPct,
-            dayGainLoss: position.dayGainLoss,
-            dayGainLossPct: position.dayGainLossPct,
-            costBasisMethod: position.costBasisMethod,
-            snapshotAt: position.snapshotAt,
-          })
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Unknown CSV parse error'
+          errors.push(message)
         }
       }
 
-      if (nextPositions.length > 0) {
-        positionsStore.upsertSnapshots(nextPositions)
-      }
-      summary.positionsUpdated = nextPositions.length
+      const added = transactionsStore.insertMany(incoming)
+      const duplicates = incoming.length - added
 
-      // 3. Fetch transactions for each Schwab account hash.
-      for (const target of syncWindowTargets) {
-        const endpoint = `${base}/api/accounts/${encodeURIComponent(target.accountHash)}/transactions?startDate=${encodeURIComponent(target.startDate)}&endDate=${encodeURIComponent(endDate)}&types=${encodeURIComponent(SCHWAB_TRANSACTION_TYPES)}`
-        let txResp = await _workerGet(endpoint)
-
-        if (!txResp.ok) {
-          if (txResp.status === 401) {
-            const refreshed = await refreshAccessToken()
-            if (!refreshed) throw new Error('Token refresh failed — re-authorization required')
-            txResp = await _workerGet(endpoint)
-            if (!txResp.ok) {
-              throw new Error(`Transactions API error (${target.accountHash}): ${txResp.status}`)
-            }
-          } else if (txResp.status === 429) {
-            const retryAfter = txResp.headers.get('Retry-After') ?? '60'
-            syncStatus.value = SyncStatus.RATE_LIMITED
-            throw new Error(`Rate limited — retry after ${retryAfter}s`)
-          } else {
-            throw new Error(`Transactions API error (${target.accountHash}): ${txResp.status}`)
-          }
-        }
-
-        const transactionsData: SchwabTransactionsResponse = await txResp.json()
-        const mappedTransactions = mapSchwabTransactionsToVaultDrafts(transactionsData, target.accountId)
-        const inserted = transactionsStore.insertMany(mappedTransactions)
-
-        summary.transactionsAdded += inserted
-        summary.deduplicatedCount += mappedTransactions.length - inserted
+      const summary: SyncSummary = {
+        startedAt,
+        completedAt: new Date().toISOString(),
+        accountsSynced: 0,
+        transactionsAdded: added,
+        positionsUpdated: 0,
+        deduplicatedCount: duplicates,
+        errors,
       }
 
-      // 4. Fetch quotes for all held symbols
-      // Wiring point: collect symbols from positions, call /api/marketdata/quotes
-
-      // 5. Update lastSyncedAt in vault
-      vaultStore.mutatePayload((p) => {
-        p.lastSyncedAt = new Date().toISOString()
-      })
-
-      summary.completedAt = new Date().toISOString()
+      lastSyncSummary.value = summary
       syncStatus.value = SyncStatus.SUCCESS
-      lastSyncSummary.value = summary
 
-      return summary
+      if (errors.length > 0) {
+        uiStore.setBanner('warning', `Imported ${added} transactions with ${errors.length} row errors.`)
+      } else {
+        uiStore.setBanner('success', `Imported ${added} transactions.`)
+      }
+
+      return { added, duplicates, errors }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      summary.errors.push(msg)
-      summary.completedAt = new Date().toISOString()
-      lastError.value = msg
+      const message = err instanceof Error ? err.message : 'CSV import failed'
+      lastError.value = message
       syncStatus.value = SyncStatus.ERROR
-      lastSyncSummary.value = summary
-      throw err
+      uiStore.setBanner('error', message)
+      return { added: 0, duplicates: 0, errors: [message] }
     }
   }
-
-  // ── CSV Import ─────────────────────────────────────────────────────────────
-
-  /**
-   * Parse and import a CSV file from a supported institution.
-   * The file is read in-browser; nothing is sent to the Worker.
-   *
-   * Returns an import summary (records added, duplicates skipped).
-   */
-  async function importCsv(_file: File, _accountId: string): Promise<{ added: number; duplicates: number; errors: string[] }> {
-    // Wiring point:
-    // 1. Detect institution from file format (Optum vs Schwab historical)
-    // 2. Route to correct parser composable
-    // 3. Call useTransactionsStore().insertMany(parsed)
-    // 4. Return summary
-
-    // Stub — replace once parsers are implemented
-    return { added: 0, duplicates: 0, errors: ['CSV import parser not yet implemented'] }
-  }
-
-  // ── Helpers ────────────────────────────────────────────────────────────────
-
-  function _bearerHeader(): HeadersInit {
-    return { Accept: 'application/json' }
-  }
-
-  async function _workerGet(url: string): Promise<Response> {
-    await _refreshAccessTokenIfNeeded()
-    return fetch(url, { headers: _bearerHeader() })
-  }
-
-  async function _refreshAccessTokenIfNeeded(): Promise<void> {
-    if (tokenStatus.value === TokenStatus.NOT_CONNECTED || tokenStatus.value === TokenStatus.EXPIRED) {
-      return
-    }
-
-    const now = Date.now()
-    const shouldRefreshByExpiry = accessTokenExpiresAtMs.value !== null && accessTokenExpiresAtMs.value - now <= 60_000
-    const shouldRefreshByStatus = tokenStatus.value === TokenStatus.EXPIRING_SOON
-
-    if (!shouldRefreshByExpiry && !shouldRefreshByStatus) {
-      return
-    }
-
-    await refreshAccessToken()
-  }
-
-  function _applyTokenStatus(data: SchwabAuthStatusResponse): void {
-    connectedAccountCount.value = data.connectedAccountCount
-
-    if (!data.isConnected) {
-      tokenStatus.value = TokenStatus.NOT_CONNECTED
-      accessTokenSecondsRemaining.value = null
-      accessTokenExpiresAtMs.value = null
-      refreshTokenSecondsRemaining.value = null
-      return
-    }
-
-    const now = Date.now()
-    const refreshSeconds =
-      data.refreshTokenSecondsRemaining ??
-      (data.refreshTokenExpiresAt ? Math.max(0, Math.floor((new Date(data.refreshTokenExpiresAt).getTime() - now) / 1000)) : null)
-    const accessSeconds =
-      data.accessTokenSecondsRemaining ??
-      (data.accessTokenExpiresAt ? Math.max(0, Math.floor((new Date(data.accessTokenExpiresAt).getTime() - now) / 1000)) : null)
-
-    refreshTokenSecondsRemaining.value = refreshSeconds
-    accessTokenSecondsRemaining.value = accessSeconds
-    accessTokenExpiresAtMs.value = data.accessTokenExpiresAt ? new Date(data.accessTokenExpiresAt).getTime() : null
-
-    if (refreshSeconds !== null && refreshSeconds <= 0) {
-      tokenStatus.value = TokenStatus.EXPIRED
-      return
-    }
-
-    if (accessSeconds !== null && accessSeconds < 60) {
-      tokenStatus.value = TokenStatus.EXPIRING_SOON
-      return
-    }
-
-    tokenStatus.value = TokenStatus.VALID
-  }
-
-  function _syncStatusWarningBanner(warning: string | null): void {
-    if (!warning) {
-      lastStatusWarning.value = null
-      return
-    }
-
-    if (warning === lastStatusWarning.value) {
-      return
-    }
-
-    lastStatusWarning.value = warning
-    uiStore.setBanner('warning', warning)
-  }
-
-  function defaultSyncWindowStart(toDateIso: string): string {
-    const end = new Date(toDateIso)
-    const start = new Date(end)
-    start.setUTCDate(start.getUTCDate() - 365)
-    return start.toISOString()
-  }
-
-  function clampStartDate(startDateIso: string, endDateIso: string): string {
-    const startMs = new Date(startDateIso).getTime()
-    const endMs = new Date(endDateIso).getTime()
-    if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || startMs >= endMs) {
-      return defaultSyncWindowStart(endDateIso)
-    }
-
-    const oneYearMs = 365 * 24 * 60 * 60 * 1000
-    if (endMs - startMs > oneYearMs) {
-      return new Date(endMs - oneYearMs).toISOString()
-    }
-
-    return startDateIso
-  }
-
-  // ── Return ─────────────────────────────────────────────────────────────────
 
   return {
     syncStatus,
-    tokenStatus,
     lastSyncSummary,
     lastError,
     callbackMessage,
-    accessTokenSecondsRemaining,
-    refreshTokenSecondsRemaining,
-    connectedAccountCount,
     isSyncing,
-    requiresReauth,
     expirationWarning,
-    pollTokenStatus,
     consumeAuthCallbackFromQuery,
     clearCallbackMessage,
-    refreshAccessToken,
-    initiateOAuthFlow,
-    syncSchwabWithAuth,
     ensureSyncedAfterUnlockOrAuth,
-    syncSchwab,
     importCsv,
   }
 })

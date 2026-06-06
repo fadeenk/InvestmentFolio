@@ -2,13 +2,11 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from '#imports'
 import { useSyncStore } from '~/stores/sync.store'
-import { useUiStore } from '~/stores/ui'
 import { useVaultStore } from '~/stores/vault.store'
-import { TokenStatus, VaultStatus } from '~/types/vault'
+import { VaultStatus } from '~/types/vault'
 
 const vault = useVaultStore()
 const sync = useSyncStore()
-const ui = useUiStore()
 const route = useRoute()
 const router = useRouter()
 
@@ -19,27 +17,15 @@ const passphraseConfirm = ref('')
 const passphraseError = ref('')
 
 const authStatusLabel = computed(() => {
-  switch (sync.tokenStatus) {
-    case TokenStatus.VALID:
-      return 'Connected'
-    case TokenStatus.EXPIRING_SOON:
-      return 'Expiring soon'
-    case TokenStatus.EXPIRED:
-      return 'Expired'
-    default:
-      return 'Not connected'
-  }
+  if (sync.isSyncing) return 'Importing'
+  if (sync.lastSyncSummary) return 'Ready'
+  return 'Idle'
 })
 
 const authStatusTone = computed<'success' | 'warning' | 'error'>(() => {
-  switch (sync.tokenStatus) {
-    case TokenStatus.VALID:
-      return 'success'
-    case TokenStatus.EXPIRING_SOON:
-      return 'warning'
-    default:
-      return 'error'
-  }
+  if (sync.lastError) return 'error'
+  if (sync.isSyncing) return 'warning'
+  return 'success'
 })
 
 const authStatusClasses = computed(() => {
@@ -49,15 +35,11 @@ const authStatusClasses = computed(() => {
 })
 
 const refreshExpiryLabel = computed(() => {
-  if (sync.refreshTokenSecondsRemaining === null) return 'Unknown'
-  const hours = Math.floor(sync.refreshTokenSecondsRemaining / 3600)
-  if (hours < 1) return 'Less than 1 hour'
-  if (hours < 24) return `${hours}h remaining`
-  const days = Math.floor(hours / 24)
-  return `${days}d remaining`
+  if (!sync.lastSyncSummary?.completedAt) return 'No imports yet'
+  return new Date(sync.lastSyncSummary.completedAt).toLocaleString()
 })
 
-const actionLabel = computed(() => (sync.requiresReauth ? 'Connect Schwab account' : 'Sync now'))
+const actionLabel = computed(() => 'Open import settings')
 
 function resetForm() {
   passphrase.value = ''
@@ -122,23 +104,19 @@ async function handleSave() {
 }
 
 async function refreshAuthStatus() {
-  await sync.pollTokenStatus()
+  await router.push('/settings')
 }
 
 function openAuthSettings() {
-  ui.openModal('auth-settings')
+  router.push('/settings')
 }
 
-function connectSchwab() {
-  sync.initiateOAuthFlow()
+function openImportSettings() {
+  router.push('/settings')
 }
 
 async function handleSyncIntent() {
-  try {
-    await sync.syncSchwabWithAuth()
-  } catch {
-    // Error state is already captured by sync.lastError.
-  }
+  await router.push('/settings')
 }
 
 function queryToSearchParams(): URLSearchParams {
@@ -160,9 +138,6 @@ async function applyAuthCallbackStateFromQuery() {
   const authConnected = auth === 'connected'
 
   sync.consumeAuthCallbackFromQuery(queryToSearchParams())
-  if (sync.callbackMessage) {
-    ui.setBanner(sync.callbackMessage.type, sync.callbackMessage.text)
-  }
   sync.clearCallbackMessage()
 
   const nextQuery: Record<string, string | string[]> = {}
@@ -226,7 +201,7 @@ onMounted(async () => {
               <span class="text-2xl font-bold text-white">F</span>
             </div>
           </div>
-          <h1 class="text-3xl font-bold">Folio</h1>
+          <h1 class="text-3xl font-bold">iFolio</h1>
           <p class="text-(--ui-text-muted)">Your private portfolio tracker. All data encrypted at rest.</p>
         </div>
 
@@ -296,8 +271,8 @@ onMounted(async () => {
           <template #header>
             <div class="flex items-center justify-between gap-3">
               <div>
-                <p class="text-sm text-(--ui-text-muted)">Schwab authentication</p>
-                <p class="text-xs text-(--ui-text-muted)">Manage connection before syncing</p>
+                <p class="text-sm text-(--ui-text-muted)">Transaction imports</p>
+                <p class="text-xs text-(--ui-text-muted)">Manage manual transaction imports in settings</p>
               </div>
               <span class="rounded-full px-2 py-1 text-xs font-medium" :class="authStatusClasses">
                 {{ authStatusLabel }}
@@ -307,12 +282,12 @@ onMounted(async () => {
 
           <div class="space-y-3">
             <p class="text-sm text-(--ui-text-muted)">
-              Refresh token:
+              Last import:
               <strong class="font-semibold text-(--ui-text-highlighted)">{{ refreshExpiryLabel }}</strong>
             </p>
 
             <div v-if="sync.expirationWarning" class="rounded-md bg-amber-500/15 p-2 text-sm text-amber-700 dark:text-amber-200">
-              Re-authorization is recommended within 24 hours to avoid interruptions.
+              Import currently in progress.
             </div>
 
             <div v-if="sync.lastError" class="rounded-md bg-red-500/15 p-2 text-sm text-red-700 dark:text-red-200">
@@ -320,9 +295,9 @@ onMounted(async () => {
             </div>
 
             <div class="flex flex-wrap gap-2">
-              <UButton :label="sync.requiresReauth ? 'Connect Schwab' : 'Re-authorize Schwab'" color="primary" @click="connectSchwab" />
-              <UButton label="Refresh status" color="neutral" variant="outline" @click="refreshAuthStatus" />
-              <UButton label="Auth settings" color="neutral" variant="ghost" @click="openAuthSettings" />
+              <UButton label="Import settings" color="primary" @click="openImportSettings" />
+              <UButton label="Open settings" color="neutral" variant="outline" @click="refreshAuthStatus" />
+              <UButton label="Settings" color="neutral" variant="ghost" @click="openAuthSettings" />
               <UButton :label="actionLabel" color="neutral" variant="soft" :loading="sync.isSyncing" @click="handleSyncIntent" />
             </div>
           </div>

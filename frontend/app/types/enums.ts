@@ -1,6 +1,5 @@
 /** The financial institution that owns the account. Determines sync strategy. */
 export enum Bank {
-  SCHWAB = 'SCHWAB',
   OPTUM = 'OPTUM',
   OTHER = 'OTHER',
 }
@@ -19,13 +18,12 @@ export enum AccountType {
 /** How account data is ingested. Derived from Bank but stored explicitly. */
 export enum SyncMethod {
   Manual = 'Manual',
-  SchwabAPI = 'SchwabAPI',
   CSVImport = 'CSVImport',
 }
 
 /**
- * Canonical Folio transaction types — a normalised superset of all incoming
- * sources (Schwab API, Optum CSV, manual entry).
+ * Canonical iFolio transaction types — a normalised superset of all incoming
+ * sources (CSV imports and manual entry).
  */
 export enum TransactionType {
   Buy = 'Buy',
@@ -41,7 +39,6 @@ export enum TransactionType {
 
 /** Where a transaction record originated. */
 export enum ImportSource {
-  SCHWAB_API = 'SCHWAB_API',
   CSV_IMPORT = 'CSV_IMPORT',
   MANUAL = 'MANUAL',
 }

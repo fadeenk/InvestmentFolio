@@ -11,12 +11,6 @@ export default defineNuxtConfig({
     classSuffix: '',
   },
 
-  runtimeConfig: {
-    public: {
-      workerUrl: process.env.NUXT_PUBLIC_WORKER_URL ?? 'https://worker.mrkannah.workers.dev/',
-    },
-  },
-
   routeRules: {
     '/': { prerender: true },
   },

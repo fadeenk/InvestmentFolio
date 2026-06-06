@@ -11,6 +11,7 @@ import { useVaultStore } from './vault.store'
 import type { Transaction } from '@/types/vault'
 import { ImportSource, TransactionType } from '@/types/enums'
 import { randomUUID } from '@/utils/crypto'
+import { recalculateDerivedDataFromTransactions } from '@/utils/ledger'
 
 // ---------------------------------------------------------------------------
 // Filter shape
@@ -146,6 +147,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
 
     vaultStore.mutatePayload((p) => {
       p.transactions.push(...toInsert)
+      recalculateDerivedDataFromTransactions(p)
     })
 
     return toInsert.length
@@ -170,6 +172,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
 
     vaultStore.mutatePayload((p) => {
       p.transactions.push(tx)
+      recalculateDerivedDataFromTransactions(p)
     })
 
     return id
@@ -188,6 +191,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
       if (!tx) throw new Error(`Transaction ${id} not found`)
       if (tx.externalId) throw new Error('Cannot edit API-synced transactions')
       Object.assign(tx, updates)
+      recalculateDerivedDataFromTransactions(p)
     })
   }
 
@@ -204,6 +208,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
         throw new Error('Cannot delete API-synced transactions')
       }
       p.transactions.splice(idx, 1)
+      recalculateDerivedDataFromTransactions(p)
     })
   }
 

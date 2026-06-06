@@ -226,13 +226,7 @@ function setAccountCostBasis(accountId: string, method: CostBasisMethod): void {
                 </td>
                 <td class="px-3 py-2 text-right">{{ holdingPeriodLabel(position.accountId, position.symbol) }}</td>
                 <td class="px-3 py-2 text-right">
-                  <UButton
-                    :label="isExpanded(position.id) ? 'Hide' : 'Show'"
-                    size="xs"
-                    color="neutral"
-                    variant="ghost"
-                    @click="toggleExpanded(position.id)"
-                  />
+                  <UButton :label="isExpanded(position.id) ? 'Hide' : 'Show'" size="xs" color="neutral" variant="ghost" @click="toggleExpanded(position.id)" />
                 </td>
               </tr>
 

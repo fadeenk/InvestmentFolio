@@ -28,9 +28,6 @@ function createPayload(): VaultPayload {
         defaultCostBasisMethod: CostBasisMethod.FIFO,
         defaultTimeRange: 'YTD',
       },
-      schwabAccountHashes: {},
-      schwabAccountHashesByFullNumber: {},
-      schwabTokenMeta: null,
       costBasisMethodByAccount: {},
       lastSavedAt: null,
     },
@@ -76,8 +73,8 @@ describe('dashboard page', () => {
 
     const wrapper = mountDashboard()
 
-    expect(wrapper.text()).toContain('Active accounts')
-    expect(wrapper.text()).toContain('Open positions')
+    expect(wrapper.text()).toContain('Accounts')
+    expect(wrapper.text()).toContain('Positions')
     expect(wrapper.text()).toContain('No accounts found.')
     expect(wrapper.text()).toContain('No positions found.')
   })
@@ -89,12 +86,11 @@ describe('dashboard page', () => {
     payload.accounts = [
       {
         id: 'acc-1',
-        bank: Bank.SCHWAB,
+        bank: Bank.OTHER,
         type: AccountType.BROKERAGE,
         displayName: 'Main Brokerage',
         accountNumber: '1234',
-        accountHash: 'hash-1',
-        syncMethod: SyncMethod.SchwabAPI,
+        syncMethod: SyncMethod.Manual,
         currentBalance: 10000,
         cashBalance: 1200,
         lastUpdatedAt: '2026-06-03T10:00:00.000Z',
@@ -106,7 +102,6 @@ describe('dashboard page', () => {
         type: AccountType.TRADITIONAL,
         displayName: 'Legacy IRA',
         accountNumber: '9999',
-        accountHash: null,
         syncMethod: SyncMethod.Manual,
         currentBalance: 5000,
         cashBalance: 300,
@@ -162,7 +157,7 @@ describe('dashboard page', () => {
     expect(text).toContain('Legacy IRA')
     expect(text).toContain('1 total')
     expect(text).toContain('2 total')
-    expect(text).toContain('$2,400.00')
+    expect(text).toContain('$3,600.00')
     expect(text).toContain('$1,200.00')
   })
 })

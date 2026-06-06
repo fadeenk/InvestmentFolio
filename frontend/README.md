@@ -1,6 +1,6 @@
-# InvestmentFolio Frontend
+# iFolio Frontend
 
-Nuxt 4 single-page frontend for InvestmentFolio.
+Nuxt 4 single-page frontend for iFolio.
 
 ## Purpose
 
@@ -8,45 +8,37 @@ The frontend is responsible for:
 
 - Local encrypted vault lifecycle (create, open, save, lock)
 - Portfolio UI (dashboard cards/charts/tables)
-- Auth workflow UX for Schwab OAuth (connect, status, re-authorize)
-- Coordinating sync requests through the Cloudflare Worker
+- Manual transaction imports (CSV) into the local vault
+- Shared local calculations for balances, positions, tax lots, and income
 
-Portfolio data remains local to the browser vault. The worker is used only for OAuth/token relay and Schwab API proxying.
+Portfolio data remains local to the browser vault. No backend service is required.
 
 ## Runtime Configuration
 
-The frontend reads the worker base URL from Nuxt public runtime config:
+No required runtime environment variables.
 
-- `NUXT_PUBLIC_WORKER_URL`
+## Import Workflow
 
-Configured in `nuxt.config.ts` as:
+Import controls are available in settings:
 
-- `runtimeConfig.public.workerUrl`
+- Select account
+- Upload CSV file
+- Run import
 
-Example `.env` value:
+Import behavior:
 
-```bash
-NUXT_PUBLIC_WORKER_URL=http://localhost:8787
-```
+- File parsing and validation run locally in-browser.
+- Accepted rows are deduplicated and inserted into transactions.
+- Account balances, positions, tax lots, and income are recalculated from the transaction ledger.
 
-## Auth UX Behavior
+Supported CSV columns for the first generic adapter:
 
-Auth controls are available in two places:
-
-- Dashboard auth card
-- Header settings modal
-
-OAuth callback behavior:
-
-- Worker redirects back with query params:
-  - `auth=connected`
-  - `auth=error&reason=...`
-- Frontend reads the params, displays a banner, and clears callback params from the URL.
-
-Sync behavior:
-
-- If disconnected, sync intent auto-starts OAuth login.
-- If connected, sync proceeds through the normal orchestration path.
+- `date`
+- `type`
+- `symbol`
+- `description`
+- `price`
+- Optional: `quantity`, `fees`, `assetType`, `externalId`, `notes`
 
 ## Development
 
@@ -87,13 +79,14 @@ From `frontend` workspace:
 
 ## Testing Notes
 
-Store tests for auth workflow live under:
+Core store tests live under:
 
-- `test/unit/stores/sync.test.ts`
+- `test/unit/stores/vault.test.ts`
+- `test/unit/stores/positions.test.ts`
 - `test/unit/stores/ui.test.ts`
 
 Typical targeted run:
 
 ```bash
-npm --workspace=frontend run test:run -- test/unit/stores/sync.test.ts test/unit/stores/ui.test.ts
+npm --workspace=frontend exec vitest run test/unit/stores/vault.test.ts test/unit/stores/positions.test.ts
 ```

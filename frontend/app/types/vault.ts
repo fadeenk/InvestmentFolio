@@ -27,23 +27,6 @@ export interface VaultPayload {
 export interface VaultMetadata {
   /** Display preferences saved by the user. */
   displayPreferences: DisplayPreferences
-  /**
-   * Schwab account hashes retrieved from /trader/v1/accounts/accountNumbers.
-   * Map of accountNumber (last 4) → Schwab hash string.
-   * Used to construct per-account API request paths.
-   */
-  schwabAccountHashes: Record<string, string>
-  /**
-   * Full accountNumber → Schwab hash string.
-   * This is the canonical map used during sync merges.
-   */
-  schwabAccountHashesByFullNumber: Record<string, string>
-  /**
-   * Cached Schwab OAuth token metadata (not the raw tokens — those live
-   * in Cloudflare Worker KV). Expiry timestamps are stored here so the
-   * frontend can warn the user without hitting the Worker.
-   */
-  schwabTokenMeta: SchwabTokenMeta | null
   /** Per-account cost basis method override (accountId → method). */
   costBasisMethodByAccount: Record<string, CostBasisMethod>
   /** ISO 8601 timestamp of the last full vault save. */
@@ -59,24 +42,13 @@ export interface DisplayPreferences {
   defaultTimeRange: string // TimeRange enum value
 }
 
-export interface SchwabTokenMeta {
-  accessTokenExpiresAt: string // ISO 8601
-  refreshTokenExpiresAt: string // ISO 8601
-  connectedAccountCount: number
-  lastRefreshedAt: string // ISO 8601
-}
 export interface Account {
   id: string
   bank: Bank
   type: AccountType
   displayName: string
-  /** Last 4 digits only, e.g. "4821". Stored for display; never the full number. */
+  /** Full account number. Always encrypted at rest as part of the vault payload. */
   accountNumber: string
-  /**
-   * Schwab-provided opaque hash used as the path parameter for per-account
-   * API calls. Null for non-Schwab accounts.
-   */
-  accountHash: string | null
   /** Derived from bank; stored explicitly so the UI doesn't need to re-derive. */
   syncMethod: SyncMethod
   /** Total market value of all positions + cash at last sync. */
@@ -89,7 +61,7 @@ export interface Account {
 
 export interface Transaction {
   id: string
-  /** Schwab's own transaction ID for deduplication; null for manual/CSV entries. */
+  /** Source record ID for deduplication; null when unavailable. */
   externalId: string | null
 
   accountId: string
@@ -230,16 +202,6 @@ export enum SyncStatus {
   IN_PROGRESS = 'IN_PROGRESS',
   SUCCESS = 'SUCCESS',
   ERROR = 'ERROR',
-  /** Sync paused because the Schwab API rate limit was approached. */
-  RATE_LIMITED = 'RATE_LIMITED',
-}
-
-/** OAuth token health reported by the Cloudflare Worker. */
-export enum TokenStatus {
-  VALID = 'VALID',
-  EXPIRING_SOON = 'EXPIRING_SOON',
-  EXPIRED = 'EXPIRED',
-  NOT_CONNECTED = 'NOT_CONNECTED',
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -109,12 +109,12 @@ describe('buildVaultBuffer / parseVaultBuffer', () => {
 
   it('parseVaultBuffer throws on invalid magic bytes', () => {
     const bad = new ArrayBuffer(54)
-    expect(() => parseVaultBuffer(bad)).toThrow('Not a valid Folio vault file')
+    expect(() => parseVaultBuffer(bad)).toThrow('Not a valid iFolio vault file')
   })
 
   it('parseVaultBuffer throws on empty buffer', () => {
     const empty = new ArrayBuffer(0)
-    expect(() => parseVaultBuffer(empty)).toThrow('Not a valid Folio vault file')
+    expect(() => parseVaultBuffer(empty)).toThrow('Not a valid iFolio vault file')
   })
 })
 

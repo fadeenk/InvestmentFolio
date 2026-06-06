@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: production
-      url: https://<your-org>.github.io/folio
+      url: https://ifolio.mrkannah.com
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,8 +24,6 @@ jobs:
       - run: npm ci
       - name: Generate static site
         run: npm --workspace=frontend run build
-        env:
-          NUXT_PUBLIC_WORKER_URL: ${{ vars.WORKER_URL }}
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:

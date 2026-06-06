@@ -92,7 +92,7 @@ export function parseVaultBuffer(buffer: ArrayBuffer): ParsedVault {
   const bytes = new Uint8Array(buffer)
 
   if (bytes[0] !== 0x46 || bytes[1] !== 0x4f || bytes[2] !== 0x4c || bytes[3] !== 0x49) {
-    throw new Error('Not a valid Folio vault file')
+    throw new Error('Not a valid iFolio vault file')
   }
 
   const iterations = view.getUint32(5, false)

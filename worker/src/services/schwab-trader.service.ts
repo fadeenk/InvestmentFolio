@@ -36,8 +36,8 @@ async function getAccessToken(env: WorkerEnv): Promise<string> {
 	return envelope.accessToken
 }
 
-async function fetchTraderJson(env: WorkerEnv, path: string): Promise<unknown> {
-	const accessToken = await getAccessToken(env)
+async function fetchTraderJson(env: WorkerEnv, path: string, accessTokenOverride?: string): Promise<unknown> {
+	const accessToken = accessTokenOverride ?? (await getAccessToken(env))
 	const response = await fetch(`${getApiBaseUrl(env)}${path}`, {
 		headers: {
 			authorization: `Bearer ${accessToken}`,
@@ -82,8 +82,8 @@ function normalizeTransactionsPayload(payload: unknown): SchwabTransactionsRespo
 	throw new TraderApiError('Invalid transactions response shape', 502)
 }
 
-export async function fetchAccountNumbers(env: WorkerEnv): Promise<SchwabAccountNumbersResponse> {
-	const payload = await fetchTraderJson(env, '/trader/v1/accounts/accountNumbers')
+export async function fetchAccountNumbers(env: WorkerEnv, accessTokenOverride?: string): Promise<SchwabAccountNumbersResponse> {
+	const payload = await fetchTraderJson(env, '/trader/v1/accounts/accountNumbers', accessTokenOverride)
 	if (!Array.isArray(payload)) {
 		throw new TraderApiError('Invalid account numbers response shape', 502)
 	}

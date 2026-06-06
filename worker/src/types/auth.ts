@@ -48,6 +48,10 @@ export interface AuthStatusResponse {
 	isConnected: boolean
 	accessTokenExpiresAt: string | null
 	refreshTokenExpiresAt: string | null
+	accessTokenSecondsRemaining: number | null
+	refreshTokenSecondsRemaining: number | null
+	isRefreshTokenExpiringSoon: boolean
+	warning: string | null
 	connectedAccountCount: number
 	lastRefreshedAt: string | null
 }

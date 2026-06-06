@@ -191,23 +191,7 @@ function signedAmount(tx: (typeof filteredTransactions.value)[number]): number {
   return transactionCashDelta(tx)
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)
-}
-
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 4,
-  }).format(value)
-}
-
-function amountClass(value: number): string {
+function signClass(value: number): string {
   if (value > 0) return 'text-emerald-600 dark:text-emerald-300'
   if (value < 0) return 'text-red-600 dark:text-red-300'
   return 'text-(--ui-text-muted)'
@@ -433,7 +417,7 @@ function deleteTransaction(id: string): void {
                 v-for="cell in row.getVisibleCells()"
                 :key="cell.id"
                 class="px-3 py-2"
-                :class="cell.column.id === 'amount' ? amountClass(row.original.rawAmount) : ''"
+                :class="cell.column.id === 'amount' ? signClass(row.original.rawAmount) : ''"
               >
                 {{ cell.getValue() }}
               </td>

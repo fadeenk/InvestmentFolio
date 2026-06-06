@@ -79,20 +79,7 @@ function selectRange(range: TimeRange): void {
   positionsStore.selectTimeRange(range)
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)
-}
-
-function formatPercent(value: number): string {
-  return `${value.toFixed(2)}%`
-}
-
-function gainLossClass(value: number): string {
+function signClass(value: number): string {
   if (value > 0) return 'text-emerald-600 dark:text-emerald-300'
   if (value < 0) return 'text-red-600 dark:text-red-300'
   return 'text-(--ui-text-muted)'
@@ -131,7 +118,7 @@ function gainLossClass(value: number): string {
           <template #header>
             <p class="text-sm text-(--ui-text-muted)">Today's G/L</p>
           </template>
-          <p class="text-2xl font-bold" :class="gainLossClass(totals.totalDayGainLoss)">
+          <p class="text-2xl font-bold" :class="signClass(totals.totalDayGainLoss)">
             {{ formatCurrency(totals.totalDayGainLoss) }}
           </p>
           <p class="text-xs text-(--ui-text-muted)">{{ formatPercent(totals.totalDayGainLossPct) }}</p>
@@ -141,7 +128,7 @@ function gainLossClass(value: number): string {
           <template #header>
             <p class="text-sm text-(--ui-text-muted)">Unrealized G/L</p>
           </template>
-          <p class="text-2xl font-bold" :class="gainLossClass(totals.totalUnrealizedGainLoss)">
+          <p class="text-2xl font-bold" :class="signClass(totals.totalUnrealizedGainLoss)">
             {{ formatCurrency(totals.totalUnrealizedGainLoss) }}
           </p>
           <p class="text-xs text-(--ui-text-muted)">{{ formatPercent(totals.totalUnrealizedGainLossPct) }}</p>
@@ -151,7 +138,7 @@ function gainLossClass(value: number): string {
           <template #header>
             <p class="text-sm text-(--ui-text-muted)">Realized G/L YTD</p>
           </template>
-          <p class="text-2xl font-bold" :class="gainLossClass(totals.ytdRealizedGainLossTotal)">
+          <p class="text-2xl font-bold" :class="signClass(totals.ytdRealizedGainLossTotal)">
             {{ formatCurrency(totals.ytdRealizedGainLossTotal) }}
           </p>
           <p class="text-xs text-(--ui-text-muted)">
@@ -333,7 +320,7 @@ function gainLossClass(value: number): string {
                 <td class="px-3 py-2 text-right">{{ formatCurrency(position.avgCost) }}</td>
                 <td class="px-3 py-2 text-right">{{ formatCurrency(position.currentPrice) }}</td>
                 <td class="px-3 py-2 text-right">{{ formatCurrency(position.marketValue) }}</td>
-                <td class="px-3 py-2 text-right" :class="gainLossClass(position.unrealizedGainLoss)">
+                <td class="px-3 py-2 text-right" :class="signClass(position.unrealizedGainLoss)">
                   {{ formatCurrency(position.unrealizedGainLoss) }} ({{ formatPercent(position.unrealizedGainLossPct) }})
                 </td>
               </tr>

@@ -46,31 +46,11 @@ const closedLotsForYear = computed(() => {
   return taxLotsStore.closedLots.filter((lot) => lot.taxYear === taxLotsStore.selectedTaxYear)
 })
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)
-}
-
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 4,
-  }).format(value)
-}
-
-function formatPercent(value: number): string {
-  return `${value.toFixed(2)}%`
-}
-
 function formatDate(value: string): string {
   return new Date(value).toLocaleDateString('en-US')
 }
 
-function gainLossClass(value: number): string {
+function signClass(value: number): string {
   if (value > 0) return 'text-emerald-600 dark:text-emerald-300'
   if (value < 0) return 'text-red-600 dark:text-red-300'
   return 'text-(--ui-text-muted)'
@@ -218,10 +198,10 @@ function setAccountCostBasis(accountId: string, method: CostBasisMethod): void {
                 <td class="px-3 py-2 text-right">{{ formatCurrency(position.avgCost) }}</td>
                 <td class="px-3 py-2 text-right">{{ formatCurrency(position.currentPrice) }}</td>
                 <td class="px-3 py-2 text-right">{{ formatCurrency(position.marketValue) }}</td>
-                <td class="px-3 py-2 text-right" :class="gainLossClass(position.unrealizedGainLoss)">
+                <td class="px-3 py-2 text-right" :class="signClass(position.unrealizedGainLoss)">
                   {{ formatCurrency(position.unrealizedGainLoss) }} ({{ formatPercent(position.unrealizedGainLossPct) }})
                 </td>
-                <td class="px-3 py-2 text-right" :class="gainLossClass(position.dayGainLoss)">
+                <td class="px-3 py-2 text-right" :class="signClass(position.dayGainLoss)">
                   {{ formatCurrency(position.dayGainLoss) }} ({{ formatPercent(position.dayGainLossPct) }})
                 </td>
                 <td class="px-3 py-2 text-right">{{ holdingPeriodLabel(position.accountId, position.symbol) }}</td>
@@ -254,7 +234,7 @@ function setAccountCostBasis(accountId: string, method: CostBasisMethod): void {
                           <td class="px-2 py-1 text-right">{{ formatNumber(lot.remainingQuantity) }}</td>
                           <td class="px-2 py-1 text-right">{{ formatCurrency(lot.adjustedCostBasis) }}</td>
                           <td class="px-2 py-1 text-right">{{ formatCurrency(lot.currentValue) }}</td>
-                          <td class="px-2 py-1 text-right" :class="gainLossClass(lot.unrealizedGainLoss)">
+                          <td class="px-2 py-1 text-right" :class="signClass(lot.unrealizedGainLoss)">
                             {{ formatCurrency(lot.unrealizedGainLoss) }} ({{ formatPercent(lot.unrealizedGainLossPct) }})
                           </td>
                           <td class="px-2 py-1 text-right">{{ lot.isWashSale ? 'Yes' : 'No' }}</td>
@@ -311,7 +291,7 @@ function setAccountCostBasis(accountId: string, method: CostBasisMethod): void {
               <td class="px-3 py-2">{{ formatDate(lot.soldDate) }}</td>
               <td class="px-3 py-2 font-medium">{{ lot.symbol }}</td>
               <td class="px-3 py-2 text-right">{{ formatCurrency(lot.proceeds) }}</td>
-              <td class="px-3 py-2 text-right" :class="gainLossClass(lot.realizedGainLoss)">{{ formatCurrency(lot.realizedGainLoss) }}</td>
+              <td class="px-3 py-2 text-right" :class="signClass(lot.realizedGainLoss)">{{ formatCurrency(lot.realizedGainLoss) }}</td>
               <td class="px-3 py-2 text-right">{{ lot.termType }}</td>
             </tr>
             <tr v-if="closedLotsForYear.length === 0">

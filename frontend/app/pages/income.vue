@@ -124,15 +124,6 @@ function aggregateIncome(records: IncomeRecord[]) {
   )
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)
-}
-
 function monthLabel(month: number): string {
   return new Date(selectedYear.value, month - 1, 1).toLocaleString('en-US', { month: 'short' })
 }

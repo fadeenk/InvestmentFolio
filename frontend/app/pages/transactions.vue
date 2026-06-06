@@ -201,6 +201,12 @@ function isFiniteInputNumber(value: string): boolean {
   return Number.isFinite(Number(value))
 }
 
+function normalizeInput(value: string | number | null | undefined): string {
+  if (typeof value === 'string') return value.trim()
+  if (typeof value === 'number') return Number.isFinite(value) ? String(value) : ''
+  return ''
+}
+
 function getDefaultForm(): TransactionForm {
   return {
     accountId: accountsStore.all[0]?.id ?? '',
@@ -245,9 +251,16 @@ function openAdd(): void {
 }
 
 function saveTransaction(): void {
+  const priceInput = normalizeInput(transactionForm.value.price)
+  const feesInput = normalizeInput(transactionForm.value.fees)
+  const quantityInput = normalizeInput(transactionForm.value.quantity)
+  const symbolInput = normalizeInput(transactionForm.value.symbol).toUpperCase()
+  const descriptionInput = normalizeInput(transactionForm.value.description)
+  const notesInput = normalizeInput(transactionForm.value.notes)
+
   if (!transactionForm.value.accountId || !transactionForm.value.date) return
-  if (!isFiniteInputNumber(transactionForm.value.price) || !isFiniteInputNumber(transactionForm.value.fees)) return
-  if (transactionForm.value.quantity.trim() !== '' && !isFiniteInputNumber(transactionForm.value.quantity)) return
+  if (!isFiniteInputNumber(priceInput) || !isFiniteInputNumber(feesInput)) return
+  if (quantityInput !== '' && !isFiniteInputNumber(quantityInput)) return
 
   if (isEditMode.value) {
     if (!editingId.value) return
@@ -255,12 +268,13 @@ function saveTransaction(): void {
     transactionsStore.updateTransaction(editingId.value, {
       date: transactionForm.value.date,
       type: transactionForm.value.type,
-      symbol: transactionForm.value.symbol.trim().toUpperCase(),
-      description: transactionForm.value.description.trim(),
-      quantity: transactionForm.value.quantity.trim() === '' ? null : Number(transactionForm.value.quantity),
-      price: Number(transactionForm.value.price),
-      fees: Number(transactionForm.value.fees),
-      notes: transactionForm.value.notes.trim() === '' ? null : transactionForm.value.notes,
+      assetType: transactionForm.value.assetType,
+      symbol: symbolInput,
+      description: descriptionInput,
+      quantity: quantityInput === '' ? null : Number(quantityInput),
+      price: Number(priceInput),
+      fees: Number(feesInput),
+      notes: notesInput === '' ? null : notesInput,
     })
   } else {
     transactionsStore.addManual({
@@ -268,12 +282,12 @@ function saveTransaction(): void {
       date: transactionForm.value.date,
       type: transactionForm.value.type,
       assetType: transactionForm.value.assetType,
-      symbol: transactionForm.value.symbol.trim().toUpperCase(),
-      description: transactionForm.value.description.trim(),
-      quantity: transactionForm.value.quantity.trim() === '' ? null : Number(transactionForm.value.quantity),
-      price: Number(transactionForm.value.price),
-      fees: Number(transactionForm.value.fees),
-      notes: transactionForm.value.notes.trim() === '' ? null : transactionForm.value.notes,
+      symbol: symbolInput,
+      description: descriptionInput,
+      quantity: quantityInput === '' ? null : Number(quantityInput),
+      price: Number(priceInput),
+      fees: Number(feesInput),
+      notes: notesInput === '' ? null : notesInput,
     })
     activeTab.value = 'MANUAL'
   }
@@ -466,11 +480,7 @@ function deleteTransaction(id: string): void {
 
           <label class="space-y-1 text-sm">
             <span class="text-(--ui-text-muted)">Asset type</span>
-            <select
-              v-model="transactionForm.assetType"
-              :disabled="isEditMode"
-              class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
-            >
+            <select v-model="transactionForm.assetType" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
               <option v-for="assetType in assetTypeOptions" :key="assetType" :value="assetType">{{ assetType }}</option>
             </select>
           </label>

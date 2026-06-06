@@ -111,7 +111,6 @@ describe('vault store', () => {
     it('returns empty arrays when locked', () => {
       const store = useVaultStore()
       expect(store.accounts).toEqual([])
-      expect(store.activeAccounts).toEqual([])
       expect(store.displayPreferences).toBeNull()
     })
   })

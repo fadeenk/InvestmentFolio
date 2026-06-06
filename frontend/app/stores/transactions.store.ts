@@ -184,7 +184,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
    */
   function updateTransaction(
     id: string,
-    updates: Partial<Pick<Transaction, 'date' | 'type' | 'symbol' | 'description' | 'quantity' | 'price' | 'quantity' | 'fees' | 'notes'>>,
+    updates: Partial<Pick<Transaction, 'date' | 'type' | 'assetType' | 'symbol' | 'description' | 'quantity' | 'price' | 'quantity' | 'fees' | 'notes'>>,
   ): void {
     vaultStore.mutatePayload((p) => {
       const tx = p.transactions.find((t) => t.id === id)

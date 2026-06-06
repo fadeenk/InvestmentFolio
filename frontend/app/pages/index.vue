@@ -141,10 +141,6 @@ async function handleSyncIntent() {
   }
 }
 
-function dismissBanner() {
-  ui.clearBanner()
-}
-
 function queryToSearchParams(): URLSearchParams {
   const params = new URLSearchParams()
   for (const [key, value] of Object.entries(route.query)) {
@@ -221,19 +217,6 @@ onMounted(async () => {
 
 <template>
   <div class="mx-auto max-w-2xl px-4 py-12">
-    <div
-      v-if="ui.banner"
-      class="mb-6 flex items-center justify-between rounded-lg border p-3 text-sm"
-      :class="
-        ui.banner.type === 'success'
-          ? ['border-emerald-200 bg-emerald-50 text-emerald-800', 'dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200'].join(' ')
-          : ['border-red-200 bg-red-50 text-red-800 dark:border-red-800', 'dark:bg-red-950/30 dark:text-red-200'].join(' ')
-      "
-    >
-      <span>{{ ui.banner.message }}</span>
-      <UButton label="Dismiss" size="xs" color="neutral" variant="ghost" @click="dismissBanner" />
-    </div>
-
     <!-- LOCKED STATE -->
     <template v-if="vault.status === VaultStatus.LOCKED">
       <div class="space-y-8 text-center">

@@ -45,6 +45,23 @@ const authStatusLabel = computed(() => {
   }
 })
 
+const bannerClasses = computed(() => {
+  if (!ui.banner) return ''
+
+  if (ui.banner.type === 'success') {
+    return ['border-emerald-200 bg-emerald-50 text-emerald-800', 'dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200'].join(' ')
+  }
+
+  if (ui.banner.type === 'warning') {
+    return ['border-amber-200 bg-amber-50 text-amber-800', 'dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200'].join(' ')
+  }
+
+  return ['border-red-200 bg-red-50 text-red-800', 'dark:border-red-800 dark:bg-red-950/30 dark:text-red-200'].join(' ')
+})
+
+const refreshExpiryLabel = computed(() => formatRemaining(sync.refreshTokenSecondsRemaining))
+const accessExpiryLabel = computed(() => formatRemaining(sync.accessTokenSecondsRemaining))
+
 watch(
   () => vault.status,
   async () => {
@@ -60,6 +77,25 @@ function openAuthSettings() {
 
 function connectSchwab() {
   sync.initiateOAuthFlow()
+}
+
+function dismissBanner() {
+  ui.clearBanner()
+}
+
+function formatRemaining(secondsRemaining: number | null): string {
+  if (secondsRemaining === null) return 'Unknown'
+
+  if (secondsRemaining <= 0) {
+    return 'Expired'
+  }
+
+  const hours = Math.floor(secondsRemaining / 3600)
+  if (hours < 1) return 'Less than 1 hour'
+  if (hours < 24) return `${hours}h remaining`
+
+  const days = Math.floor(hours / 24)
+  return `${days}d remaining`
 }
 </script>
 
@@ -95,6 +131,13 @@ function connectSchwab() {
       </UHeader>
     </template>
 
+    <div v-if="isUnlocked && ui.banner" class="mx-auto mt-4 mb-4 w-full max-w-6xl px-4">
+      <div class="flex items-center justify-between rounded-lg border p-3 text-sm" :class="bannerClasses">
+        <span>{{ ui.banner.message }}</span>
+        <UButton label="Dismiss" size="xs" color="neutral" variant="ghost" @click="dismissBanner" />
+      </div>
+    </div>
+
     <UMain>
       <NuxtPage />
     </UMain>
@@ -102,11 +145,38 @@ function connectSchwab() {
     <UModal v-model:open="settingsOpen" title="Settings" description="Authentication" :ui="{ footer: 'justify-end' }">
       <template #body>
         <div class="space-y-4">
-          <div class="rounded-lg border border-(--ui-border) p-3">
-            <p class="text-sm text-(--ui-text-muted)">Schwab status</p>
-            <p class="text-base font-semibold">
-              {{ authStatusLabel }}
-            </p>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div class="rounded-lg border border-(--ui-border) p-3">
+              <p class="text-sm text-(--ui-text-muted)">Schwab status</p>
+              <p class="text-base font-semibold">
+                {{ authStatusLabel }}
+              </p>
+            </div>
+
+            <div class="rounded-lg border border-(--ui-border) p-3">
+              <p class="text-sm text-(--ui-text-muted)">Connected accounts</p>
+              <p class="text-base font-semibold">
+                {{ sync.connectedAccountCount }}
+              </p>
+            </div>
+
+            <div class="rounded-lg border border-(--ui-border) p-3">
+              <p class="text-sm text-(--ui-text-muted)">Access token</p>
+              <p class="text-base font-semibold">
+                {{ accessExpiryLabel }}
+              </p>
+            </div>
+
+            <div class="rounded-lg border border-(--ui-border) p-3">
+              <p class="text-sm text-(--ui-text-muted)">Refresh token</p>
+              <p class="text-base font-semibold">
+                {{ refreshExpiryLabel }}
+              </p>
+            </div>
+          </div>
+
+          <div v-if="sync.expirationWarning" class="rounded-md bg-amber-500/15 p-2 text-sm text-amber-700 dark:text-amber-200">
+            Re-authorization is recommended within 24 hours to avoid interruptions.
           </div>
 
           <p class="text-sm text-(--ui-text-muted)">Use this panel to reconnect or verify token health before running sync.</p>

@@ -122,50 +122,44 @@ Build all user-facing views on top of vault data: dashboard, positions, transact
 
 ### Dashboard view `UI`
 
-- [ ] Summary metric cards: total value, today's G/L, unrealized G/L, realized G/L YTD, income YTD, cash
-- [ ] Account selector pills (All + per-account) and time range selector (1D, 1W, 1M, 3M, YTD, 1Y, All)
-- [ ] Portfolio value line chart from daily snapshots (Chart.js / Vue-ChartJS)
-- [ ] Asset allocation horizontal bar: US Equity, International, Fixed Income, HSA, Cash
-- [ ] Monthly income bar chart with dividend / interest toggle
+- [x] Summary metric cards: total value, today's G/L, unrealized G/L, realized G/L YTD, income YTD, cash
+- [x] Account selector pills (All + per-account) and time range selector (1D, 1W, 1M, 3M, YTD, 1Y, All)
+- [x] Portfolio value line chart from daily snapshots (Chart.js / Vue-ChartJS)
+- [x] Asset allocation horizontal bar: US Equity, International, Fixed Income, HSA, Cash
+- [x] Monthly income bar chart with dividend / interest toggle
 
 > **Depends on:** Transaction sync, Market data
 
 ### Positions & tax lots `UI`
 
-- [ ] Open positions table: symbol, quantity, avg cost, price, market value, unrealized G/L, day G/L, holding period
-- [ ] Expandable row: tax lot breakdown per position
-- [ ] Tax lot table: lot ID, acquired date, acquired price, qty, cost basis, current value, unrealized G/L, wash sale flag
-- [ ] Cost basis method selector per account: FIFO (default), LIFO, Specific ID
-- [ ] Closed positions tab: sold date, proceeds, realized G/L, short/long-term, tax year filter
-
-> **Depends on:** Tax lot computation (Phase 4) — stub this view early and revisit
+- [x] Open positions table: symbol, quantity, avg cost, price, market value, unrealized G/L, day G/L, holding period
+- [x] Expandable row: tax lot breakdown per position
+- [x] Tax lot table: lot ID, acquired date, acquired price, qty, cost basis, current value, unrealized G/L, wash sale flag
+- [x] Cost basis method selector per account: FIFO (default), LIFO, Specific ID
+- [x] Closed positions tab: sold date, proceeds, realized G/L, short/long-term, tax year filter
 
 ### Transactions view `UI`
 
-- [ ] Table: date, account, type badge, symbol, description, quantity, price, amount
-- [ ] Filter by: type, account, symbol, date range
-- [ ] Tabs: All, Trades, Dividends, Interest, Transfers, Manual
-- [ ] Edit / delete controls for manual and CSV-imported transactions
-- [ ] Virtualized table for large datasets (TanStack Table v8)
-
-> **Depends on:** Transaction sync
+- [x] Table: date, account, type badge, symbol, description, quantity, price, amount
+- [x] Filter by: type, account, symbol, date range
+- [x] Tabs: All, Trades, Dividends, Interest, Transfers, Manual
+- [x] Edit / delete controls for manual and CSV-imported transactions
+- [x] Virtualized table for large datasets (TanStack Table v8)
 
 ### Income view `UI`
 
-- [ ] Year-over-year table: total dividends, qualified, ordinary, interest, HSA contributions per tax year
-- [ ] Income by security: symbol, YTD total, prior year, income type breakdown
-- [ ] Monthly calendar grid showing income received by month
-- [ ] Filter by account and year
-
-> **Depends on:** Transaction sync
+- [x] Year-over-year table: total dividends, qualified, ordinary, interest, HSA contributions per tax year
+- [x] Income by security: symbol, YTD total, prior year, income type breakdown
+- [x] Monthly calendar grid showing income received by month
+- [x] Filter by account and year
 
 ### Settings view `UI`
 
-- [ ] Schwab connection: status badge, re-authorize button, token expiry countdown
-- [ ] Account management: add, edit, reorder, deactivate accounts
-- [ ] Vault management: change passphrase, export vault as JSON, delete vault data
-- [ ] Display preferences: currency/date format, default account filter, cost basis method, theme (light/dark/system)
-- [ ] Mobile bottom navigation: collapses sidebar on small screens
+- [x] Schwab connection: status badge, re-authorize button, token expiry countdown
+- [x] Account management: add, edit, reorder, deactivate accounts
+- [x] Vault management: change passphrase, export vault as JSON, delete vault data
+- [x] Display preferences: currency/date format, default account filter, cost basis method, theme (light/dark/system)
+- [x] Mobile bottom navigation: collapses sidebar on small screens
 
 > **Depends on:** Vault I/O, OAuth flow
 

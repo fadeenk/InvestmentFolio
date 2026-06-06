@@ -72,7 +72,6 @@ describe('positions page', () => {
         currentBalance: 5000,
         cashBalance: 200,
         lastUpdatedAt: '2026-06-05T10:00:00.000Z',
-        isActive: true,
       },
     ]
     vault.payload!.positions = [

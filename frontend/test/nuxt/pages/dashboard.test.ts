@@ -94,7 +94,6 @@ describe('dashboard page', () => {
         currentBalance: 10000,
         cashBalance: 1200,
         lastUpdatedAt: '2026-06-03T10:00:00.000Z',
-        isActive: true,
       },
       {
         id: 'acc-2',
@@ -105,7 +104,6 @@ describe('dashboard page', () => {
         currentBalance: 5000,
         cashBalance: 300,
         lastUpdatedAt: '2026-06-03T10:00:00.000Z',
-        isActive: false,
       },
     ]
 

@@ -165,7 +165,7 @@ function monthLabel(month: number): string {
           <span class="text-(--ui-text-muted)">Account</span>
           <select v-model="selectedAccountId" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
             <option value="ALL">All accounts</option>
-            <option v-for="account in accountsStore.active" :key="account.id" :value="account.id">{{ account.displayName }}</option>
+            <option v-for="account in accountsStore.all" :key="account.id" :value="account.id">{{ account.displayName }}</option>
           </select>
         </label>
       </div>

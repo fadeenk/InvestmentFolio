@@ -54,7 +54,6 @@ export const useVaultStore = defineStore('vault', () => {
   const hasUnsavedChanges = computed(() => isDirty.value)
 
   const accounts = computed<Account[]>(() => payload.value?.accounts ?? [])
-  const activeAccounts = computed(() => accounts.value.filter((a) => a.isActive))
 
   const displayPreferences = computed<DisplayPreferences | null>(() => payload.value?.metadata.displayPreferences ?? null)
 
@@ -235,7 +234,6 @@ export const useVaultStore = defineStore('vault', () => {
     isSaving,
     hasUnsavedChanges,
     accounts,
-    activeAccounts,
     displayPreferences,
     payload,
     createVault,

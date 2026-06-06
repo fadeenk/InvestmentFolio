@@ -65,7 +65,6 @@ export interface Account {
   /** Uninvested cash. For CASH accounts this equals currentBalance. */
   cashBalance: number
   lastUpdatedAt: string // ISO 8601
-  isActive: boolean
 }
 
 export interface Transaction {

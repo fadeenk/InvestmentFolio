@@ -28,7 +28,7 @@ const accountOptions = computed(() => {
       id: null,
       label: 'All accounts',
     },
-    ...accountsStore.active.map((account) => ({
+    ...accountsStore.all.map((account) => ({
       id: account.id,
       label: account.displayName,
     })),
@@ -150,7 +150,7 @@ function setAccountCostBasis(accountId: string, method: CostBasisMethod): void {
       </template>
 
       <div class="grid gap-3 md:grid-cols-2">
-        <div v-for="account in accountsStore.active" :key="account.id" class="rounded-md border border-(--ui-border) p-3">
+        <div v-for="account in accountsStore.all" :key="account.id" class="rounded-md border border-(--ui-border) p-3">
           <div class="mb-2">
             <p class="text-sm font-medium">{{ account.displayName }}</p>
             <p class="text-xs text-(--ui-text-muted)">••••{{ account.accountNumber }}</p>

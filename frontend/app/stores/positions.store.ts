@@ -75,7 +75,7 @@ export const usePositionsStore = defineStore('positions', () => {
     // Cash balances — pulled from accounts
     const accounts = payload?.accounts ?? []
     const accountFilter = selectedAccountId.value
-    const relevantAccounts = accountFilter ? accounts.filter((a) => a.id === accountFilter) : accounts.filter((a) => a.isActive)
+    const relevantAccounts = accountFilter ? accounts.filter((a) => a.id === accountFilter) : accounts
     const totalCashBalance = relevantAccounts.reduce((s, a) => s + a.cashBalance, 0)
 
     // Realized G/L and income for current calendar year

@@ -54,7 +54,7 @@ const formOpen = ref(false)
 const formMode = ref<FormMode>('add')
 const editingId = ref<string | null>(null)
 const transactionForm = ref<TransactionForm>({
-  accountId: accountsStore.active[0]?.id ?? '',
+  accountId: accountsStore.all[0]?.id ?? '',
   date: '',
   type: TransactionType.Buy,
   assetType: AssetType.Stock,
@@ -219,7 +219,7 @@ function isFiniteInputNumber(value: string): boolean {
 
 function getDefaultForm(): TransactionForm {
   return {
-    accountId: accountsStore.active[0]?.id ?? '',
+    accountId: accountsStore.all[0]?.id ?? '',
     date: new Date().toISOString().slice(0, 10),
     type: TransactionType.Buy,
     assetType: AssetType.Stock,
@@ -370,7 +370,7 @@ function deleteTransaction(id: string): void {
           <span class="text-(--ui-text-muted)">Account</span>
           <select v-model="selectedAccountId" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
             <option value="ALL">All</option>
-            <option v-for="account in accountsStore.active" :key="account.id" :value="account.id">{{ account.displayName }}</option>
+            <option v-for="account in accountsStore.all" :key="account.id" :value="account.id">{{ account.displayName }}</option>
           </select>
         </label>
 
@@ -464,7 +464,7 @@ function deleteTransaction(id: string): void {
               :disabled="isEditMode"
               class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
             >
-              <option v-for="account in accountsStore.active" :key="account.id" :value="account.id">{{ account.displayName }}</option>
+              <option v-for="account in accountsStore.all" :key="account.id" :value="account.id">{{ account.displayName }}</option>
             </select>
           </label>
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { maskAccountNumber } from '~/utils/accounts'
 import { useAccountsStore } from '~/stores/accounts.store'
 import { useSyncStore } from '~/stores/sync.store'
 import { useVaultStore } from '~/stores/vault.store'
@@ -64,7 +65,7 @@ const accountOptions = computed(() => {
       id: 'ALL',
       label: 'All accounts',
     },
-    ...accountsStore.active.map((account) => ({
+    ...accountsStore.all.map((account) => ({
       id: account.id,
       label: account.displayName,
     })),
@@ -110,14 +111,6 @@ function moveAccount(accountId: string, direction: -1 | 1): void {
   ids[target] = temp!
 
   accountsStore.reorderAccounts(ids)
-}
-
-function toggleAccount(accountId: string, isActive: boolean): void {
-  if (isActive) {
-    accountsStore.deactivateAccount(accountId)
-  } else {
-    accountsStore.reactivateAccount(accountId)
-  }
 }
 
 function exportVaultJson(): void {
@@ -257,7 +250,7 @@ async function changePassphrase(): Promise<void> {
       <div class="mt-3 grid gap-3 md:grid-cols-2">
         <select v-model="importAccountId" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
           <option :value="null">Select account</option>
-          <option v-for="account in accountsStore.active" :key="account.id" :value="account.id">{{ account.displayName }}</option>
+          <option v-for="account in accountsStore.all" :key="account.id" :value="account.id">{{ account.displayName }}</option>
         </select>
         <input type="file" accept=".csv,text/csv" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" @change="onImportFileChange" />
       </div>
@@ -281,10 +274,7 @@ async function changePassphrase(): Promise<void> {
           <div class="flex flex-wrap items-start justify-between gap-2">
             <div>
               <p class="font-medium">{{ account.displayName }}</p>
-              <p class="text-xs text-(--ui-text-muted)">
-                {{ account.bank }} · {{ account.type }} · {{ accountsStore.maskAccountNumber(account.accountNumber) }} ·
-                {{ account.isActive ? 'Active' : 'Inactive' }}
-              </p>
+              <p class="text-xs text-(--ui-text-muted)">{{ account.bank }} · {{ account.type }} · {{ maskAccountNumber(account.accountNumber) }}</p>
             </div>
 
             <div class="flex gap-2">
@@ -296,13 +286,6 @@ async function changePassphrase(): Promise<void> {
                 variant="outline"
                 :disabled="index === orderedAccounts.length - 1"
                 @click="moveAccount(account.id, 1)"
-              />
-              <UButton
-                :label="account.isActive ? 'Deactivate' : 'Activate'"
-                size="xs"
-                :color="account.isActive ? 'warning' : 'primary'"
-                variant="outline"
-                @click="toggleAccount(account.id, account.isActive)"
               />
             </div>
           </div>

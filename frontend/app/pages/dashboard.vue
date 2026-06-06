@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useAccountsStore } from '~/stores/accounts.store'
+import { maskAccountNumber } from '~/utils/accounts'
 import { useIncomeStore } from '~/stores/income.store'
 import { usePositionsStore } from '~/stores/positions.store'
 import { useVaultStore } from '~/stores/vault.store'
@@ -8,12 +8,10 @@ import { TimeRange } from '~/types/enums'
 import { VaultStatus } from '~/types/vault'
 
 const vault = useVaultStore()
-const accountsStore = useAccountsStore()
 const positionsStore = usePositionsStore()
 const incomeStore = useIncomeStore()
 
 const isUnlocked = computed(() => vault.status === VaultStatus.UNLOCKED)
-const accounts = computed(() => accountsStore.active)
 const allAccounts = computed(() => vault.accounts)
 const positions = computed(() => positionsStore.latest)
 
@@ -41,7 +39,7 @@ const accountOptions = computed(() => {
       id: null,
       label: 'All',
     },
-    ...accounts.value.map((account) => ({
+    ...allAccounts.value.map((account) => ({
       id: account.id,
       label: account.displayName,
     })),
@@ -271,7 +269,7 @@ function gainLossClass(value: number): string {
         <template #header>
           <div class="flex items-center justify-between gap-2">
             <h2 class="text-lg font-semibold">Accounts</h2>
-            <span class="text-sm text-(--ui-text-muted)">{{ accounts.length }} total</span>
+            <span class="text-sm text-(--ui-text-muted)">{{ allAccounts.length }} total</span>
           </div>
         </template>
 
@@ -288,15 +286,15 @@ function gainLossClass(value: number): string {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="account in accounts" :key="account.id" class="border-b border-(--ui-border)/60">
+              <tr v-for="account in allAccounts" :key="account.id" class="border-b border-(--ui-border)/60">
                 <td class="px-3 py-2 font-medium">{{ account.displayName }}</td>
                 <td class="px-3 py-2">{{ account.bank }}</td>
                 <td class="px-3 py-2">{{ account.type }}</td>
-                <td class="px-3 py-2">{{ accountsStore.maskAccountNumber(account.accountNumber) }}</td>
+                <td class="px-3 py-2">{{ maskAccountNumber(account.accountNumber) }}</td>
                 <td class="px-3 py-2 text-right">{{ formatCurrency(account.currentBalance) }}</td>
                 <td class="px-3 py-2 text-right">{{ formatCurrency(account.cashBalance) }}</td>
               </tr>
-              <tr v-if="accounts.length === 0">
+              <tr v-if="allAccounts.length === 0">
                 <td class="px-3 py-6 text-center text-(--ui-text-muted)" colspan="6">No accounts found.</td>
               </tr>
             </tbody>

@@ -75,7 +75,6 @@ describe('transactions page', () => {
         currentBalance: 1000,
         cashBalance: 1000,
         lastUpdatedAt: '2026-06-05T10:00:00.000Z',
-        isActive: true,
       },
     ]
 

@@ -11,6 +11,8 @@ const taxLotsStore = useTaxLotsStore()
 const activeTab = ref<'OPEN' | 'CLOSED'>('OPEN')
 const expandedPositionIds = ref<Set<string>>(new Set())
 
+const totals = computed(() => positionsStore.summary)
+
 const positions = computed(() => {
   return [...positionsStore.visible].sort((a, b) => b.marketValue - a.marketValue)
 })
@@ -85,6 +87,56 @@ function holdingPeriodLabel(accountId: string, symbol: string): string {
         <p class="text-sm text-(--ui-text-muted)">Open positions, tax lot drilldown, and realized gains history.</p>
       </div>
       <UButton label="Dashboard" to="/dashboard" color="neutral" variant="outline" />
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <UCard>
+        <template #header>
+          <p class="text-sm text-(--ui-text-muted)">Total value</p>
+        </template>
+        <p class="text-2xl font-bold">{{ formatCurrency(totals.totalMarketValue + totals.totalCashBalance) }}</p>
+      </UCard>
+
+      <UCard>
+        <template #header>
+          <p class="text-sm text-(--ui-text-muted)">Market value</p>
+        </template>
+        <p class="text-2xl font-bold">{{ formatCurrency(totals.totalMarketValue) }}</p>
+      </UCard>
+
+      <UCard>
+        <template #header>
+          <p class="text-sm text-(--ui-text-muted)">Cash</p>
+        </template>
+        <p class="text-2xl font-bold">{{ formatCurrency(totals.totalCashBalance) }}</p>
+      </UCard>
+
+      <UCard>
+        <template #header>
+          <p class="text-sm text-(--ui-text-muted)">Cost basis</p>
+        </template>
+        <p class="text-2xl font-bold">{{ formatCurrency(totals.totalCostBasis) }}</p>
+      </UCard>
+
+      <UCard>
+        <template #header>
+          <p class="text-sm text-(--ui-text-muted)">Day change</p>
+        </template>
+        <p class="text-2xl font-bold" :class="signClass(totals.totalDayGainLoss)">
+          {{ formatCurrency(totals.totalDayGainLoss) }}
+        </p>
+        <p class="text-xs text-(--ui-text-muted)">{{ formatPercent(totals.totalDayGainLossPct) }}</p>
+      </UCard>
+
+      <UCard>
+        <template #header>
+          <p class="text-sm text-(--ui-text-muted)">Total gain / loss</p>
+        </template>
+        <p class="text-2xl font-bold" :class="signClass(totals.totalUnrealizedGainLoss)">
+          {{ formatCurrency(totals.totalUnrealizedGainLoss) }}
+        </p>
+        <p class="text-xs text-(--ui-text-muted)">{{ formatPercent(totals.totalUnrealizedGainLossPct) }}</p>
+      </UCard>
     </div>
 
     <UCard>
@@ -238,6 +290,7 @@ function holdingPeriodLabel(accountId: string, symbol: string): string {
             <tr class="border-b border-(--ui-border)">
               <th class="px-3 py-2 text-left font-medium text-(--ui-text-muted)">Sold date</th>
               <th class="px-3 py-2 text-left font-medium text-(--ui-text-muted)">Symbol</th>
+              <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Cost</th>
               <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Proceeds</th>
               <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Realized G/L</th>
               <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Term</th>
@@ -247,14 +300,15 @@ function holdingPeriodLabel(accountId: string, symbol: string): string {
             <tr v-for="lot in closedLotsForYear" :key="lot.id" class="border-b border-(--ui-border)/60">
               <td class="px-3 py-2">{{ formatDate(lot.soldDate) }}</td>
               <td class="px-3 py-2 font-medium">{{ lot.symbol }}</td>
+              <td class="px-3 py-2 text-right">{{ formatCurrency(lot.costBasis) }}</td>
               <td class="px-3 py-2 text-right">{{ formatCurrency(lot.proceeds) }}</td>
-              <td class="px-3 py-2 text-right" :class="signClass(lot.realizedGainLoss)">{{ formatCurrency(lot.realizedGainLoss) }}</td>
+              <td class="px-3 py-2 text-right" :class="signClass(lot.realizedGainLoss)">
+                {{ formatCurrency(lot.realizedGainLoss) }} ({{ formatPercent(lot.costBasis > 0 ? (lot.realizedGainLoss / lot.costBasis) * 100 : 0) }})
+              </td>
               <td class="px-3 py-2 text-right">{{ lot.termType }}</td>
             </tr>
             <tr v-if="closedLotsForYear.length === 0">
-              <td colspan="5" class="px-3 py-6 text-center text-(--ui-text-muted)">
-                No closed lots are available yet. Realized G/L values remain provisional until closed lot persistence is implemented.
-              </td>
+              <td colspan="6" class="px-3 py-6 text-center text-(--ui-text-muted)">No closed lots found for this tax year.</td>
             </tr>
           </tbody>
         </table>

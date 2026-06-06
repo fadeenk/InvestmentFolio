@@ -1,6 +1,7 @@
 import type { CostBasisMethod } from '@/types/enums'
 import { TransactionType } from '@/types/enums'
-import type { IncomeRecord, Position, TaxLot, Transaction, VaultPayload } from '@/types/vault'
+import { TermType } from '@/types/vault'
+import type { ClosedLot, IncomeRecord, Position, TaxLot, Transaction, VaultPayload } from '@/types/vault'
 
 interface WorkingLot {
   lot: TaxLot
@@ -85,6 +86,7 @@ export function recalculateDerivedDataFromTransactions(payload: VaultPayload): v
   const lotsByHolding = new Map<string, WorkingLot[]>()
   const holdingMetaByKey = new Map<string, HoldingMeta>()
   const incomeDrafts: IncomeDraft[] = []
+  const closedDrafts: Omit<ClosedLot, 'id'>[] = []
 
   for (const tx of transactions) {
     touchedAccounts.add(tx.accountId)
@@ -164,6 +166,11 @@ export function recalculateDerivedDataFromTransactions(payload: VaultPayload): v
         const take = Math.min(entry.lot.remainingQuantity, remainingToClose)
         const unitCost = entry.lot.remainingQuantity > 0 ? entry.lot.adjustedCostBasis / entry.lot.remainingQuantity : 0
         const closedCost = unitCost * take
+        const proceeds = tx.price * take
+        const realizedGainLoss = proceeds - closedCost
+
+        const daysHeld = Math.floor((new Date(tx.date).getTime() - new Date(entry.lot.acquiredDate).getTime()) / (1000 * 60 * 60 * 24))
+        const termType = daysHeld >= 366 ? TermType.LONG_TERM : TermType.SHORT_TERM
 
         entry.lot.remainingQuantity = roundCurrency(entry.lot.remainingQuantity - take)
         entry.lot.costBasis = roundCurrency(Math.max(0, entry.lot.costBasis - closedCost))
@@ -174,6 +181,24 @@ export function recalculateDerivedDataFromTransactions(payload: VaultPayload): v
           entry.lot.costBasis = 0
           entry.lot.adjustedCostBasis = 0
           entry.lot.isOpen = false
+
+          closedDrafts.push({
+            accountId: entry.lot.accountId,
+            symbol: entry.lot.symbol,
+            openingLotId: entry.lot.id,
+            openingTransactionId: entry.lot.openingTransactionId,
+            closingTransactionId: tx.id,
+            acquiredDate: entry.lot.acquiredDate,
+            soldDate: tx.date,
+            quantity: take,
+            costBasis: roundCurrency(closedCost),
+            proceeds: roundCurrency(proceeds),
+            realizedGainLoss: roundCurrency(realizedGainLoss),
+            termType,
+            taxYear: new Date(tx.date).getFullYear(),
+            isWashSale: entry.lot.isWashSale,
+            washSaleDisallowedLoss: entry.lot.washSaleDisallowedLoss,
+          })
         }
 
         remainingToClose = roundCurrency(remainingToClose - take)
@@ -247,8 +272,14 @@ export function recalculateDerivedDataFromTransactions(payload: VaultPayload): v
     })
   }
 
+  const nextClosedLots: ClosedLot[] = closedDrafts.map((draft, idx) => ({
+    ...draft,
+    id: `closed-${idx}-${draft.closingTransactionId}`,
+  }))
+
   payload.positions = nextPositions
   payload.taxLots = nextLots
+  payload.closedLots = nextClosedLots
   payload.dividends = Array.from(incomeByTransactionId.values())
 
   const marketByAccount = new Map<string, number>()
@@ -270,4 +301,115 @@ export function recalculateDerivedDataFromTransactions(payload: VaultPayload): v
   }
 
   payload.lastSyncedAt = now
+}
+
+/**
+ * Backfill closedLots from scratch by re-processing all sell transactions.
+ * Only writes to payload.closedLots — does NOT touch positions, taxLots,
+ * dividends, or account balances (unlike recalculateDerivedDataFromTransactions).
+ * Safe to run as a one-time migration for existing vaults.
+ */
+export function backfillClosedLots(payload: VaultPayload): void {
+  if (payload.closedLots.length > 0) return
+
+  const transactions = [...payload.transactions].filter((tx) => tx.type === TransactionType.Buy || tx.type === TransactionType.Sell).sort(transactionOrder)
+
+  const lotsByHolding = new Map<string, WorkingLot[]>()
+  const closedDrafts: Omit<ClosedLot, 'id'>[] = []
+
+  for (const tx of transactions) {
+    const symbol = tx.symbol?.toUpperCase() ?? ''
+    const holdingKey = `${tx.accountId}::${symbol}`
+    if (!symbol) continue
+
+    if (tx.type === TransactionType.Buy) {
+      const quantity = Math.max(0, tx.quantity ?? 0)
+      if (quantity <= 0) continue
+
+      const totalCost = quantity * tx.price + (tx.fees || 0)
+      const lot: TaxLot = {
+        id: `lot-${tx.id}`,
+        accountId: tx.accountId,
+        symbol,
+        openingTransactionId: tx.id,
+        acquiredDate: tx.date,
+        acquiredPrice: tx.price,
+        originalQuantity: quantity,
+        remainingQuantity: quantity,
+        costBasis: totalCost,
+        currentValue: totalCost,
+        unrealizedGainLoss: 0,
+        unrealizedGainLossPct: 0,
+        daysHeld: 0,
+        isLongTerm: false,
+        isOpen: true,
+        isWashSale: false,
+        washSaleDisallowedLoss: 0,
+        adjustedCostBasis: totalCost,
+      }
+
+      const queue = lotsByHolding.get(holdingKey) ?? []
+      queue.push({ lot, acquiredAtMs: toTimestamp(tx.date) })
+      lotsByHolding.set(holdingKey, queue)
+      continue
+    }
+
+    if (tx.type === TransactionType.Sell) {
+      const quantityToSell = Math.max(0, tx.quantity ?? 0)
+      if (quantityToSell <= 0) continue
+
+      const queue = lotsByHolding.get(holdingKey) ?? []
+      let remainingToClose = quantityToSell
+
+      queue.sort((a, b) => a.acquiredAtMs - b.acquiredAtMs)
+
+      for (const entry of queue) {
+        if (remainingToClose <= 0) break
+        if (!entry.lot.isOpen || entry.lot.remainingQuantity <= 0) continue
+
+        const take = Math.min(entry.lot.remainingQuantity, remainingToClose)
+        const unitCost = entry.lot.remainingQuantity > 0 ? entry.lot.adjustedCostBasis / entry.lot.remainingQuantity : 0
+        const closedCost = unitCost * take
+        const proceeds = tx.price * take
+        const realizedGainLoss = proceeds - closedCost
+        const daysHeld = Math.floor((new Date(tx.date).getTime() - new Date(entry.lot.acquiredDate).getTime()) / (1000 * 60 * 60 * 24))
+        const termType = daysHeld >= 366 ? TermType.LONG_TERM : TermType.SHORT_TERM
+
+        entry.lot.remainingQuantity = roundCurrency(entry.lot.remainingQuantity - take)
+        entry.lot.costBasis = roundCurrency(Math.max(0, entry.lot.costBasis - closedCost))
+        entry.lot.adjustedCostBasis = roundCurrency(Math.max(0, entry.lot.adjustedCostBasis - closedCost))
+
+        if (entry.lot.remainingQuantity <= 0) {
+          entry.lot.isOpen = false
+
+          closedDrafts.push({
+            accountId: entry.lot.accountId,
+            symbol: entry.lot.symbol,
+            openingLotId: entry.lot.id,
+            openingTransactionId: entry.lot.openingTransactionId,
+            closingTransactionId: tx.id,
+            acquiredDate: entry.lot.acquiredDate,
+            soldDate: tx.date,
+            quantity: take,
+            costBasis: roundCurrency(closedCost),
+            proceeds: roundCurrency(proceeds),
+            realizedGainLoss: roundCurrency(realizedGainLoss),
+            termType,
+            taxYear: new Date(tx.date).getFullYear(),
+            isWashSale: entry.lot.isWashSale,
+            washSaleDisallowedLoss: entry.lot.washSaleDisallowedLoss,
+          })
+        }
+
+        remainingToClose = roundCurrency(remainingToClose - take)
+      }
+
+      lotsByHolding.set(holdingKey, queue)
+    }
+  }
+
+  payload.closedLots = closedDrafts.map((draft, idx) => ({
+    ...draft,
+    id: `closed-${idx}-${draft.closingTransactionId}`,
+  }))
 }

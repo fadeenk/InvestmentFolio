@@ -21,6 +21,7 @@ export interface VaultPayload {
   transactions: Transaction[]
   positions: Position[]
   taxLots: TaxLot[]
+  closedLots: ClosedLot[]
   dividends: IncomeRecord[]
   /**
    * Symbol → ordered array of daily price points.

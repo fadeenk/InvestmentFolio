@@ -9,6 +9,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { useVaultStore } from './vault.store'
+import { TermType } from '@/types/vault'
 import type { Position, PortfolioSummary, AllocationSlice, PortfolioValuePoint } from '@/types/vault'
 import { AssetType, TimeRange, TransactionType } from '@/types/enums'
 import { randomUUID } from '@/utils/crypto'
@@ -80,12 +81,11 @@ export const usePositionsStore = defineStore('positions', () => {
 
     // Realized G/L and income for current calendar year
     const currentYear = new Date().getFullYear()
-    const _closedLots = payload?.taxLots.filter((l) => !l.isOpen) ?? []
-    // Note: ClosedLot lives separately; for now derive from transactions
-    // (full realized G/L computation lives in taxLots.store.ts)
-    const ytdRealizedShort = 0 // computed in taxLots.store.ts
-    const ytdRealizedLong = 0
-    const ytdRealizedTotal = 0
+    const closedLots = payload?.closedLots ?? []
+    const ytdRealizedClosed = closedLots.filter((l) => l.taxYear === currentYear)
+    const ytdRealizedShort = ytdRealizedClosed.filter((l) => l.termType === TermType.SHORT_TERM).reduce((s, l) => s + l.realizedGainLoss, 0)
+    const ytdRealizedLong = ytdRealizedClosed.filter((l) => l.termType === TermType.LONG_TERM).reduce((s, l) => s + l.realizedGainLoss, 0)
+    const ytdRealizedTotal = ytdRealizedShort + ytdRealizedLong
 
     const ytdDividends = (payload?.dividends ?? [])
       .filter((d) => d.taxYear === currentYear && d.incomeType === TransactionType.Dividend)

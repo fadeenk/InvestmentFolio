@@ -15,6 +15,7 @@ function initVault(): void {
     transactions: [],
     positions: [],
     taxLots: [],
+    closedLots: [],
     dividends: [],
     priceHistory: {},
     lastSyncSummary: null,

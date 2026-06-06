@@ -4,6 +4,7 @@ import type { VaultPayload, Account, DisplayPreferences } from '@/types/vault'
 import { VaultStatus } from '@/types/vault'
 import { CostBasisMethod, Theme, DateFormat } from '@/types/enums'
 import { deriveKey, randomSalt, encryptPayload, decryptPayload, buildVaultBuffer, parseVaultBuffer } from '@/utils/vault'
+import { backfillClosedLots } from '@/utils/ledger'
 
 function createDefaultPayload(): VaultPayload {
   const now = new Date().toISOString()
@@ -15,6 +16,7 @@ function createDefaultPayload(): VaultPayload {
     transactions: [],
     positions: [],
     taxLots: [],
+    closedLots: [],
     dividends: [],
     priceHistory: {},
     lastSyncSummary: null,
@@ -101,6 +103,11 @@ export const useVaultStore = defineStore('vault', () => {
 
       _cryptoKey.value = key
       _sessionSalt.value = salt
+      decryptedPayload.closedLots ??= []
+      if (decryptedPayload.closedLots.length === 0 && decryptedPayload.taxLots.some((l) => !l.isOpen)) {
+        backfillClosedLots(decryptedPayload)
+        isDirty.value = true
+      }
       payload.value = decryptedPayload
       isDirty.value = false
       status.value = VaultStatus.UNLOCKED

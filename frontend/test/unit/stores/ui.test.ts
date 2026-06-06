@@ -18,6 +18,7 @@ describe('ui store', () => {
       transactions: [],
       positions: [],
       taxLots: [],
+      closedLots: [],
       dividends: [],
       priceHistory: {},
       lastSyncSummary: null,

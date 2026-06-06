@@ -17,6 +17,7 @@ function createPayload(): VaultPayload {
     transactions: [],
     positions: [],
     taxLots: [],
+    closedLots: [],
     dividends: [],
     priceHistory: {},
     lastSyncSummary: null,

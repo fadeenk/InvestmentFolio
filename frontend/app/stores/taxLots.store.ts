@@ -32,14 +32,7 @@ export const useTaxLotsStore = defineStore('taxLots', () => {
 
   const openLots = computed(() => allLots.value.filter((l) => l.isOpen))
 
-  const closedLots = computed<ClosedLot[]>(() => {
-    // ClosedLot records are derived from TaxLot records where isOpen = false.
-    // The vault stores them as TaxLot entries with isOpen = false plus
-    // a companion ClosedLot record written during lot matching.
-    // For now we read directly from the vault's derivable shape.
-    // TODO: add a top-level closedLots[] array to VaultPayload in schema v2.
-    return []
-  })
+  const closedLots = computed<ClosedLot[]>(() => vaultStore.payload?.closedLots ?? [])
 
   /** Open lots filtered to a specific symbol. */
   function openLotsForSymbol(symbol: string): TaxLot[] {
@@ -203,6 +196,25 @@ export const useTaxLotsStore = defineStore('taxLots', () => {
 
       if (lot.remainingQuantity === 0) {
         lot.isOpen = false
+
+        p.closedLots.push({
+          id: randomUUID(),
+          accountId: lot.accountId,
+          symbol: lot.symbol,
+          openingLotId: lot.id,
+          openingTransactionId: lot.openingTransactionId,
+          closingTransactionId: _closingTransactionId,
+          acquiredDate: lot.acquiredDate,
+          soldDate: soldDate,
+          quantity: quantitySold,
+          costBasis: costBasisClosed,
+          proceeds,
+          realizedGainLoss,
+          termType,
+          taxYear: new Date(soldDate).getFullYear(),
+          isWashSale: lot.isWashSale,
+          washSaleDisallowedLoss: lot.washSaleDisallowedLoss,
+        })
       }
     })
 

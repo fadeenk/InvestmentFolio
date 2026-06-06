@@ -34,7 +34,7 @@ const settingsOpen = computed({
 
 const authStatusLabel = computed(() => {
   if (sync.isSyncing) return 'Importing'
-  if (sync.lastSyncSummary) return 'Ready'
+  if (vault.payload?.lastSyncSummary) return 'Ready'
   return 'Idle'
 })
 
@@ -135,21 +135,21 @@ function dismissBanner() {
             <div class="rounded-lg border border-(--ui-border) p-3">
               <p class="text-sm text-(--ui-text-muted)">Imported records</p>
               <p class="text-base font-semibold">
-                {{ sync.lastSyncSummary?.transactionsAdded ?? 0 }}
+                {{ vault.payload?.lastSyncSummary?.transactionsAdded ?? 0 }}
               </p>
             </div>
 
             <div class="rounded-lg border border-(--ui-border) p-3">
               <p class="text-sm text-(--ui-text-muted)">Last import</p>
               <p class="text-base font-semibold">
-                {{ sync.lastSyncSummary?.completedAt ? new Date(sync.lastSyncSummary.completedAt).toLocaleString() : 'Never' }}
+                {{ vault.payload?.lastSyncSummary?.completedAt ? new Date(vault.payload.lastSyncSummary.completedAt).toLocaleString() : 'Never' }}
               </p>
             </div>
 
             <div class="rounded-lg border border-(--ui-border) p-3">
               <p class="text-sm text-(--ui-text-muted)">Deduplicated</p>
               <p class="text-base font-semibold">
-                {{ sync.lastSyncSummary?.deduplicatedCount ?? 0 }}
+                {{ vault.payload?.lastSyncSummary?.deduplicatedCount ?? 0 }}
               </p>
             </div>
           </div>

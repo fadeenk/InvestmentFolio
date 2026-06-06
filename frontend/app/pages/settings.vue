@@ -52,7 +52,7 @@ const displayPreferences = computed(() => {
 const importStatusLabel = computed(() => {
   if (syncStore.isSyncing) return 'Importing'
   if (syncStore.lastError) return 'Error'
-  if (syncStore.lastSyncSummary) return 'Ready'
+  if (vaultStore.payload?.lastSyncSummary) return 'Ready'
   return 'Idle'
 })
 
@@ -235,18 +235,18 @@ async function changePassphrase(): Promise<void> {
         <div class="rounded-md border border-(--ui-border) p-3">
           <p class="text-sm text-(--ui-text-muted)">Last import</p>
           <p class="text-base font-semibold">
-            {{ syncStore.lastSyncSummary?.completedAt ? new Date(syncStore.lastSyncSummary.completedAt).toLocaleString() : 'Never' }}
+            {{ vaultStore.payload?.lastSyncSummary?.completedAt ? new Date(vaultStore.payload.lastSyncSummary.completedAt).toLocaleString() : 'Never' }}
           </p>
         </div>
 
         <div class="rounded-md border border-(--ui-border) p-3">
           <p class="text-sm text-(--ui-text-muted)">Imported rows</p>
-          <p class="text-base font-semibold">{{ syncStore.lastSyncSummary?.transactionsAdded ?? 0 }}</p>
+          <p class="text-base font-semibold">{{ vaultStore.payload?.lastSyncSummary?.transactionsAdded ?? 0 }}</p>
         </div>
 
         <div class="rounded-md border border-(--ui-border) p-3">
           <p class="text-sm text-(--ui-text-muted)">Deduplicated</p>
-          <p class="text-base font-semibold">{{ syncStore.lastSyncSummary?.deduplicatedCount ?? 0 }}</p>
+          <p class="text-base font-semibold">{{ vaultStore.payload?.lastSyncSummary?.deduplicatedCount ?? 0 }}</p>
         </div>
       </div>
 

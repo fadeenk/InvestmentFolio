@@ -201,6 +201,7 @@ describe('vault store', () => {
         taxLots: [],
         dividends: [],
         priceHistory: {},
+        lastSyncSummary: null,
         metadata: {
           displayPreferences: {
             theme: Theme.SYSTEM,
@@ -285,6 +286,7 @@ describe('vault store', () => {
         taxLots: [],
         dividends: [],
         priceHistory: {},
+        lastSyncSummary: null,
         metadata: {
           displayPreferences: {
             theme: Theme.SYSTEM,
@@ -364,6 +366,7 @@ describe('vault store', () => {
         taxLots: [],
         dividends: [],
         priceHistory: {},
+        lastSyncSummary: null,
         metadata: {
           displayPreferences: {
             theme: Theme.SYSTEM,
@@ -439,6 +442,7 @@ describe('vault store', () => {
         taxLots: [],
         dividends: [],
         priceHistory: {},
+        lastSyncSummary: null,
         metadata: {
           displayPreferences: {
             theme: Theme.SYSTEM,

@@ -17,6 +17,7 @@ function initVault(): void {
     taxLots: [],
     dividends: [],
     priceHistory: {},
+    lastSyncSummary: null,
     metadata: {
       displayPreferences: {
         theme: Theme.SYSTEM,

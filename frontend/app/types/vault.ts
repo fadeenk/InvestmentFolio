@@ -3,6 +3,16 @@ import type { Bank, AccountType, TransactionType, AssetType, CostBasisMethod, Im
  * Top-level decrypted JSON payload stored inside the .foli vault file.
  * Every field written here will be AES-256-GCM encrypted at rest.
  */
+export interface SyncSummary {
+  startedAt: string
+  completedAt: string | null
+  accountsSynced: number
+  transactionsAdded: number
+  positionsUpdated: number
+  deduplicatedCount: number
+  errors: string[]
+}
+
 export interface VaultPayload {
   schemaVersion: number
   createdAt: string // ISO 8601
@@ -18,6 +28,7 @@ export interface VaultPayload {
    */
   priceHistory: Record<string, PricePoint[]>
   metadata: VaultMetadata
+  lastSyncSummary: SyncSummary | null
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

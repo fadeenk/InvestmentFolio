@@ -18,7 +18,7 @@ const passphraseError = ref('')
 
 const authStatusLabel = computed(() => {
   if (sync.isSyncing) return 'Importing'
-  if (sync.lastSyncSummary) return 'Ready'
+  if (vault.payload?.lastSyncSummary) return 'Ready'
   return 'Idle'
 })
 
@@ -35,8 +35,8 @@ const authStatusClasses = computed(() => {
 })
 
 const refreshExpiryLabel = computed(() => {
-  if (!sync.lastSyncSummary?.completedAt) return 'No imports yet'
-  return new Date(sync.lastSyncSummary.completedAt).toLocaleString()
+  if (!vault.payload?.lastSyncSummary?.completedAt) return 'No imports yet'
+  return new Date(vault.payload!.lastSyncSummary!.completedAt).toLocaleString()
 })
 
 const actionLabel = computed(() => 'Open import settings')

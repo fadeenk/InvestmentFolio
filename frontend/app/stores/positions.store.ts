@@ -129,7 +129,8 @@ export const usePositionsStore = defineStore('positions', () => {
       [AssetType.Stock]: 'Equity',
       [AssetType.Bond]: 'Fixed Income (Bond)',
       [AssetType.Crypto]: 'Crypto',
-      [AssetType.Cash]: 'Cash & Equivalents',
+      [AssetType.Cash]: 'Cash',
+      [AssetType.CashEquivalent]: 'Cash Equivalent',
       [AssetType.MutualFund]: 'Mutual Funds',
       [AssetType.ETF]: 'ETFs',
     }

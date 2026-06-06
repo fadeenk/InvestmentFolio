@@ -26,6 +26,7 @@ function makeTestPayload(): VaultPayload {
     taxLots: [],
     dividends: [],
     priceHistory: {},
+    lastSyncSummary: null,
     metadata: {
       displayPreferences: {
         theme: Theme.SYSTEM,

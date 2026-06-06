@@ -5,16 +5,20 @@ import { useAccountsStore } from '~/stores/accounts.store'
 import { useSyncStore } from '~/stores/sync.store'
 import { useVaultStore } from '~/stores/vault.store'
 import { AccountType, Bank, CostBasisMethod, DateFormat, Theme, TimeRange } from '~/types/enums'
+import type { Account } from '~/types/vault'
 
 const vaultStore = useVaultStore()
 const syncStore = useSyncStore()
 const accountsStore = useAccountsStore()
 
-const newAccount = ref({
+const editAccountId = ref<string | null>(null)
+
+const editForm = ref({
   displayName: '',
   accountNumber: '',
   bank: Bank.OTHER,
   type: AccountType.CASH,
+  costBasisMethod: CostBasisMethod.FIFO,
   initialBalance: 0,
 })
 
@@ -33,9 +37,9 @@ const importErrors = ref<string[]>([])
 const themeOptions = [Theme.LIGHT, Theme.DARK, Theme.SYSTEM]
 const currencyOptions = ['USD']
 const dateFormatOptions = [DateFormat.MM_DD_YYYY, DateFormat.DD_MM_YYYY, DateFormat.YYYY_MM_DD]
-const costBasisOptions = [CostBasisMethod.FIFO, CostBasisMethod.LIFO, CostBasisMethod.SpecificLot]
 const timeRangeOptions = [TimeRange.ONE_DAY, TimeRange.ONE_WEEK, TimeRange.ONE_MONTH, TimeRange.THREE_MONTHS, TimeRange.YTD, TimeRange.ONE_YEAR, TimeRange.ALL]
 const bankOptions = Object.values(Bank)
+const costBasisOptions = Object.values(CostBasisMethod)
 
 const displayPreferences = computed(() => {
   return (
@@ -78,24 +82,67 @@ function updateDisplayPreference<K extends keyof typeof displayPreferences.value
   })
 }
 
-function addAccount(): void {
-  if (!newAccount.value.displayName || !newAccount.value.accountNumber) return
-
-  accountsStore.addAccount({
-    bank: newAccount.value.bank,
-    type: newAccount.value.type,
-    displayName: newAccount.value.displayName,
-    accountNumber: newAccount.value.accountNumber,
-    initialBalance: Number(newAccount.value.initialBalance) || 0,
-  })
-
-  newAccount.value = {
+function resetForm(): void {
+  editAccountId.value = null
+  editForm.value = {
     displayName: '',
     accountNumber: '',
     bank: Bank.OTHER,
     type: AccountType.CASH,
+    costBasisMethod: CostBasisMethod.FIFO,
     initialBalance: 0,
   }
+}
+
+function startEdit(account: Account): void {
+  editAccountId.value = account.id
+  const payload = vaultStore.payload
+  const costBasisMethod =
+    payload?.metadata.costBasisMethodByAccount[account.id] ?? payload?.metadata.displayPreferences.defaultCostBasisMethod ?? CostBasisMethod.FIFO
+  editForm.value = {
+    displayName: account.displayName,
+    accountNumber: account.accountNumber,
+    bank: account.bank,
+    type: account.type,
+    costBasisMethod,
+    initialBalance: 0,
+  }
+}
+
+function saveEdit(): void {
+  if (!editAccountId.value) return
+  if (!editForm.value.displayName || !editForm.value.accountNumber) return
+
+  accountsStore.updateAccount(editAccountId.value, {
+    displayName: editForm.value.displayName,
+    accountNumber: editForm.value.accountNumber,
+    bank: editForm.value.bank,
+    type: editForm.value.type,
+  })
+  vaultStore.mutatePayload((p) => {
+    if (editAccountId.value) {
+      p.metadata.costBasisMethodByAccount[editAccountId.value] = editForm.value.costBasisMethod
+    }
+  })
+  resetForm()
+}
+
+function addAccount(): void {
+  if (!editForm.value.displayName || !editForm.value.accountNumber) return
+
+  const accountId = accountsStore.addAccount({
+    bank: editForm.value.bank,
+    type: editForm.value.type,
+    displayName: editForm.value.displayName,
+    accountNumber: editForm.value.accountNumber,
+    initialBalance: Number(editForm.value.initialBalance) || 0,
+  })
+
+  vaultStore.mutatePayload((p) => {
+    p.metadata.costBasisMethodByAccount[accountId] = editForm.value.costBasisMethod
+  })
+
+  resetForm()
 }
 
 function moveAccount(accountId: string, direction: -1 | 1): void {
@@ -278,6 +325,7 @@ async function changePassphrase(): Promise<void> {
             </div>
 
             <div class="flex gap-2">
+              <UButton label="Edit" size="xs" color="neutral" variant="outline" @click="startEdit(account)" />
               <UButton label="Up" size="xs" color="neutral" variant="outline" :disabled="index === 0" @click="moveAccount(account.id, -1)" />
               <UButton
                 label="Down"
@@ -293,26 +341,27 @@ async function changePassphrase(): Promise<void> {
       </div>
 
       <div class="mt-4 rounded-md border border-(--ui-border) p-3">
-        <p class="mb-3 text-sm font-medium">Add account</p>
+        <p class="mb-3 text-sm font-medium">{{ editAccountId ? 'Edit account' : 'Add account' }}</p>
 
-        <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-          <input v-model="newAccount.displayName" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" placeholder="Display name" />
-          <input
-            v-model="newAccount.accountNumber"
-            class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
-            placeholder="Account number"
-          />
+        <div class="grid gap-3 md:grid-cols-2">
+          <input v-model="editForm.displayName" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" placeholder="Display name" />
+          <input v-model="editForm.accountNumber" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" placeholder="Account number" />
 
-          <select v-model="newAccount.bank" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
+          <select v-model="editForm.bank" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
             <option v-for="bank in bankOptions" :key="bank" :value="bank">{{ bank }}</option>
           </select>
 
-          <select v-model="newAccount.type" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
+          <select v-model="editForm.type" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
             <option v-for="type in Object.values(AccountType)" :key="type" :value="type">{{ type }}</option>
           </select>
 
+          <select v-model="editForm.costBasisMethod" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
+            <option v-for="option in costBasisOptions" :key="option" :value="option">{{ option }}</option>
+          </select>
+
           <input
-            v-model.number="newAccount.initialBalance"
+            v-if="!editAccountId"
+            v-model.number="editForm.initialBalance"
             class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
             placeholder="Initial balance"
             type="number"
@@ -320,8 +369,9 @@ async function changePassphrase(): Promise<void> {
           />
         </div>
 
-        <div class="mt-3">
-          <UButton label="Add account" color="primary" @click="addAccount" />
+        <div class="mt-3 flex flex-wrap gap-2">
+          <UButton :label="editAccountId ? 'Save changes' : 'Add account'" color="primary" @click="editAccountId ? saveEdit() : addAccount()" />
+          <UButton v-if="editAccountId" label="Cancel" color="neutral" variant="outline" @click="resetForm" />
         </div>
       </div>
     </UCard>

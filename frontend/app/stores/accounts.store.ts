@@ -40,7 +40,10 @@ export const useAccountsStore = defineStore('accounts', () => {
     return id
   }
 
-  function updateAccount(id: string, updates: Partial<Pick<Account, 'displayName' | 'accountNumber' | 'currentBalance' | 'cashBalance'>>): void {
+  function updateAccount(
+    id: string,
+    updates: Partial<Pick<Account, 'displayName' | 'accountNumber' | 'currentBalance' | 'cashBalance' | 'bank' | 'type'>>,
+  ): void {
     vaultStore.mutatePayload((p) => {
       const account = p.accounts.find((a) => a.id === id)
       if (!account) throw new Error(`Account ${id} not found`)

@@ -3,13 +3,10 @@ import { computed, ref } from 'vue'
 import { useAccountsStore } from '~/stores/accounts.store'
 import { usePositionsStore } from '~/stores/positions.store'
 import { useTaxLotsStore } from '~/stores/taxLots.store'
-import { useVaultStore } from '~/stores/vault.store'
-import { CostBasisMethod } from '~/types/enums'
 
 const accountsStore = useAccountsStore()
 const positionsStore = usePositionsStore()
 const taxLotsStore = useTaxLotsStore()
-const vaultStore = useVaultStore()
 
 const activeTab = ref<'OPEN' | 'CLOSED'>('OPEN')
 const expandedPositionIds = ref<Set<string>>(new Set())
@@ -34,8 +31,6 @@ const accountOptions = computed(() => {
     })),
   ]
 })
-
-const costBasisOptions = [CostBasisMethod.FIFO, CostBasisMethod.LIFO, CostBasisMethod.SpecificLot]
 
 const availableTaxYears = computed(() => {
   if (taxLotsStore.availableTaxYears.length > 0) return taxLotsStore.availableTaxYears
@@ -80,18 +75,6 @@ function holdingPeriodLabel(accountId: string, symbol: string): string {
   const maxDays = Math.max(...lots.map((lot) => lot.daysHeld))
   return `${maxDays}d`
 }
-
-function accountCostBasis(accountId: string): CostBasisMethod {
-  const payload = vaultStore.payload
-  if (!payload) return CostBasisMethod.FIFO
-  return payload.metadata.costBasisMethodByAccount[accountId] ?? payload.metadata.displayPreferences.defaultCostBasisMethod
-}
-
-function setAccountCostBasis(accountId: string, method: CostBasisMethod): void {
-  vaultStore.mutatePayload((payload) => {
-    payload.metadata.costBasisMethodByAccount[accountId] = method
-  })
-}
 </script>
 
 <template>
@@ -118,32 +101,6 @@ function setAccountCostBasis(accountId: string, method: CostBasisMethod): void {
           :variant="positionsStore.selectedAccountId === option.id ? 'solid' : 'outline'"
           @click="positionsStore.selectAccount(option.id)"
         />
-      </div>
-    </UCard>
-
-    <UCard>
-      <template #header>
-        <div class="flex items-center justify-between gap-3">
-          <h2 class="text-lg font-semibold">Cost basis method by account</h2>
-          <span class="text-xs text-(--ui-text-muted)">FIFO default, editable per account</span>
-        </div>
-      </template>
-
-      <div class="grid gap-3 md:grid-cols-2">
-        <div v-for="account in accountsStore.all" :key="account.id" class="rounded-md border border-(--ui-border) p-3">
-          <div class="mb-2">
-            <p class="text-sm font-medium">{{ account.displayName }}</p>
-            <p class="text-xs text-(--ui-text-muted)">••••{{ account.accountNumber }}</p>
-          </div>
-
-          <select
-            class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
-            :value="accountCostBasis(account.id)"
-            @change="setAccountCostBasis(account.id, ($event.target as HTMLSelectElement).value as CostBasisMethod)"
-          >
-            <option v-for="option in costBasisOptions" :key="option" :value="option">{{ option }}</option>
-          </select>
-        </div>
       </div>
     </UCard>
 

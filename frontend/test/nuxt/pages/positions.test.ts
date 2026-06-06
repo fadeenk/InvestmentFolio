@@ -97,7 +97,6 @@ describe('positions page', () => {
     const text = wrapper.text()
 
     expect(text).toContain('Positions & Tax Lots')
-    expect(text).toContain('Cost basis method by account')
     expect(text).toContain('AAPL')
     expect(text).toContain('Open positions')
   })

@@ -145,6 +145,44 @@ export const useVaultStore = defineStore('vault', () => {
     }
   }
 
+  async function changePassphrase(currentPassphrase: string, nextPassphrase: string): Promise<void> {
+    if (!payload.value || !_cryptoKey.value || !_sessionSalt.value) {
+      throw new Error('Vault is locked')
+    }
+
+    lastError.value = null
+    status.value = VaultStatus.SAVING
+
+    try {
+      const currentKey = await deriveKey(currentPassphrase, _sessionSalt.value)
+
+      // Validate the provided current passphrase by decrypting a probe payload.
+      const probe = await encryptPayload(payload.value, _cryptoKey.value)
+      try {
+        await decryptPayload(probe.ciphertext, probe.iv, currentKey)
+      } catch {
+        throw new Error('Current passphrase is incorrect')
+      }
+
+      const nextSalt = randomSalt()
+      const nextKey = await deriveKey(nextPassphrase, nextSalt)
+      payload.value.metadata.lastSavedAt = new Date().toISOString()
+      const { iv, ciphertext } = await encryptPayload(payload.value, nextKey)
+      const buffer = buildVaultBuffer(nextSalt, iv, ciphertext)
+
+      await _writeBuffer(buffer)
+
+      _cryptoKey.value = nextKey
+      _sessionSalt.value = nextSalt
+      isDirty.value = false
+      status.value = VaultStatus.UNLOCKED
+    } catch (err) {
+      status.value = VaultStatus.UNLOCKED
+      lastError.value = err instanceof Error ? err.message : 'Passphrase update failed'
+      throw err
+    }
+  }
+
   function lockVault(): void {
     payload.value = null
     _cryptoKey.value = null
@@ -206,6 +244,7 @@ export const useVaultStore = defineStore('vault', () => {
     openVault,
     setFileHandle,
     saveVault,
+    changePassphrase,
     lockVault,
     markDirty,
     mutatePayload,

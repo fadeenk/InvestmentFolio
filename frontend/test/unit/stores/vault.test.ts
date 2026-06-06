@@ -1,8 +1,7 @@
 import { setActivePinia, createPinia } from 'pinia'
 import { useVaultStore } from '~/stores/vault.store'
-import type { VaultPayload } from '~/types/enums'
 import { CostBasisMethod, Theme, DateFormat } from '~/types/enums'
-import { VaultStatus } from '~/types/vault'
+import { VaultStatus, type VaultPayload } from '~/types/vault'
 import * as vaultUtils from '~/utils/vault'
 
 // ---------------------------------------------------------------------------
@@ -342,6 +341,75 @@ describe('vault store', () => {
       await store.saveVault()
 
       expect(encryptSpy).toHaveBeenCalled()
+    })
+  })
+
+  describe('changePassphrase', () => {
+    beforeEach(async () => {
+      mockCryptoAPI()
+      stubDOM()
+      vi.spyOn(vaultUtils, 'deriveKey').mockResolvedValue(createMockCryptoKey())
+      vi.spyOn(vaultUtils, 'encryptPayload').mockResolvedValue({
+        iv: new Uint8Array(12).fill(0xee),
+        ciphertext: new ArrayBuffer(64),
+      })
+      vi.spyOn(vaultUtils, 'buildVaultBuffer').mockReturnValue(new ArrayBuffer(118))
+      vi.spyOn(vaultUtils, 'decryptPayload').mockResolvedValue({
+        schemaVersion: 1,
+        createdAt: '2025-01-01T00:00:00.000Z',
+        lastSyncedAt: null,
+        accounts: [],
+        transactions: [],
+        positions: [],
+        taxLots: [],
+        dividends: [],
+        priceHistory: {},
+        metadata: {
+          displayPreferences: {
+            theme: Theme.SYSTEM,
+            currencyFormat: 'USD',
+            dateFormat: DateFormat.MM_DD_YYYY,
+            defaultAccountFilter: null,
+            defaultCostBasisMethod: CostBasisMethod.FIFO,
+            defaultTimeRange: 'YTD',
+          },
+          schwabAccountHashes: {},
+          schwabAccountHashesByFullNumber: {},
+          schwabTokenMeta: null,
+          costBasisMethodByAccount: {},
+          lastSavedAt: null,
+        },
+      })
+    })
+
+    it('re-encrypts vault with a new passphrase', async () => {
+      const store = useVaultStore()
+      await store.createVault('old-passphrase')
+      expect(store.status).toBe(VaultStatus.UNLOCKED)
+
+      await store.changePassphrase('old-passphrase', 'new-passphrase')
+
+      expect(vaultUtils.deriveKey).toHaveBeenCalledTimes(3)
+      expect(vaultUtils.buildVaultBuffer).toHaveBeenCalled()
+      expect(store.status).toBe(VaultStatus.UNLOCKED)
+      expect(store.isDirty).toBe(false)
+      expect(store.lastError).toBeNull()
+    })
+
+    it('throws when current passphrase is incorrect', async () => {
+      const store = useVaultStore()
+      await store.createVault('old-passphrase')
+
+      vi.spyOn(vaultUtils, 'decryptPayload').mockRejectedValueOnce(new Error('operation failed'))
+
+      await expect(store.changePassphrase('wrong-passphrase', 'new-passphrase')).rejects.toThrow('Current passphrase is incorrect')
+      expect(store.status).toBe(VaultStatus.UNLOCKED)
+      expect(store.lastError).toBe('Current passphrase is incorrect')
+    })
+
+    it('throws when vault is locked', async () => {
+      const store = useVaultStore()
+      await expect(store.changePassphrase('old-passphrase', 'new-passphrase')).rejects.toThrow('Vault is locked')
     })
   })
 

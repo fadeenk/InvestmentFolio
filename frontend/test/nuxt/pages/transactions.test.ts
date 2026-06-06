@@ -3,7 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
 import TransactionsPage from '~/pages/transactions.vue'
 import { useVaultStore } from '~/stores/vault.store'
-import { AccountType, AssetType, Bank, CostBasisMethod, DateFormat, ImportSource, SyncMethod, Theme, TransactionType } from '~/types/enums'
+import { AccountType, AssetType, Bank, CostBasisMethod, DateFormat, ImportSource, Theme, TransactionType } from '~/types/enums'
 import { VaultStatus, type VaultPayload } from '~/types/vault'
 
 function createPayload(): VaultPayload {
@@ -71,7 +71,6 @@ describe('transactions page', () => {
         type: AccountType.BROKERAGE,
         displayName: 'Manual Account',
         accountNumber: '4321',
-        syncMethod: SyncMethod.Manual,
         currentBalance: 1000,
         cashBalance: 1000,
         lastUpdatedAt: '2026-06-05T10:00:00.000Z',

@@ -31,14 +31,13 @@ Import behavior:
 - Accepted rows are deduplicated and inserted into transactions.
 - Account balances, positions, tax lots, and income are recalculated from the transaction ledger.
 
-Supported CSV columns for the first generic adapter:
+Supported CSV columns by account bank:
 
-- `date`
-- `type`
-- `symbol`
-- `description`
-- `price`
-- Optional: `quantity`, `fees`, `assetType`, `externalId`, `notes`
+- `OTHER`: `Date`, `type`, `action`, `symbol`, `amount`, `price`, `fees`, `total`
+- `OPTUM`: `Date`, `Transaction type`, `Requested action`, `Amount`, `Fund name`, `Shares`, `Share price`
+- `SCHWAB`: `Date`, `Action`, `Symbol`, `Description`, `Quantity`, `Price`, `Fees & Comm`, `Amount`
+
+Optional passthrough columns (all formats): `assetType`, `externalId`, `notes`
 
 ## Development
 

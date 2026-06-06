@@ -1,4 +1,4 @@
-import type { Bank, AccountType, TransactionType, AssetType, CostBasisMethod, SyncMethod, ImportSource } from './enums'
+import type { Bank, AccountType, TransactionType, AssetType, CostBasisMethod, ImportSource } from './enums'
 /**
  * Top-level decrypted JSON payload stored inside the .foli vault file.
  * Every field written here will be AES-256-GCM encrypted at rest.
@@ -49,8 +49,6 @@ export interface Account {
   displayName: string
   /** Full account number. Always encrypted at rest as part of the vault payload. */
   accountNumber: string
-  /** Derived from bank; stored explicitly so the UI doesn't need to re-derive. */
-  syncMethod: SyncMethod
   /** Total market value of all positions + cash at last sync. */
   currentBalance: number
   /** Uninvested cash. For CASH accounts this equals currentBalance. */

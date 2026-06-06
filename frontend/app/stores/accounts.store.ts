@@ -2,16 +2,8 @@ import { defineStore } from 'pinia'
 import { computed } from 'vue'
 import { useVaultStore } from './vault.store'
 import type { Account } from '@/types/vault'
-import { AccountType, Bank, SyncMethod } from '@/types/enums'
+import { AccountType, Bank } from '@/types/enums'
 import { randomUUID } from '@/utils/crypto'
-
-function syncMethodForBank(bank: Bank): SyncMethod {
-  if (bank === Bank.OPTUM) {
-    return SyncMethod.CSVImport
-  }
-
-  return SyncMethod.Manual
-}
 
 function maskAccountNumber(accountNumber: string): string {
   const trimmed = accountNumber.trim()
@@ -41,7 +33,7 @@ export const useAccountsStore = defineStore('accounts', () => {
   }
 
   function addAccount(
-    input: Omit<Account, 'id' | 'syncMethod' | 'currentBalance' | 'cashBalance' | 'lastUpdatedAt' | 'isActive'> & {
+    input: Omit<Account, 'id' | 'currentBalance' | 'cashBalance' | 'lastUpdatedAt' | 'isActive'> & {
       initialBalance?: number
     },
   ): string {
@@ -54,7 +46,6 @@ export const useAccountsStore = defineStore('accounts', () => {
       type: input.type,
       displayName: input.displayName,
       accountNumber: input.accountNumber,
-      syncMethod: syncMethodForBank(input.bank),
       currentBalance: input.initialBalance ?? 0,
       cashBalance: input.type === AccountType.CASH ? (input.initialBalance ?? 0) : 0,
       lastUpdatedAt: now,

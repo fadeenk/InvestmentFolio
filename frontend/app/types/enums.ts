@@ -1,5 +1,6 @@
 /** The financial institution that owns the account. Determines sync strategy. */
 export enum Bank {
+  SCHWAB = 'SCHWAB',
   OPTUM = 'OPTUM',
   OTHER = 'OTHER',
 }
@@ -35,6 +36,7 @@ export enum TransactionType {
   WITHDRAWAL = 'WITHDRAWAL',
   TRANSFER_IN = 'TRANSFER_IN',
   TRANSFER_OUT = 'TRANSFER_OUT',
+  Journal = 'Journal', // For manual adjustments that don't fit other categories
 }
 
 /** Where a transaction record originated. */

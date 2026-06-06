@@ -34,6 +34,7 @@ const currencyOptions = ['USD']
 const dateFormatOptions = [DateFormat.MM_DD_YYYY, DateFormat.DD_MM_YYYY, DateFormat.YYYY_MM_DD]
 const costBasisOptions = [CostBasisMethod.FIFO, CostBasisMethod.LIFO, CostBasisMethod.SpecificLot]
 const timeRangeOptions = [TimeRange.ONE_DAY, TimeRange.ONE_WEEK, TimeRange.ONE_MONTH, TimeRange.THREE_MONTHS, TimeRange.YTD, TimeRange.ONE_YEAR, TimeRange.ALL]
+const bankOptions = Object.values(Bank)
 
 const displayPreferences = computed(() => {
   return (
@@ -320,18 +321,11 @@ async function changePassphrase(): Promise<void> {
           />
 
           <select v-model="newAccount.bank" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
-            <option :value="Bank.OTHER">OTHER</option>
-            <option :value="Bank.OPTUM">OPTUM</option>
+            <option v-for="bank in bankOptions" :key="bank" :value="bank">{{ bank }}</option>
           </select>
 
           <select v-model="newAccount.type" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
-            <option :value="AccountType.CASH">CASH</option>
-            <option :value="AccountType.BROKERAGE">BROKERAGE</option>
-            <option :value="AccountType.ROTH">ROTH</option>
-            <option :value="AccountType.TRADITIONAL">TRADITIONAL</option>
-            <option :value="AccountType.TRADITIONAL401K">TRADITIONAL 401K</option>
-            <option :value="AccountType.Roth401K">401K ROTH</option>
-            <option :value="AccountType.HSA">HSA</option>
+            <option v-for="type in Object.values(AccountType)" :key="type" :value="type">{{ type }}</option>
           </select>
 
           <input

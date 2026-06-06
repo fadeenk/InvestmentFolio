@@ -3,11 +3,26 @@ import { computed, ref } from 'vue'
 import { createColumnHelper, createTable, getCoreRowModel } from '@tanstack/table-core'
 import { useAccountsStore } from '~/stores/accounts.store'
 import { useTransactionsStore } from '~/stores/transactions.store'
+import { useUiStore } from '~/stores/ui'
 import type { ImportSource } from '~/types/enums'
-import { TransactionType } from '~/types/enums'
+import { AssetType, TransactionType } from '~/types/enums'
 import { transactionCashDelta } from '~/utils/ledger'
 
 type TransactionTab = 'ALL' | 'TRADES' | 'DIVIDENDS' | 'INTEREST' | 'TRANSFERS' | 'MANUAL'
+type FormMode = 'add' | 'edit'
+
+type TransactionForm = {
+  accountId: string
+  date: string
+  type: TransactionType
+  assetType: AssetType
+  symbol: string
+  description: string
+  quantity: string
+  price: string
+  fees: string
+  notes: string
+}
 
 type TransactionRow = {
   id: string
@@ -26,6 +41,7 @@ type TransactionRow = {
 
 const accountsStore = useAccountsStore()
 const transactionsStore = useTransactionsStore()
+const uiStore = useUiStore()
 
 const activeTab = ref<TransactionTab>('ALL')
 const selectedAccountId = ref<string>('ALL')
@@ -34,16 +50,19 @@ const symbolFilter = ref('')
 const dateFrom = ref('')
 const dateTo = ref('')
 
-const editOpen = ref(false)
+const formOpen = ref(false)
+const formMode = ref<FormMode>('add')
 const editingId = ref<string | null>(null)
-const editForm = ref({
+const transactionForm = ref<TransactionForm>({
+  accountId: accountsStore.active[0]?.id ?? '',
   date: '',
   type: TransactionType.Buy,
+  assetType: AssetType.Stock,
   symbol: '',
   description: '',
   quantity: '',
   price: '',
-  fees: '',
+  fees: '0',
   notes: '',
 })
 
@@ -52,6 +71,9 @@ const accountNameById = computed(() => {
 })
 
 const typeOptions = Object.values(TransactionType)
+const assetTypeOptions = Object.values(AssetType)
+const isEditMode = computed(() => formMode.value === 'edit')
+const formTitle = computed(() => (isEditMode.value ? 'Edit transaction' : 'New transaction'))
 
 const tabCounts = computed(() => ({
   ALL: transactionsStore.all.length,
@@ -105,7 +127,7 @@ const rows = computed<TransactionRow[]>(() => {
 
     return {
       id: tx.id,
-      date: tx.date,
+      date: uiStore.formatDate(tx.date),
       account: accountNameById.value.get(tx.accountId) ?? 'Unknown account',
       type: tx.type,
       symbol: tx.symbol,
@@ -191,14 +213,36 @@ function amountClass(value: number): string {
   return 'text-(--ui-text-muted)'
 }
 
+function isFiniteInputNumber(value: string): boolean {
+  return Number.isFinite(Number(value))
+}
+
+function getDefaultForm(): TransactionForm {
+  return {
+    accountId: accountsStore.active[0]?.id ?? '',
+    date: new Date().toISOString().slice(0, 10),
+    type: TransactionType.Buy,
+    assetType: AssetType.Stock,
+    symbol: '',
+    description: '',
+    quantity: '',
+    price: '',
+    fees: '0',
+    notes: '',
+  }
+}
+
 function openEdit(row: TransactionRow): void {
   const tx = transactionsStore.all.find((item) => item.id === row.id)
   if (!tx || tx.externalId) return
 
+  formMode.value = 'edit'
   editingId.value = tx.id
-  editForm.value = {
+  transactionForm.value = {
+    accountId: tx.accountId,
     date: tx.date,
     type: tx.type,
+    assetType: tx.assetType,
     symbol: tx.symbol,
     description: tx.description,
     quantity: tx.quantity === null ? '' : String(tx.quantity),
@@ -206,25 +250,53 @@ function openEdit(row: TransactionRow): void {
     fees: String(tx.fees),
     notes: tx.notes ?? '',
   }
-  editOpen.value = true
+  formOpen.value = true
 }
 
-function saveEdit(): void {
-  if (!editingId.value) return
-
-  transactionsStore.updateTransaction(editingId.value, {
-    date: editForm.value.date,
-    type: editForm.value.type,
-    symbol: editForm.value.symbol,
-    description: editForm.value.description,
-    quantity: editForm.value.quantity ? Number(editForm.value.quantity) : null,
-    price: Number(editForm.value.price),
-    fees: Number(editForm.value.fees),
-    notes: editForm.value.notes.trim() === '' ? null : editForm.value.notes,
-  })
-
-  editOpen.value = false
+function openAdd(): void {
+  formMode.value = 'add'
   editingId.value = null
+  transactionForm.value = getDefaultForm()
+  formOpen.value = true
+}
+
+function saveTransaction(): void {
+  if (!transactionForm.value.accountId || !transactionForm.value.date) return
+  if (!isFiniteInputNumber(transactionForm.value.price) || !isFiniteInputNumber(transactionForm.value.fees)) return
+  if (transactionForm.value.quantity.trim() !== '' && !isFiniteInputNumber(transactionForm.value.quantity)) return
+
+  if (isEditMode.value) {
+    if (!editingId.value) return
+
+    transactionsStore.updateTransaction(editingId.value, {
+      date: transactionForm.value.date,
+      type: transactionForm.value.type,
+      symbol: transactionForm.value.symbol.trim().toUpperCase(),
+      description: transactionForm.value.description.trim(),
+      quantity: transactionForm.value.quantity.trim() === '' ? null : Number(transactionForm.value.quantity),
+      price: Number(transactionForm.value.price),
+      fees: Number(transactionForm.value.fees),
+      notes: transactionForm.value.notes.trim() === '' ? null : transactionForm.value.notes,
+    })
+  } else {
+    transactionsStore.addManual({
+      accountId: transactionForm.value.accountId,
+      date: transactionForm.value.date,
+      type: transactionForm.value.type,
+      assetType: transactionForm.value.assetType,
+      symbol: transactionForm.value.symbol.trim().toUpperCase(),
+      description: transactionForm.value.description.trim(),
+      quantity: transactionForm.value.quantity.trim() === '' ? null : Number(transactionForm.value.quantity),
+      price: Number(transactionForm.value.price),
+      fees: Number(transactionForm.value.fees),
+      notes: transactionForm.value.notes.trim() === '' ? null : transactionForm.value.notes,
+    })
+    activeTab.value = 'MANUAL'
+  }
+
+  formOpen.value = false
+  editingId.value = null
+  transactionForm.value = getDefaultForm()
 }
 
 function deleteTransaction(id: string): void {
@@ -239,7 +311,10 @@ function deleteTransaction(id: string): void {
         <h1 class="text-2xl font-bold">Transactions</h1>
         <p class="text-sm text-(--ui-text-muted)">Filter by type, account, symbol, and date range.</p>
       </div>
-      <UButton label="Dashboard" to="/dashboard" color="neutral" variant="outline" />
+      <div class="flex items-center gap-2">
+        <UButton label="New transaction" color="primary" @click="openAdd" />
+        <UButton label="Dashboard" to="/dashboard" color="neutral" variant="outline" />
+      </div>
     </div>
 
     <UCard>
@@ -379,35 +454,57 @@ function deleteTransaction(id: string): void {
       </div>
     </UCard>
 
-    <UModal v-model:open="editOpen" title="Edit transaction" :ui="{ footer: 'justify-end' }">
+    <UModal v-model:open="formOpen" :title="formTitle" :ui="{ footer: 'justify-end' }">
       <template #body>
         <div class="grid gap-3 md:grid-cols-2">
           <label class="space-y-1 text-sm">
+            <span class="text-(--ui-text-muted)">Account</span>
+            <select
+              v-model="transactionForm.accountId"
+              :disabled="isEditMode"
+              class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
+            >
+              <option v-for="account in accountsStore.active" :key="account.id" :value="account.id">{{ account.displayName }}</option>
+            </select>
+          </label>
+
+          <label class="space-y-1 text-sm">
             <span class="text-(--ui-text-muted)">Date</span>
-            <input v-model="editForm.date" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="date" />
+            <input v-model="transactionForm.date" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="date" />
           </label>
 
           <label class="space-y-1 text-sm">
             <span class="text-(--ui-text-muted)">Type</span>
-            <select v-model="editForm.type" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
+            <select v-model="transactionForm.type" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
               <option v-for="type in typeOptions" :key="type" :value="type">{{ type }}</option>
             </select>
           </label>
 
           <label class="space-y-1 text-sm">
+            <span class="text-(--ui-text-muted)">Asset type</span>
+            <select
+              v-model="transactionForm.assetType"
+              :disabled="isEditMode"
+              class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
+            >
+              <option v-for="assetType in assetTypeOptions" :key="assetType" :value="assetType">{{ assetType }}</option>
+            </select>
+          </label>
+
+          <label class="space-y-1 text-sm">
             <span class="text-(--ui-text-muted)">Symbol</span>
-            <input v-model="editForm.symbol" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="text" />
+            <input v-model="transactionForm.symbol" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="text" />
           </label>
 
           <label class="space-y-1 text-sm">
             <span class="text-(--ui-text-muted)">Description</span>
-            <input v-model="editForm.description" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="text" />
+            <input v-model="transactionForm.description" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="text" />
           </label>
 
           <label class="space-y-1 text-sm">
             <span class="text-(--ui-text-muted)">Quantity</span>
             <input
-              v-model="editForm.quantity"
+              v-model="transactionForm.quantity"
               class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
               type="number"
               step="0.0001"
@@ -415,25 +512,34 @@ function deleteTransaction(id: string): void {
           </label>
 
           <label class="space-y-1 text-sm">
-            <span class="text-(--ui-text-muted)">Price</span>
-            <input v-model="editForm.price" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="number" step="0.0001" />
+            <span class="text-(--ui-text-muted)">Price / Amount</span>
+            <input
+              v-model="transactionForm.price"
+              class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
+              type="number"
+              step="0.0001"
+            />
           </label>
 
           <label class="space-y-1 text-sm">
             <span class="text-(--ui-text-muted)">Fees</span>
-            <input v-model="editForm.fees" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="number" step="0.01" />
+            <input
+              v-model="transactionForm.fees"
+              class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
+              type="number"
+              step="0.01"
+            />
           </label>
-
           <label class="space-y-1 text-sm md:col-span-2">
             <span class="text-(--ui-text-muted)">Notes</span>
-            <textarea v-model="editForm.notes" class="min-h-24 w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" />
+            <textarea v-model="transactionForm.notes" class="min-h-24 w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" />
           </label>
         </div>
       </template>
 
       <template #footer>
-        <UButton label="Cancel" color="neutral" variant="outline" @click="editOpen = false" />
-        <UButton label="Save" color="primary" @click="saveEdit" />
+        <UButton label="Cancel" color="neutral" variant="outline" @click="formOpen = false" />
+        <UButton :label="isEditMode ? 'Save' : 'Add'" color="primary" @click="saveTransaction" />
       </template>
     </UModal>
   </div>

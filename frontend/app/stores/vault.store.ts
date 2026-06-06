@@ -220,7 +220,7 @@ export const useVaultStore = defineStore('vault', () => {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'ifolio.foli'
+    a.download = 'folio.iFolio'
     a.click()
     URL.revokeObjectURL(url)
   }

@@ -75,7 +75,7 @@ async function handleOpen() {
   try {
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = '.foli'
+    input.accept = '.iFolio'
     input.click()
 
     const file = await new Promise<File | null>((resolve) => {

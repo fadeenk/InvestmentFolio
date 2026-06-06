@@ -18,6 +18,10 @@ export interface SchwabAuthStatusResponse {
   isConnected: boolean
   accessTokenExpiresAt: string | null // ISO 8601
   refreshTokenExpiresAt: string | null // ISO 8601
+  accessTokenSecondsRemaining: number | null
+  refreshTokenSecondsRemaining: number | null
+  isRefreshTokenExpiringSoon: boolean
+  warning: string | null
   connectedAccountCount: number
   lastRefreshedAt: string | null // ISO 8601
 }

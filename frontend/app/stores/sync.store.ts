@@ -13,6 +13,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useVaultStore } from './vault.store'
+import { useUiStore } from './ui'
 import { useAccountsStore } from './accounts.store'
 import { usePositionsStore } from './positions.store'
 import { useTransactionsStore } from './transactions.store'
@@ -82,6 +83,7 @@ export interface SyncSummary {
 
 export const useSyncStore = defineStore('sync', () => {
   const vaultStore = useVaultStore()
+  const uiStore = useUiStore()
   const accountsStore = useAccountsStore()
   const positionsStore = usePositionsStore()
   const transactionsStore = useTransactionsStore()
@@ -98,6 +100,10 @@ export const useSyncStore = defineStore('sync', () => {
   const accessTokenSecondsRemaining = ref<number | null>(null)
   /** Seconds until the refresh token expires. */
   const refreshTokenSecondsRemaining = ref<number | null>(null)
+  /** Connected account count reported by Worker /auth/status. */
+  const connectedAccountCount = ref(0)
+  /** Last warning emitted by /auth/status to avoid duplicate banners on poll. */
+  const lastStatusWarning = ref<string | null>(null)
 
   /** True while a sync is actively running. */
   const isSyncing = computed(() => syncStatus.value === SyncStatus.IN_PROGRESS)
@@ -126,11 +132,15 @@ export const useSyncStore = defineStore('sync', () => {
       })
       if (!resp.ok) {
         tokenStatus.value = TokenStatus.NOT_CONNECTED
+        connectedAccountCount.value = 0
+        accessTokenSecondsRemaining.value = null
+        refreshTokenSecondsRemaining.value = null
         return
       }
 
       const data: SchwabAuthStatusResponse = await resp.json()
       _applyTokenStatus(data)
+      _syncStatusWarningBanner(data.warning)
 
       // Cache token meta in vault metadata for offline display
       if (vaultStore.payload && data.isConnected) {
@@ -145,6 +155,9 @@ export const useSyncStore = defineStore('sync', () => {
       }
     } catch {
       tokenStatus.value = TokenStatus.NOT_CONNECTED
+      connectedAccountCount.value = 0
+      accessTokenSecondsRemaining.value = null
+      refreshTokenSecondsRemaining.value = null
     }
   }
 
@@ -189,6 +202,7 @@ export const useSyncStore = defineStore('sync', () => {
       })
       if (!resp.ok) {
         tokenStatus.value = TokenStatus.EXPIRED
+        uiStore.setBanner('warning', 'Schwab session expired. Re-authorize to continue syncing.')
         return false
       }
 
@@ -198,8 +212,10 @@ export const useSyncStore = defineStore('sync', () => {
         return true
       }
       tokenStatus.value = TokenStatus.EXPIRED
+      uiStore.setBanner('warning', 'Schwab session expired. Re-authorize to continue syncing.')
       return false
     } catch {
+      uiStore.setBanner('warning', 'Could not refresh Schwab session. Re-authorize to continue syncing.')
       return false
     }
   }
@@ -470,31 +486,51 @@ export const useSyncStore = defineStore('sync', () => {
   }
 
   function _applyTokenStatus(data: SchwabAuthStatusResponse): void {
+    connectedAccountCount.value = data.connectedAccountCount
+
     if (!data.isConnected) {
       tokenStatus.value = TokenStatus.NOT_CONNECTED
+      accessTokenSecondsRemaining.value = null
+      refreshTokenSecondsRemaining.value = null
       return
     }
 
     const now = Date.now()
-    if (data.refreshTokenExpiresAt) {
-      const refreshMs = new Date(data.refreshTokenExpiresAt).getTime() - now
-      refreshTokenSecondsRemaining.value = Math.max(0, Math.floor(refreshMs / 1000))
-      if (refreshMs <= 0) {
-        tokenStatus.value = TokenStatus.EXPIRED
-        return
-      }
+    const refreshSeconds =
+      data.refreshTokenSecondsRemaining ??
+      (data.refreshTokenExpiresAt ? Math.max(0, Math.floor((new Date(data.refreshTokenExpiresAt).getTime() - now) / 1000)) : null)
+    const accessSeconds =
+      data.accessTokenSecondsRemaining ??
+      (data.accessTokenExpiresAt ? Math.max(0, Math.floor((new Date(data.accessTokenExpiresAt).getTime() - now) / 1000)) : null)
+
+    refreshTokenSecondsRemaining.value = refreshSeconds
+    accessTokenSecondsRemaining.value = accessSeconds
+
+    if (refreshSeconds !== null && refreshSeconds <= 0) {
+      tokenStatus.value = TokenStatus.EXPIRED
+      return
     }
 
-    if (data.accessTokenExpiresAt) {
-      const accessMs = new Date(data.accessTokenExpiresAt).getTime() - now
-      accessTokenSecondsRemaining.value = Math.max(0, Math.floor(accessMs / 1000))
-      if (accessMs < 60_000) {
-        tokenStatus.value = TokenStatus.EXPIRING_SOON
-        return
-      }
+    if (accessSeconds !== null && accessSeconds < 60) {
+      tokenStatus.value = TokenStatus.EXPIRING_SOON
+      return
     }
 
     tokenStatus.value = TokenStatus.VALID
+  }
+
+  function _syncStatusWarningBanner(warning: string | null): void {
+    if (!warning) {
+      lastStatusWarning.value = null
+      return
+    }
+
+    if (warning === lastStatusWarning.value) {
+      return
+    }
+
+    lastStatusWarning.value = warning
+    uiStore.setBanner('warning', warning)
   }
 
   function defaultSyncWindowStart(toDateIso: string): string {
@@ -529,6 +565,7 @@ export const useSyncStore = defineStore('sync', () => {
     callbackMessage,
     accessTokenSecondsRemaining,
     refreshTokenSecondsRemaining,
+    connectedAccountCount,
     isSyncing,
     requiresReauth,
     expirationWarning,

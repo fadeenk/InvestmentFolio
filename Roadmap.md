@@ -101,11 +101,12 @@ Wire up OAuth 2.0, token lifecycle, and all Schwab API endpoints. This is the hi
 
 ### Token expiry & re-auth `Auth`
 
-- [ ] Worker tracks refresh token expiry; return warning in `/auth/status` response
-- [ ] Show banner 24 hours before refresh token expiry
-- [ ] `GET /auth/status`: token expiry timestamps + connected account count
-- [ ] Settings view: Schwab connection status, re-authorize button, token expiry timer
-- [ ] On `401` mid-session: silently refresh; on refresh failure show non-blocking banner
+- [x] Worker tracks refresh token expiry; return warning in `/auth/status` response
+- [x] Show banner 24 hours before refresh token expiry
+- [x] `GET /auth/status`: token expiry timestamps + connected account count
+- [x] Settings view: Schwab connection status, re-authorize button, token expiry timer
+- [x] On `401` mid-session: silently refresh; on refresh failure show non-blocking banner
+- [x] Frontend: detect token expiry, call `/auth/refresh` silently before API calls
 
 > **Depends on:** OAuth 2.0 flow
 
@@ -227,10 +228,6 @@ Error handling, edge cases, mobile QA, performance, and final deployment.
 - [ ] Frontend deployed: GitHub Actions workflow triggered on push to main
 - [ ] GitHub Pages enabled in repo Settings → Pages → gh-pages branch
 - [ ] Worker allowed origin update to include production `worker\vitest.config.mts`
-
-### Cleanup
-
-- [ ] Frontend: detect token expiry, call `/auth/refresh` silently before API calls
 
 ### Error handling & edge cases `Reliability`
 

@@ -98,6 +98,8 @@ export const useSyncStore = defineStore('sync', () => {
 
   /** Seconds until the access token expires. Updated by pollTokenStatus(). */
   const accessTokenSecondsRemaining = ref<number | null>(null)
+  /** Cached access-token absolute expiry used for pre-request refresh checks. */
+  const accessTokenExpiresAtMs = ref<number | null>(null)
   /** Seconds until the refresh token expires. */
   const refreshTokenSecondsRemaining = ref<number | null>(null)
   /** Connected account count reported by Worker /auth/status. */
@@ -134,6 +136,7 @@ export const useSyncStore = defineStore('sync', () => {
         tokenStatus.value = TokenStatus.NOT_CONNECTED
         connectedAccountCount.value = 0
         accessTokenSecondsRemaining.value = null
+        accessTokenExpiresAtMs.value = null
         refreshTokenSecondsRemaining.value = null
         return
       }
@@ -157,6 +160,7 @@ export const useSyncStore = defineStore('sync', () => {
       tokenStatus.value = TokenStatus.NOT_CONNECTED
       connectedAccountCount.value = 0
       accessTokenSecondsRemaining.value = null
+      accessTokenExpiresAtMs.value = null
       refreshTokenSecondsRemaining.value = null
     }
   }
@@ -482,7 +486,24 @@ export const useSyncStore = defineStore('sync', () => {
   }
 
   async function _workerGet(url: string): Promise<Response> {
+    await _refreshAccessTokenIfNeeded()
     return fetch(url, { headers: _bearerHeader() })
+  }
+
+  async function _refreshAccessTokenIfNeeded(): Promise<void> {
+    if (tokenStatus.value === TokenStatus.NOT_CONNECTED || tokenStatus.value === TokenStatus.EXPIRED) {
+      return
+    }
+
+    const now = Date.now()
+    const shouldRefreshByExpiry = accessTokenExpiresAtMs.value !== null && accessTokenExpiresAtMs.value - now <= 60_000
+    const shouldRefreshByStatus = tokenStatus.value === TokenStatus.EXPIRING_SOON
+
+    if (!shouldRefreshByExpiry && !shouldRefreshByStatus) {
+      return
+    }
+
+    await refreshAccessToken()
   }
 
   function _applyTokenStatus(data: SchwabAuthStatusResponse): void {
@@ -491,6 +512,7 @@ export const useSyncStore = defineStore('sync', () => {
     if (!data.isConnected) {
       tokenStatus.value = TokenStatus.NOT_CONNECTED
       accessTokenSecondsRemaining.value = null
+      accessTokenExpiresAtMs.value = null
       refreshTokenSecondsRemaining.value = null
       return
     }
@@ -505,6 +527,7 @@ export const useSyncStore = defineStore('sync', () => {
 
     refreshTokenSecondsRemaining.value = refreshSeconds
     accessTokenSecondsRemaining.value = accessSeconds
+    accessTokenExpiresAtMs.value = data.accessTokenExpiresAt ? new Date(data.accessTokenExpiresAt).getTime() : null
 
     if (refreshSeconds !== null && refreshSeconds <= 0) {
       tokenStatus.value = TokenStatus.EXPIRED

@@ -91,6 +91,101 @@ describe('sync store auth workflow', () => {
     expect(uiStore.banner?.message).toContain('Re-authorize')
   })
 
+  it('silently refreshes token before api calls when access token is expiring', async () => {
+    const store = useSyncStore()
+    const vaultStore = useVaultStore()
+    const now = new Date().toISOString()
+
+    vaultStore.payload = {
+      schemaVersion: 1,
+      createdAt: now,
+      lastSyncedAt: null,
+      accounts: [],
+      transactions: [],
+      positions: [],
+      taxLots: [],
+      dividends: [],
+      priceHistory: {},
+      metadata: {
+        displayPreferences: {
+          theme: Theme.SYSTEM,
+          currencyFormat: 'USD',
+          dateFormat: DateFormat.MM_DD_YYYY,
+          defaultAccountFilter: null,
+          defaultCostBasisMethod: CostBasisMethod.FIFO,
+          defaultTimeRange: 'YTD',
+        },
+        schwabAccountHashes: {},
+        schwabAccountHashesByFullNumber: {},
+        schwabTokenMeta: null,
+        costBasisMethodByAccount: {},
+        lastSavedAt: null,
+      },
+    }
+
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            isConnected: true,
+            accessTokenExpiresAt: new Date(Date.now() + 20_000).toISOString(),
+            refreshTokenExpiresAt: new Date(Date.now() + 48 * 60 * 60_000).toISOString(),
+            accessTokenSecondsRemaining: 20,
+            refreshTokenSecondsRemaining: 172800,
+            isRefreshTokenExpiringSoon: false,
+            warning: null,
+            connectedAccountCount: 1,
+            lastRefreshedAt: now,
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ success: true, accessTokenExpiresAt: new Date(Date.now() + 3600_000).toISOString() }), { status: 200 }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            isConnected: true,
+            accessTokenExpiresAt: new Date(Date.now() + 3600_000).toISOString(),
+            refreshTokenExpiresAt: new Date(Date.now() + 48 * 60 * 60_000).toISOString(),
+            accessTokenSecondsRemaining: 3600,
+            refreshTokenSecondsRemaining: 172800,
+            isRefreshTokenExpiringSoon: false,
+            warning: null,
+            connectedAccountCount: 1,
+            lastRefreshedAt: new Date().toISOString(),
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify([{ accountNumber: '12345678', hashValue: 'hash-1234' }]), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            accounts: [],
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      )
+
+    await store.syncSchwab()
+
+    const calledUrls = fetchMock.mock.calls.map((call) => String(call[0]))
+    const refreshIndex = calledUrls.findIndex((url) => url.includes('/auth/refresh'))
+    const accountNumbersIndex = calledUrls.findIndex((url) => url.includes('/api/accountNumbers'))
+
+    expect(refreshIndex).toBeGreaterThan(-1)
+    expect(accountNumbersIndex).toBeGreaterThan(-1)
+    expect(refreshIndex).toBeLessThan(accountNumbersIndex)
+  })
+
   it('shows 24h warning banner from status payload', async () => {
     const store = useSyncStore()
     const uiStore = useUiStore()

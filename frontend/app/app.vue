@@ -110,6 +110,10 @@ function formatRemaining(secondsRemaining: number | null): string {
             </NuxtLink>
             <UButton label="Home" to="/" size="xs" color="neutral" variant="ghost" />
             <UButton label="Dashboard" to="/dashboard" size="xs" color="neutral" variant="ghost" />
+            <UButton label="Positions" to="/positions" size="xs" color="neutral" variant="ghost" />
+            <UButton label="Transactions" to="/transactions" size="xs" color="neutral" variant="ghost" />
+            <UButton label="Income" to="/income" size="xs" color="neutral" variant="ghost" />
+            <UButton label="Settings" to="/settings" size="xs" color="neutral" variant="ghost" />
           </div>
         </template>
 

@@ -50,8 +50,9 @@ export enum AssetType {
   Stock = 'Stock',
   Bond = 'Bond',
   ETF = 'ETF',
-  MutualFund = 'MutualFund',
+  MutualFund = 'Mutual Fund',
   Cash = 'Cash',
+  CashEquivalent = 'Cash Equivalent',
   Crypto = 'Crypto',
 }
 

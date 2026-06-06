@@ -217,7 +217,7 @@ function toTransactionType(rawType: string): TransactionType {
 
 function toAssetType(rawAssetType: string | undefined, description: string | undefined): AssetType {
   const normalized = (rawAssetType ?? '').trim().toUpperCase()
-  if (description?.startsWith('US TREASURY BIL')) return AssetType.Bond
+  if (description?.startsWith('US TREASURY BIL')) return AssetType.CashEquivalent
 
   switch (normalized) {
     case 'BOND':

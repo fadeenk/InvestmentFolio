@@ -1,10 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
+export type BannerType = 'success' | 'warning' | 'error'
+
 export const useUiStore = defineStore('ui', () => {
   const sidebarOpen = ref(false)
   const activeModal = ref<string | null>(null)
-  const banner = ref<{ type: 'success' | 'error'; message: string } | null>(null)
+  const banner = ref<{ type: BannerType; message: string } | null>(null)
 
   function toggleSidebar() {
     sidebarOpen.value = !sidebarOpen.value
@@ -18,7 +20,7 @@ export const useUiStore = defineStore('ui', () => {
     activeModal.value = null
   }
 
-  function setBanner(type: 'success' | 'error', message: string) {
+  function setBanner(type: BannerType, message: string) {
     banner.value = { type, message }
   }
 

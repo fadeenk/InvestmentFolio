@@ -292,7 +292,7 @@ function gainLossClass(value: number): string {
                 <td class="px-3 py-2 font-medium">{{ account.displayName }}</td>
                 <td class="px-3 py-2">{{ account.bank }}</td>
                 <td class="px-3 py-2">{{ account.type }}</td>
-                <td class="px-3 py-2">••••{{ account.accountNumber }}</td>
+                <td class="px-3 py-2">{{ accountsStore.maskAccountNumber(account.accountNumber) }}</td>
                 <td class="px-3 py-2 text-right">{{ formatCurrency(account.currentBalance) }}</td>
                 <td class="px-3 py-2 text-right">{{ formatCurrency(account.cashBalance) }}</td>
               </tr>

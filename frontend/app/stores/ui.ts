@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { DateFormat } from '~/types/enums'
 import { useVaultStore } from '~/stores/vault.store'
 
-export type BannerType = 'success' | 'warning' | 'error'
+type BannerType = 'success' | 'warning' | 'error'
 
 export const useUiStore = defineStore('ui', () => {
   const vaultStore = useVaultStore()

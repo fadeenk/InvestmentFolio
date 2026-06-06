@@ -13,13 +13,7 @@ export enum AccountType {
   TRADITIONAL401K = 'TRADITIONAL 401K',
   Roth401K = '401K ROTH',
   HSA = 'HSA',
-  CASH = 'CASH',
-}
-
-/** How account data is ingested. Derived from Bank but stored explicitly. */
-export enum SyncMethod {
-  Manual = 'Manual',
-  CSVImport = 'CSVImport',
+  CASH = 'CASH ONLY',
 }
 
 /**
@@ -72,11 +66,6 @@ export enum Theme {
   LIGHT = 'light',
   DARK = 'dark',
   SYSTEM = 'system',
-}
-
-export enum CurrencyFormat {
-  USD = 'USD',
-  // Extend for other currencies in future versions
 }
 
 export enum DateFormat {

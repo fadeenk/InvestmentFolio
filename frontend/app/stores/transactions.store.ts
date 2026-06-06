@@ -17,7 +17,7 @@ import { recalculateDerivedDataFromTransactions } from '@/utils/ledger'
 // Filter shape
 // ---------------------------------------------------------------------------
 
-export interface TransactionFilters {
+interface TransactionFilters {
   accountIds: string[] // empty = all accounts
   types: TransactionType[] // empty = all types
   symbol: string | null

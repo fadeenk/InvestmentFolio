@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useAccountsStore } from '~/stores/accounts.store'
+import { useIncomeStore } from '~/stores/income.store'
 import { usePositionsStore } from '~/stores/positions.store'
 import { useVaultStore } from '~/stores/vault.store'
+import { TimeRange } from '~/types/enums'
 import { VaultStatus } from '~/types/vault'
 
 const vault = useVaultStore()
 const accountsStore = useAccountsStore()
 const positionsStore = usePositionsStore()
+const incomeStore = useIncomeStore()
 
 const isUnlocked = computed(() => vault.status === VaultStatus.UNLOCKED)
 const accounts = computed(() => accountsStore.active)
@@ -28,6 +31,55 @@ const positionsWithAccount = computed(() => {
 })
 
 const totals = computed(() => positionsStore.summary)
+
+const accountFilter = computed(() => positionsStore.selectedAccountId)
+const selectedTimeRange = computed(() => positionsStore.selectedTimeRange)
+
+const accountOptions = computed(() => {
+  return [
+    {
+      id: null,
+      label: 'All',
+    },
+    ...accounts.value.map((account) => ({
+      id: account.id,
+      label: account.displayName,
+    })),
+  ]
+})
+
+const timeRangeOptions = [TimeRange.ONE_DAY, TimeRange.ONE_WEEK, TimeRange.ONE_MONTH, TimeRange.THREE_MONTHS, TimeRange.YTD, TimeRange.ONE_YEAR, TimeRange.ALL]
+
+const portfolioValueChartData = computed(() => {
+  return positionsStore.portfolioValueSeries.map((point) => ({
+    date: point.date,
+    value: point.totalValue,
+  }))
+})
+
+const allocationChartData = computed(() => {
+  return positionsStore.allocation.map((slice) => ({
+    category: slice.label,
+    value: slice.marketValue,
+  }))
+})
+
+const incomeChartMode = ref<'DIVIDEND' | 'INTEREST'>('DIVIDEND')
+
+const monthlyIncomeChartData = computed(() => {
+  return incomeStore.monthlyGrid.map((month) => ({
+    category: month.yearMonth.slice(5),
+    value: incomeChartMode.value === 'DIVIDEND' ? month.totalDividends : month.interest,
+  }))
+})
+
+function selectAccount(accountId: string | null): void {
+  positionsStore.selectAccount(accountId)
+}
+
+function selectRange(range: TimeRange): void {
+  positionsStore.selectTimeRange(range)
+}
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -69,35 +121,149 @@ function gainLossClass(value: number): string {
     </template>
 
     <template v-else>
-      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <UCard>
           <template #header>
-            <p class="text-sm text-(--ui-text-muted)">Active accounts</p>
+            <p class="text-sm text-(--ui-text-muted)">Total value</p>
           </template>
-          <p class="text-2xl font-bold">{{ accounts.length }}</p>
+          <p class="text-2xl font-bold">{{ formatCurrency(totals.totalMarketValue + totals.totalCashBalance) }}</p>
         </UCard>
 
         <UCard>
           <template #header>
-            <p class="text-sm text-(--ui-text-muted)">Open positions</p>
+            <p class="text-sm text-(--ui-text-muted)">Today's G/L</p>
           </template>
-          <p class="text-2xl font-bold">{{ positions.length }}</p>
+          <p class="text-2xl font-bold" :class="gainLossClass(totals.totalDayGainLoss)">
+            {{ formatCurrency(totals.totalDayGainLoss) }}
+          </p>
+          <p class="text-xs text-(--ui-text-muted)">{{ formatPercent(totals.totalDayGainLossPct) }}</p>
         </UCard>
 
         <UCard>
           <template #header>
-            <p class="text-sm text-(--ui-text-muted)">Market value</p>
+            <p class="text-sm text-(--ui-text-muted)">Unrealized G/L</p>
           </template>
-          <p class="text-2xl font-bold">{{ formatCurrency(totals.totalMarketValue) }}</p>
+          <p class="text-2xl font-bold" :class="gainLossClass(totals.totalUnrealizedGainLoss)">
+            {{ formatCurrency(totals.totalUnrealizedGainLoss) }}
+          </p>
+          <p class="text-xs text-(--ui-text-muted)">{{ formatPercent(totals.totalUnrealizedGainLossPct) }}</p>
         </UCard>
 
         <UCard>
           <template #header>
-            <p class="text-sm text-(--ui-text-muted)">Cash balance</p>
+            <p class="text-sm text-(--ui-text-muted)">Realized G/L YTD</p>
+          </template>
+          <p class="text-2xl font-bold" :class="gainLossClass(totals.ytdRealizedGainLossTotal)">
+            {{ formatCurrency(totals.ytdRealizedGainLossTotal) }}
+          </p>
+          <p class="text-xs text-(--ui-text-muted)">Short {{ formatCurrency(totals.ytdRealizedGainLossShortTerm) }} / Long {{ formatCurrency(totals.ytdRealizedGainLossLongTerm) }}</p>
+        </UCard>
+
+        <UCard>
+          <template #header>
+            <p class="text-sm text-(--ui-text-muted)">Income YTD</p>
+          </template>
+          <p class="text-2xl font-bold">{{ formatCurrency(totals.ytdIncomeTotal) }}</p>
+          <p class="text-xs text-(--ui-text-muted)">Div {{ formatCurrency(totals.ytdDividends) }} / Int {{ formatCurrency(totals.ytdInterest) }}</p>
+        </UCard>
+
+        <UCard>
+          <template #header>
+            <p class="text-sm text-(--ui-text-muted)">Cash</p>
           </template>
           <p class="text-2xl font-bold">{{ formatCurrency(totals.totalCashBalance) }}</p>
         </UCard>
       </div>
+
+      <UCard>
+        <template #header>
+          <div class="space-y-3">
+            <div>
+              <h2 class="text-lg font-semibold">Filters</h2>
+              <p class="text-sm text-(--ui-text-muted)">Select account and time range for summary and chart data.</p>
+            </div>
+
+            <div class="space-y-2">
+              <p class="text-xs font-medium uppercase tracking-wide text-(--ui-text-muted)">Account</p>
+              <div class="flex flex-wrap gap-2">
+                <UButton
+                  v-for="option in accountOptions"
+                  :key="option.label"
+                  :label="option.label"
+                  size="xs"
+                  :color="accountFilter === option.id ? 'primary' : 'neutral'"
+                  :variant="accountFilter === option.id ? 'solid' : 'outline'"
+                  @click="selectAccount(option.id)"
+                />
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <p class="text-xs font-medium uppercase tracking-wide text-(--ui-text-muted)">Range</p>
+              <div class="flex flex-wrap gap-2">
+                <UButton
+                  v-for="option in timeRangeOptions"
+                  :key="option"
+                  :label="option"
+                  size="xs"
+                  :color="selectedTimeRange === option ? 'primary' : 'neutral'"
+                  :variant="selectedTimeRange === option ? 'solid' : 'outline'"
+                  @click="selectRange(option)"
+                />
+              </div>
+            </div>
+          </div>
+        </template>
+      </UCard>
+
+      <div class="grid gap-4 xl:grid-cols-2">
+        <UCard>
+          <template #header>
+            <div class="flex items-center justify-between gap-3">
+              <h2 class="text-lg font-semibold">Portfolio value</h2>
+              <span class="text-xs text-(--ui-text-muted)">{{ selectedTimeRange }}</span>
+            </div>
+          </template>
+          <LineChart :data="portfolioValueChartData" y-key="value" />
+        </UCard>
+
+        <UCard>
+          <template #header>
+            <h2 class="text-lg font-semibold">Asset allocation</h2>
+          </template>
+          <BarChart :data="allocationChartData" orientation="horizontal" />
+        </UCard>
+      </div>
+
+      <UCard>
+        <template #header>
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <h2 class="text-lg font-semibold">Monthly income</h2>
+              <p class="text-sm text-(--ui-text-muted)">Toggle between dividends and interest totals.</p>
+            </div>
+
+            <div class="flex gap-2">
+              <UButton
+                label="Dividend"
+                size="xs"
+                :color="incomeChartMode === 'DIVIDEND' ? 'primary' : 'neutral'"
+                :variant="incomeChartMode === 'DIVIDEND' ? 'solid' : 'outline'"
+                @click="incomeChartMode = 'DIVIDEND'"
+              />
+              <UButton
+                label="Interest"
+                size="xs"
+                :color="incomeChartMode === 'INTEREST' ? 'primary' : 'neutral'"
+                :variant="incomeChartMode === 'INTEREST' ? 'solid' : 'outline'"
+                @click="incomeChartMode = 'INTEREST'"
+              />
+            </div>
+          </div>
+        </template>
+
+        <BarChart :data="monthlyIncomeChartData" />
+      </UCard>
 
       <UCard>
         <template #header>

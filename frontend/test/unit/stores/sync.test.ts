@@ -1,6 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useSyncStore } from '~/stores/sync.store'
+import { useUiStore } from '~/stores/ui'
 import { useVaultStore } from '~/stores/vault.store'
 import { TokenStatus } from '~/types/vault'
 import { CostBasisMethod, DateFormat, Theme } from '~/types/enums'
@@ -23,6 +24,10 @@ describe('sync store auth workflow', () => {
           isConnected: true,
           accessTokenExpiresAt: new Date(now + 30 * 60_000).toISOString(),
           refreshTokenExpiresAt: new Date(now + 48 * 60 * 60_000).toISOString(),
+          accessTokenSecondsRemaining: 1800,
+          refreshTokenSecondsRemaining: 172800,
+          isRefreshTokenExpiringSoon: false,
+          warning: null,
           connectedAccountCount: 1,
           lastRefreshedAt: new Date(now).toISOString(),
         }),
@@ -49,6 +54,10 @@ describe('sync store auth workflow', () => {
           isConnected: false,
           accessTokenExpiresAt: null,
           refreshTokenExpiresAt: null,
+          accessTokenSecondsRemaining: null,
+          refreshTokenSecondsRemaining: null,
+          isRefreshTokenExpiringSoon: false,
+          warning: null,
           connectedAccountCount: 0,
           lastRefreshedAt: null,
         }),
@@ -68,8 +77,9 @@ describe('sync store auth workflow', () => {
     window.location.href = originalHref
   })
 
-  it('marks token as expired when refresh endpoint fails', async () => {
+  it('marks token as expired and shows a warning banner when refresh endpoint fails', async () => {
     const store = useSyncStore()
+    const uiStore = useUiStore()
 
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ success: false }), { status: 401 }))
 
@@ -77,6 +87,40 @@ describe('sync store auth workflow', () => {
 
     expect(refreshed).toBe(false)
     expect(store.tokenStatus).toBe(TokenStatus.EXPIRED)
+    expect(uiStore.banner?.type).toBe('warning')
+    expect(uiStore.banner?.message).toContain('Re-authorize')
+  })
+
+  it('shows 24h warning banner from status payload', async () => {
+    const store = useSyncStore()
+    const uiStore = useUiStore()
+    const now = Date.now()
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          isConnected: true,
+          accessTokenExpiresAt: new Date(now + 30 * 60_000).toISOString(),
+          refreshTokenExpiresAt: new Date(now + 6 * 60 * 60_000).toISOString(),
+          accessTokenSecondsRemaining: 1800,
+          refreshTokenSecondsRemaining: 21600,
+          isRefreshTokenExpiringSoon: true,
+          warning: 'Refresh token expires within 24 hours. Re-authorize soon to avoid interruptions.',
+          connectedAccountCount: 2,
+          lastRefreshedAt: new Date(now).toISOString(),
+        }),
+        {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        },
+      ),
+    )
+
+    await store.pollTokenStatus()
+
+    expect(store.expirationWarning).toBe(true)
+    expect(store.connectedAccountCount).toBe(2)
+    expect(uiStore.banner?.type).toBe('warning')
   })
 
   it('syncs account numbers and positions into vault state', async () => {
@@ -119,6 +163,10 @@ describe('sync store auth workflow', () => {
             isConnected: true,
             accessTokenExpiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
             refreshTokenExpiresAt: new Date(Date.now() + 48 * 60 * 60_000).toISOString(),
+            accessTokenSecondsRemaining: 1800,
+            refreshTokenSecondsRemaining: 172800,
+            isRefreshTokenExpiringSoon: false,
+            warning: null,
             connectedAccountCount: 1,
             lastRefreshedAt: now,
           }),
@@ -300,6 +348,10 @@ describe('sync store auth workflow', () => {
           isConnected: false,
           accessTokenExpiresAt: null,
           refreshTokenExpiresAt: null,
+          accessTokenSecondsRemaining: null,
+          refreshTokenSecondsRemaining: null,
+          isRefreshTokenExpiringSoon: false,
+          warning: null,
           connectedAccountCount: 0,
           lastRefreshedAt: null,
         }),

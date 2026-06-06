@@ -82,11 +82,18 @@ export const useVaultStore = defineStore('vault', () => {
     }
   }
 
-  async function openVault(file: File, passphrase: string): Promise<void> {
+  async function openVault(input: File | FileSystemFileHandle, passphrase: string): Promise<void> {
     lastError.value = null
     status.value = VaultStatus.UNLOCKING
 
     try {
+      let file: File
+      if (input instanceof File) {
+        file = input
+      } else {
+        fileHandle.value = input
+        file = await input.getFile()
+      }
       const buffer = await file.arrayBuffer()
       const { salt, iv, ciphertext } = parseVaultBuffer(buffer)
       const key = await deriveKey(passphrase, salt)

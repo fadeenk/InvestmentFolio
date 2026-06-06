@@ -58,10 +58,21 @@ async function handleCreate() {
     return
   }
   try {
+    const handle = await window.showSaveFilePicker({
+      suggestedName: 'folio.iFolio',
+      types: [
+        {
+          description: 'iFolio Vault',
+          accept: { 'application/octet-stream': ['.iFolio'] },
+        },
+      ],
+    })
+    vault.setFileHandle(handle)
     await vault.createVault(passphrase.value)
     showCreateDialog.value = false
     resetForm()
-  } catch {
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') return
     // lastError is set by the store
   }
 }
@@ -73,20 +84,35 @@ async function handleOpen() {
     return
   }
   try {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.iFolio'
-    input.click()
+    const supportsPicker = 'showOpenFilePicker' in window
+    if (supportsPicker) {
+      const [handle] = await window.showOpenFilePicker({
+        types: [
+          {
+            description: 'iFolio Vault',
+            accept: { 'application/octet-stream': ['.iFolio'] },
+          },
+        ],
+      })
+      if (!handle) return
+      await vault.openVault(handle, passphrase.value)
+    } else {
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = '.iFolio'
+      input.click()
 
-    const file = await new Promise<File | null>((resolve) => {
-      input.onchange = () => resolve(input.files?.[0] ?? null)
-    })
-    if (!file) return
+      const file = await new Promise<File | null>((resolve) => {
+        input.onchange = () => resolve(input.files?.[0] ?? null)
+      })
+      if (!file) return
 
-    await vault.openVault(file, passphrase.value)
+      await vault.openVault(file, passphrase.value)
+    }
     showOpenDialog.value = false
     resetForm()
-  } catch {
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') return
     if (vault.lastError) passphraseError.value = vault.lastError
   }
 }

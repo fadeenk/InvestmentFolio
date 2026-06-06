@@ -50,6 +50,15 @@ function makeMockFile(): File {
   return new File([buf.buffer], 'ifolio.foli', { type: 'application/octet-stream' })
 }
 
+function makeMockFileSystemFileHandle(): FileSystemFileHandle {
+  const file = makeMockFile()
+  return {
+    name: 'ifolio.foli',
+    kind: 'file',
+    getFile: vi.fn().mockResolvedValue(file),
+  } as unknown as FileSystemFileHandle
+}
+
 function mockCryptoAPI() {
   const subtle = createMockSubtle()
   vi.stubGlobal('crypto', {
@@ -218,7 +227,7 @@ describe('vault store', () => {
         },
       })
 
-      const promise = store.openVault(makeMockFile(), 'correct-passphrase')
+      const promise = store.openVault(makeMockFileSystemFileHandle(), 'correct-passphrase')
 
       expect(store.status).toBe(VaultStatus.UNLOCKING)
 
@@ -240,10 +249,95 @@ describe('vault store', () => {
       vi.spyOn(vaultUtils, 'deriveKey').mockResolvedValue(createMockCryptoKey())
       vi.spyOn(vaultUtils, 'decryptPayload').mockRejectedValue(new Error('operation failed'))
 
-      await expect(store.openVault(makeMockFile(), 'wrong-passphrase')).rejects.toThrow()
+      await expect(store.openVault(makeMockFileSystemFileHandle(), 'wrong-passphrase')).rejects.toThrow()
       expect(store.status).toBe(VaultStatus.LOCKED)
       expect(store.lastError).toContain('Incorrect passphrase')
       expect(store.payload).toBeNull()
+    })
+
+    it('stores the file handle on successful open', async () => {
+      const store = useVaultStore()
+
+      vi.spyOn(vaultUtils, 'parseVaultBuffer').mockReturnValue({
+        iterations: 600_000,
+        salt: new Uint8Array(32),
+        iv: new Uint8Array(12),
+        ciphertext: new ArrayBuffer(32),
+      })
+      vi.spyOn(vaultUtils, 'deriveKey').mockResolvedValue(createMockCryptoKey())
+      vi.spyOn(vaultUtils, 'decryptPayload').mockResolvedValue({
+        schemaVersion: 1,
+        createdAt: '2025-01-01T00:00:00.000Z',
+        lastSyncedAt: null,
+        accounts: [],
+        transactions: [],
+        positions: [],
+        taxLots: [],
+        dividends: [],
+        priceHistory: {},
+        lastSyncSummary: null,
+        metadata: {
+          displayPreferences: {
+            theme: Theme.SYSTEM,
+            currencyFormat: 'USD',
+            dateFormat: DateFormat.MM_DD_YYYY,
+            defaultAccountFilter: null,
+            defaultCostBasisMethod: CostBasisMethod.FIFO,
+            defaultTimeRange: 'YTD',
+          },
+          schwabAccountHashes: {},
+          schwabAccountHashesByFullNumber: {},
+          schwabTokenMeta: null,
+          costBasisMethodByAccount: {},
+          lastSavedAt: null,
+        },
+      })
+
+      const mockHandle = makeMockFileSystemFileHandle()
+      await store.openVault(mockHandle, 'passphrase')
+      expect(store.fileHandle).toStrictEqual(mockHandle)
+    })
+
+    it('accepts a raw File as fallback and does not store a handle', async () => {
+      const store = useVaultStore()
+
+      vi.spyOn(vaultUtils, 'parseVaultBuffer').mockReturnValue({
+        iterations: 600_000,
+        salt: new Uint8Array(32),
+        iv: new Uint8Array(12),
+        ciphertext: new ArrayBuffer(32),
+      })
+      vi.spyOn(vaultUtils, 'deriveKey').mockResolvedValue(createMockCryptoKey())
+      vi.spyOn(vaultUtils, 'decryptPayload').mockResolvedValue({
+        schemaVersion: 1,
+        createdAt: '2025-01-01T00:00:00.000Z',
+        lastSyncedAt: null,
+        accounts: [],
+        transactions: [],
+        positions: [],
+        taxLots: [],
+        dividends: [],
+        priceHistory: {},
+        lastSyncSummary: null,
+        metadata: {
+          displayPreferences: {
+            theme: Theme.SYSTEM,
+            currencyFormat: 'USD',
+            dateFormat: DateFormat.MM_DD_YYYY,
+            defaultAccountFilter: null,
+            defaultCostBasisMethod: CostBasisMethod.FIFO,
+            defaultTimeRange: 'YTD',
+          },
+          schwabAccountHashes: {},
+          schwabAccountHashesByFullNumber: {},
+          schwabTokenMeta: null,
+          costBasisMethodByAccount: {},
+          lastSavedAt: null,
+        },
+      })
+
+      await store.openVault(makeMockFile(), 'passphrase')
+      expect(store.fileHandle).toBeNull()
     })
 
     it('handles corrupted vault file', async () => {

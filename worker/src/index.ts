@@ -1,4 +1,5 @@
 import { handleAuthCallback, handleAuthLogin, handleAuthRefresh, handleAuthStatus } from './controllers/auth.controller'
+import { handleMarketQuotes, handleMarketHistory } from './controllers/market.controller'
 import { fetchQuotes, fetchPriceHistory } from './services/schwab-market.service'
 import { MarketApiError } from './types/market'
 import { corsPreflight, jsonError, withCors } from './utils/http'
@@ -145,6 +146,22 @@ export default {
 				}
 				return withAuthCors(request, env, jsonError('Unexpected worker error', 500))
 			}
+		}
+
+		// ── Simplified Market Data routes ──────────────────────────────────────────
+
+		if (url.pathname === '/api/market/quotes') {
+			if (method !== 'GET') {
+				return withAuthCors(request, env, jsonError('Method not allowed', 405))
+			}
+			return withAuthCors(request, env, await handleMarketQuotes(request, env))
+		}
+
+		if (url.pathname === '/api/market/history') {
+			if (method !== 'GET') {
+				return withAuthCors(request, env, jsonError('Method not allowed', 405))
+			}
+			return withAuthCors(request, env, await handleMarketHistory(request, env))
 		}
 
 		return jsonError('Not found', 404)

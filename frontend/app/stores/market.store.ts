@@ -1,13 +1,13 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { useRuntimeConfig } from '#imports'
 import { useVaultStore } from './vault.store'
-import { fetchBatchQuotes, fetchMissingHistoricalData } from '@/utils/fmp'
-import type { FmpQuote } from '@/utils/fmp'
+import { getWorkerBaseUrl } from '@/utils/worker'
 import { AssetType, TransactionType } from '@/types/enums'
 import { SyncStatus } from '@/types/vault'
 import { transactionCashDelta } from '@/utils/ledger'
-import type { BalancePoint, Position, VaultPayload } from '@/types/vault'
+import type { BalancePoint, Position, PricePoint, VaultPayload } from '@/types/vault'
+
+const BACKFILL_CUTOFF = '2026-06-01'
 
 export const useMarketStore = defineStore('market', () => {
   const vaultStore = useVaultStore()
@@ -43,20 +43,47 @@ export const useMarketStore = defineStore('market', () => {
 
       const uniqueSymbolsToFetch = [...new Set(symbolsToFetch)]
 
-      const apiKey = useRuntimeConfig().public.fmpApiKey
+      const base = getWorkerBaseUrl()
+      if (!base) {
+        throw new Error('Worker URL not configured')
+      }
 
-      const quotes = await fetchBatchQuotes(uniqueSymbolsToFetch, apiKey)
+      const quotesRes = await fetch(`${base}/api/market/quotes?symbols=${uniqueSymbolsToFetch.join(',')}`)
+      if (!quotesRes.ok) throw new Error(`Quotes fetch failed: ${quotesRes.status}`)
+      const quotes: Record<string, { price: number; previousClose: number }> = await quotesRes.json()
 
       progress.value = { current: 0, total: uniqueSymbolsToFetch.length }
 
-      const mergedData = await fetchMissingHistoricalData(
-        uniqueSymbolsToFetch,
-        (symbol) => payload.priceHistory[symbol] ?? [],
-        apiKey,
-        (current) => {
-          progress.value = { ...progress.value!, current }
-        },
-      )
+      const mergedData = new Map<string, PricePoint[]>()
+      for (let i = 0; i < uniqueSymbolsToFetch.length; i++) {
+        const symbol = uniqueSymbolsToFetch[i]!
+        const cached = payload.priceHistory[symbol] ?? []
+
+        const latestCached = cached.length > 0 ? cached[cached.length - 1]! : null
+        const latestDate = latestCached ? latestCached.date : null
+
+        if (!isCacheFresh(latestDate) || needsHistoricalBackfill(cached)) {
+          try {
+            const res = await fetch(`${base}/api/market/history?symbol=${encodeURIComponent(symbol)}`)
+            if (!res.ok) throw new Error(`History fetch failed: ${res.status}`)
+            const data: { symbol: string; candles: PricePoint[] } = await res.json()
+
+            const freshMap = new Map<string, PricePoint>()
+            for (const point of data.candles) {
+              freshMap.set(point.date, point)
+            }
+
+            mergedData.set(symbol, mergeCachedWithFresh(cached, freshMap))
+          } catch (err) {
+            console.warn(`Failed to fetch historical data for ${symbol}, using cached`, err)
+            mergedData.set(symbol, [...cached])
+          }
+        } else {
+          mergedData.set(symbol, [...cached])
+        }
+
+        progress.value = { current: i + 1, total: uniqueSymbolsToFetch.length }
+      }
 
       vaultStore.mutatePayload((p) => {
         for (const [symbol, points] of mergedData) {
@@ -175,7 +202,7 @@ function generateBalanceHistories(payload: VaultPayload, symbolToAssetType: Map<
   }
 }
 
-function updatePositionPrices(payload: VaultPayload, cashEqSymbols: Set<string>, quotes?: Map<string, FmpQuote>): void {
+function updatePositionPrices(payload: VaultPayload, cashEqSymbols: Set<string>, quotes?: Record<string, { price: number; previousClose: number }>): void {
   const latestIdx = new Map<string, number>()
   for (let i = payload.positions.length - 1; i >= 0; i--) {
     const p = payload.positions[i]!
@@ -195,7 +222,7 @@ function updatePositionPrices(payload: VaultPayload, cashEqSymbols: Set<string>,
       currentPrice = 1
       previousClose = 1
     } else {
-      const quote = quotes?.get(position.symbol)
+      const quote = quotes?.[position.symbol]
 
       if (quote) {
         currentPrice = quote.price
@@ -237,6 +264,32 @@ function updatePositionPrices(payload: VaultPayload, cashEqSymbols: Set<string>,
     position.dayGainLossPct = roundCurrency(dayGainLossPct)
     position.snapshotAt = now
   }
+}
+
+function mergeCachedWithFresh(cached: PricePoint[], fresh: Map<string, PricePoint>): PricePoint[] {
+  const merged = new Map<string, PricePoint>()
+  for (const point of cached) {
+    merged.set(point.date, { ...point })
+  }
+  for (const [, point] of fresh) {
+    merged.set(point.date, { ...point })
+  }
+  return Array.from(merged.values()).sort((a, b) => a.date.localeCompare(b.date))
+}
+
+function isCacheFresh(latestDate: string | null): boolean {
+  if (!latestDate) return false
+  const now = new Date()
+  const latest = new Date(latestDate)
+  const diffMs = now.getTime() - latest.getTime()
+  const diffDays = diffMs / (1000 * 60 * 60 * 24)
+  return diffDays <= 1.5
+}
+
+function needsHistoricalBackfill(cached: PricePoint[]): boolean {
+  if (cached.length === 0) return true
+  const earliest = cached.reduce((min, p) => (p.date < min ? p.date : min), cached[0]!.date)
+  return earliest > BACKFILL_CUTOFF
 }
 
 function roundCurrency(value: number): number {

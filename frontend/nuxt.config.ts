@@ -21,8 +21,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      fmpApiKey: '',
-      workerUrl: '',
+      workerUrl: 'https://worker.mrkannah.workers.dev',
     },
   },
 

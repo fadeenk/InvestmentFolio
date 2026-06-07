@@ -2,17 +2,20 @@
   "name": "ifolio",
   "private": true,
   "workspaces": [
-    "frontend"
+    "frontend",
+    "worker"
   ],
   "scripts": {
     "audit": "fallow audit",
     "check": "npm run format && npm run lint && npm run typecheck && fallow health --targets --production",
     "frontend": "npm --workspace=frontend run dev",
-    "test": "npm --workspace=frontend run test",
+    "worker": "npm --workspace=worker run dev",
+    "test": "npm --workspace=frontend run test && npm --workspace=worker run test",
     "test:frontend": "npm --workspace=frontend run test",
-    "lint": "npm --workspace=frontend run lint",
+    "test:backend": "npm --workspace=worker run test",
+    "lint": "npm --workspace=frontend run lint && npm --workspace=worker run lint",
     "format": "prettier --write .",
-    "typecheck": "npm --workspace=frontend run typecheck",
+    "typecheck": "npm --workspace=frontend run typecheck && npm --workspace=worker run typecheck",
     "prepare": "husky"
   },
   "devDependencies": {

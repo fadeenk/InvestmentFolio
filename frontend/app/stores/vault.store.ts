@@ -30,6 +30,7 @@ function createDefaultPayload(): VaultPayload {
         defaultTimeRange: 'YTD',
       },
       costBasisMethodByAccount: {},
+      schwabTokenMeta: null,
       lastSavedAt: null,
     },
   }

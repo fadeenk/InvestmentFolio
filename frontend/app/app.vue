@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
+import { useOAuthStore } from '~/stores/oauth.store'
 import { useSyncStore } from '~/stores/sync.store'
 import { useUiStore } from '~/stores/ui'
 import { useVaultStore } from '~/stores/vault.store'
 import { VaultStatus } from '~/types/vault'
 
 const vault = useVaultStore()
+const oauth = useOAuthStore()
 const sync = useSyncStore()
 const ui = useUiStore()
 
@@ -56,7 +58,7 @@ watch(
   () => vault.status,
   async () => {
     if (vault.status === VaultStatus.UNLOCKED) {
-      await sync.ensureSyncedAfterUnlockOrAuth()
+      await oauth.ensureSyncedAfterUnlockOrAuth()
     }
   },
 )
@@ -152,10 +154,6 @@ function dismissBanner() {
                 {{ vault.payload?.lastSyncSummary?.deduplicatedCount ?? 0 }}
               </p>
             </div>
-          </div>
-
-          <div v-if="sync.expirationWarning" class="rounded-md bg-amber-500/15 p-2 text-sm text-amber-700 dark:text-amber-200">
-            Import is currently in progress.
           </div>
 
           <p class="text-sm text-(--ui-text-muted)">Use settings to import transaction files and manage accounts.</p>

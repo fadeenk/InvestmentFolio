@@ -41,6 +41,7 @@ function initVault(bank: Bank): void {
         defaultCostBasisMethod: CostBasisMethod.FIFO,
         defaultTimeRange: 'YTD',
       },
+      schwabTokenMeta: null,
       costBasisMethodByAccount: {},
       lastSavedAt: null,
     },

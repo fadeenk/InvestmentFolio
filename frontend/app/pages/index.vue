@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from '#imports'
+import { useOAuthStore } from '~/stores/oauth.store'
 import { useSyncStore } from '~/stores/sync.store'
 import { useVaultStore } from '~/stores/vault.store'
 import { VaultStatus } from '~/types/vault'
 
 const vault = useVaultStore()
+const oauth = useOAuthStore()
 const sync = useSyncStore()
 const route = useRoute()
 const router = useRouter()
@@ -163,8 +165,8 @@ async function applyAuthCallbackStateFromQuery() {
 
   const authConnected = auth === 'connected'
 
-  sync.consumeAuthCallbackFromQuery(queryToSearchParams())
-  sync.clearCallbackMessage()
+  oauth.consumeAuthCallbackFromQuery(queryToSearchParams())
+  oauth.clearCallbackMessage()
 
   const nextQuery: Record<string, string | string[]> = {}
   for (const [key, value] of Object.entries(route.query)) {
@@ -184,7 +186,7 @@ async function applyAuthCallbackStateFromQuery() {
   await router.replace({ query: nextQuery })
 
   if (authConnected && vault.status === VaultStatus.UNLOCKED) {
-    await sync.ensureSyncedAfterUnlockOrAuth()
+    await oauth.ensureSyncedAfterUnlockOrAuth()
   }
 }
 
@@ -211,7 +213,7 @@ onMounted(async () => {
   await applyAuthCallbackStateFromQuery()
 
   if (vault.status === VaultStatus.UNLOCKED) {
-    await sync.ensureSyncedAfterUnlockOrAuth()
+    await oauth.ensureSyncedAfterUnlockOrAuth()
   }
 })
 </script>
@@ -312,7 +314,7 @@ onMounted(async () => {
               <strong class="font-semibold text-(--ui-text-highlighted)">{{ refreshExpiryLabel }}</strong>
             </p>
 
-            <div v-if="sync.expirationWarning" class="rounded-md bg-amber-500/15 p-2 text-sm text-amber-700 dark:text-amber-200">
+            <div v-if="oauth.expirationWarning" class="rounded-md bg-amber-500/15 p-2 text-sm text-amber-700 dark:text-amber-200">
               Import currently in progress.
             </div>
 

@@ -3,12 +3,15 @@ import { computed, ref } from 'vue'
 import { maskAccountNumber } from '~/utils/accounts'
 import { useAccountsStore } from '~/stores/accounts.store'
 import { useMarketStore } from '~/stores/market.store'
+import { useOAuthStore } from '~/stores/oauth.store'
 import { useSyncStore } from '~/stores/sync.store'
 import { useVaultStore } from '~/stores/vault.store'
 import { AccountType, Bank, CostBasisMethod, DateFormat, Theme, TimeRange } from '~/types/enums'
+import { TokenStatus } from '~/types/vault'
 import type { Account } from '~/types/vault'
 
 const vaultStore = useVaultStore()
+const oauthStore = useOAuthStore()
 const syncStore = useSyncStore()
 const accountsStore = useAccountsStore()
 const marketStore = useMarketStore()
@@ -63,6 +66,19 @@ const importStatusLabel = computed(() => {
   return 'Idle'
 })
 
+const tokenLabel = computed(() => {
+  switch (oauthStore.tokenStatus) {
+    case TokenStatus.VALID:
+      return 'Connected'
+    case TokenStatus.EXPIRING_SOON:
+      return 'Expiring soon'
+    case TokenStatus.EXPIRED:
+      return 'Expired'
+    default:
+      return 'Not connected'
+  }
+})
+
 const orderedAccounts = computed(() => accountsStore.all)
 
 const accountOptions = computed(() => {
@@ -77,6 +93,18 @@ const accountOptions = computed(() => {
     })),
   ]
 })
+
+function formatRemaining(secondsRemaining: number | null): string {
+  if (secondsRemaining === null) return 'Unknown'
+  if (secondsRemaining <= 0) return 'Expired'
+
+  const hours = Math.floor(secondsRemaining / 3600)
+  if (hours < 1) return 'Less than 1 hour'
+  if (hours < 24) return `${hours}h remaining`
+
+  const days = Math.floor(hours / 24)
+  return `${days}d remaining`
+}
 
 function updateDisplayPreference<K extends keyof typeof displayPreferences.value>(key: K, value: (typeof displayPreferences.value)[K]): void {
   vaultStore.mutatePayload((payload) => {
@@ -258,10 +286,47 @@ async function changePassphrase(): Promise<void> {
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
         <h1 class="text-2xl font-bold">Settings</h1>
-        <p class="text-sm text-(--ui-text-muted)">Transaction imports, account management, vault controls, and display preferences.</p>
+        <p class="text-sm text-(--ui-text-muted)">Schwab connection, transaction imports, account management, vault controls, and display preferences.</p>
       </div>
       <UButton label="Dashboard" to="/dashboard" color="neutral" variant="outline" />
     </div>
+
+    <UCard>
+      <template #header>
+        <h2 class="text-lg font-semibold">Schwab connection</h2>
+      </template>
+
+      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="rounded-md border border-(--ui-border) p-3">
+          <p class="text-sm text-(--ui-text-muted)">Status</p>
+          <p class="text-base font-semibold">{{ tokenLabel }}</p>
+        </div>
+
+        <div class="rounded-md border border-(--ui-border) p-3">
+          <p class="text-sm text-(--ui-text-muted)">Connected accounts</p>
+          <p class="text-base font-semibold">{{ oauthStore.connectedAccountCount }}</p>
+        </div>
+
+        <div class="rounded-md border border-(--ui-border) p-3">
+          <p class="text-sm text-(--ui-text-muted)">Access token</p>
+          <p class="text-base font-semibold">{{ formatRemaining(oauthStore.accessTokenSecondsRemaining) }}</p>
+        </div>
+
+        <div class="rounded-md border border-(--ui-border) p-3">
+          <p class="text-sm text-(--ui-text-muted)">Refresh token</p>
+          <p class="text-base font-semibold">{{ formatRemaining(oauthStore.refreshTokenSecondsRemaining) }}</p>
+        </div>
+      </div>
+
+      <div v-if="oauthStore.expirationWarning" class="mt-3 rounded-md bg-amber-500/15 p-2 text-sm text-amber-700 dark:text-amber-200">
+        Re-authorization is recommended within 24 hours to avoid sync interruptions.
+      </div>
+
+      <div class="mt-3 flex flex-wrap gap-2">
+        <UButton label="Refresh status" color="neutral" variant="outline" @click="oauthStore.pollTokenStatus" />
+        <UButton :label="oauthStore.requiresReauth ? 'Connect Schwab' : 'Re-authorize Schwab'" color="primary" @click="oauthStore.initiateOAuthFlow" />
+      </div>
+    </UCard>
 
     <UCard>
       <template #header>
@@ -290,10 +355,6 @@ async function changePassphrase(): Promise<void> {
           <p class="text-sm text-(--ui-text-muted)">Deduplicated</p>
           <p class="text-base font-semibold">{{ vaultStore.payload?.lastSyncSummary?.deduplicatedCount ?? 0 }}</p>
         </div>
-      </div>
-
-      <div v-if="syncStore.expirationWarning" class="mt-3 rounded-md bg-amber-500/15 p-2 text-sm text-amber-700 dark:text-amber-200">
-        Import currently in progress.
       </div>
 
       <div class="mt-3 grid gap-3 md:grid-cols-2">

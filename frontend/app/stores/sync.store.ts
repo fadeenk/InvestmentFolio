@@ -8,29 +8,28 @@ import { SyncStatus } from '@/types/vault'
 import type { Transaction } from '@/types/vault'
 import { parseCsvText, getCsvSchemaForAccount, toTransactionType, toAssetType, normalizeDate } from '@/utils/csv'
 
+export interface SyncSummary {
+  startedAt: string
+  completedAt: string | null
+  accountsSynced: number
+  transactionsAdded: number
+  positionsUpdated: number
+  deduplicatedCount: number
+  errors: string[]
+}
+
 export const useSyncStore = defineStore('sync', () => {
   const vaultStore = useVaultStore()
   const uiStore = useUiStore()
   const transactionsStore = useTransactionsStore()
 
   const syncStatus = ref<SyncStatus>(SyncStatus.IDLE)
+  const lastSyncSummary = ref<SyncSummary | null>(null)
   const lastError = ref<string | null>(null)
-  const callbackMessage = ref<{ type: 'success' | 'error'; text: string } | null>(null)
 
   const isSyncing = computed(() => syncStatus.value === SyncStatus.IN_PROGRESS)
-  const expirationWarning = computed(() => isSyncing.value)
 
-  function consumeAuthCallbackFromQuery(_params: URLSearchParams): void {
-    callbackMessage.value = null
-  }
-
-  function clearCallbackMessage(): void {
-    callbackMessage.value = null
-  }
-
-  async function ensureSyncedAfterUnlockOrAuth(): Promise<void> {
-    return
-  }
+  // ── CSV Import ─────────────────────────────────────────────────────────────
 
   async function importCsv(file: File, accountId: string): Promise<{ added: number; duplicates: number; errors: string[] }> {
     if (!vaultStore.payload) {
@@ -125,13 +124,9 @@ export const useSyncStore = defineStore('sync', () => {
 
   return {
     syncStatus,
+    lastSyncSummary,
     lastError,
-    callbackMessage,
     isSyncing,
-    expirationWarning,
-    consumeAuthCallbackFromQuery,
-    clearCallbackMessage,
-    ensureSyncedAfterUnlockOrAuth,
     importCsv,
   }
 })

@@ -1,7 +1,5 @@
 import { handleAuthCallback, handleAuthLogin, handleAuthRefresh, handleAuthStatus } from './controllers/auth.controller'
 import { handleMarketQuotes, handleMarketHistory } from './controllers/market.controller'
-import { fetchQuotes, fetchPriceHistory } from './services/schwab-market.service'
-import { MarketApiError } from './types/market'
 import { corsPreflight, jsonError, withCors } from './utils/http'
 
 function isAuthPath(pathname: string): boolean {
@@ -62,92 +60,6 @@ export default {
 			}
 			return withAuthCors(request, env, await handleAuthStatus(env))
 		}
-
-		// ── Market Data API routes ───────────────────────────────────────────────
-
-		if (url.pathname === '/api/quotes') {
-			if (method !== 'GET') {
-				return withAuthCors(request, env, jsonError('Method not allowed', 405))
-			}
-
-			const symbols = url.searchParams.get('symbols')
-			if (!symbols) {
-				return withAuthCors(request, env, jsonError('Missing required parameter: symbols', 400))
-			}
-
-			try {
-				const fields = url.searchParams.get('fields')
-				const data = await fetchQuotes(env, {
-					symbols,
-					...(fields ? { fields } : {}),
-				})
-				return withAuthCors(
-					request,
-					env,
-					new Response(JSON.stringify(data), {
-						status: 200,
-						headers: { 'content-type': 'application/json; charset=utf-8' },
-					}),
-				)
-			} catch (error) {
-				if (error instanceof MarketApiError) {
-					return withAuthCors(request, env, jsonError(error.message, error.status))
-				}
-				return withAuthCors(request, env, jsonError('Unexpected worker error', 500))
-			}
-		}
-
-		if (url.pathname === '/api/pricehistory') {
-			if (method !== 'GET') {
-				return withAuthCors(request, env, jsonError('Method not allowed', 405))
-			}
-
-			const symbol = url.searchParams.get('symbol')
-			const periodType = url.searchParams.get('periodType')
-			if (!symbol || !periodType) {
-				return withAuthCors(request, env, jsonError('Missing required parameters: symbol, periodType', 400))
-			}
-
-			if (!['day', 'month', 'year', 'ytd'].includes(periodType)) {
-				return withAuthCors(request, env, jsonError('Invalid periodType. Must be day, month, year, or ytd', 400))
-			}
-
-			try {
-				const periodStr = url.searchParams.get('period')
-				const frequencyTypeStr = url.searchParams.get('frequencyType')
-				const frequencyStr = url.searchParams.get('frequency')
-				const startDateStr = url.searchParams.get('startDate')
-				const endDateStr = url.searchParams.get('endDate')
-				const needExtendedHoursData = url.searchParams.get('needExtendedHoursData')
-				const needPreviousClose = url.searchParams.get('needPreviousClose')
-
-				const data = await fetchPriceHistory(env, {
-					symbol,
-					periodType: periodType as 'day' | 'month' | 'year' | 'ytd',
-					...(periodStr ? { period: Number(periodStr) } : {}),
-					...(frequencyTypeStr ? { frequencyType: frequencyTypeStr as 'minute' | 'daily' | 'weekly' | 'monthly' } : {}),
-					...(frequencyStr ? { frequency: Number(frequencyStr) } : {}),
-					...(startDateStr ? { startDate: Number(startDateStr) } : {}),
-					...(endDateStr ? { endDate: Number(endDateStr) } : {}),
-					...(needExtendedHoursData === 'true' ? { needExtendedHoursData: true } : {}),
-					...(needPreviousClose === 'true' ? { needPreviousClose: true } : {}),
-				})
-				return withAuthCors(
-					request,
-					env,
-					new Response(JSON.stringify(data), {
-						status: 200,
-						headers: { 'content-type': 'application/json; charset=utf-8' },
-					}),
-				)
-			} catch (error) {
-				if (error instanceof MarketApiError) {
-					return withAuthCors(request, env, jsonError(error.message, error.status))
-				}
-				return withAuthCors(request, env, jsonError('Unexpected worker error', 500))
-			}
-		}
-
 		// ── Simplified Market Data routes ──────────────────────────────────────────
 
 		if (url.pathname === '/api/market/quotes') {

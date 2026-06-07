@@ -282,8 +282,8 @@ describe('auth worker', () => {
 		expect(response.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:3000')
 	})
 
-	it('returns 401 for /api/quotes when no token is connected', async () => {
-		const request = new IncomingRequest('http://example.com/api/quotes?symbols=AAPL')
+	it('returns 401 for /api/market/quotes when no token is connected', async () => {
+		const request = new IncomingRequest('http://example.com/api/market/quotes?symbols=AAPL')
 		const env = createEnv()
 		const response = await worker.fetch(request, env)
 
@@ -291,8 +291,8 @@ describe('auth worker', () => {
 		expect(await response.json()).toEqual({ error: 'Not connected' })
 	})
 
-	it('returns 400 for /api/quotes when symbols parameter is missing', async () => {
-		const request = new IncomingRequest('http://example.com/api/quotes')
+	it('returns 400 for /api/market/quotes when symbols parameter is missing', async () => {
+		const request = new IncomingRequest('http://example.com/api/market/quotes')
 		const env = createEnv()
 		const response = await worker.fetch(request, env)
 
@@ -300,7 +300,7 @@ describe('auth worker', () => {
 		expect(await response.json()).toEqual({ error: 'Missing required parameter: symbols' })
 	})
 
-	it('proxies /api/quotes to Schwab market data endpoint', async () => {
+	it('proxies /api/market/quotes to Schwab and returns simplified response', async () => {
 		const env = createEnv()
 		await putEncryptedTestTokens(env)
 
@@ -311,8 +311,8 @@ describe('auth worker', () => {
 				return Promise.resolve(
 					new Response(
 						JSON.stringify({
-							AAPL: { quote: { lastPrice: 170.5 } },
-							MSFT: { quote: { lastPrice: 410.2 } },
+							AAPL: { quote: { lastPrice: 175.5, closePrice: 170.0 } },
+							MSFT: { quote: { lastPrice: 410.2, closePrice: 405.0 } },
 						}),
 						{ status: 200, headers: { 'content-type': 'application/json' } },
 					),
@@ -323,22 +323,22 @@ describe('auth worker', () => {
 		}
 
 		try {
-			const request = new IncomingRequest('http://example.com/api/quotes?symbols=AAPL,MSFT')
+			const request = new IncomingRequest('http://example.com/api/market/quotes?symbols=AAPL,MSFT')
 			const response = await worker.fetch(request, env)
 
 			expect(response.status).toBe(200)
 			const body = await response.json()
 			expect(body).toEqual({
-				AAPL: { quote: { lastPrice: 170.5 } },
-				MSFT: { quote: { lastPrice: 410.2 } },
+				AAPL: { price: 175.5, previousClose: 170.0 },
+				MSFT: { price: 410.2, previousClose: 405.0 },
 			})
 		} finally {
 			globalThis.fetch = originalFetch
 		}
 	})
 
-	it('returns 401 for /api/pricehistory when no token is connected', async () => {
-		const request = new IncomingRequest('http://example.com/api/pricehistory?symbol=AAPL&periodType=month')
+	it('returns 401 for /api/market/history when no token is connected', async () => {
+		const request = new IncomingRequest('http://example.com/api/market/history?symbol=AAPL')
 		const env = createEnv()
 		const response = await worker.fetch(request, env)
 
@@ -346,32 +346,28 @@ describe('auth worker', () => {
 		expect(await response.json()).toEqual({ error: 'Not connected' })
 	})
 
-	it('returns 400 for /api/pricehistory when required params are missing', async () => {
-		const request = new IncomingRequest('http://example.com/api/pricehistory')
+	it('returns 400 for /api/market/history when symbol parameter is missing', async () => {
+		const request = new IncomingRequest('http://example.com/api/market/history')
 		const env = createEnv()
 		const response = await worker.fetch(request, env)
 
 		expect(response.status).toBe(400)
-		expect(await response.json()).toEqual({ error: 'Missing required parameters: symbol, periodType' })
+		expect(await response.json()).toEqual({ error: 'Missing required parameter: symbol' })
 	})
 
-	it('returns 400 for /api/pricehistory with invalid periodType', async () => {
-		const request = new IncomingRequest('http://example.com/api/pricehistory?symbol=AAPL&periodType=invalid')
-		const env = createEnv()
-		const response = await worker.fetch(request, env)
-
-		expect(response.status).toBe(400)
-		expect(await response.json()).toEqual({ error: 'Invalid periodType. Must be day, month, year, or ytd' })
-	})
-
-	it('proxies /api/pricehistory to Schwab market data endpoint', async () => {
+	it('proxies /api/market/history to Schwab and returns simplified response', async () => {
 		const env = createEnv()
 		await putEncryptedTestTokens(env)
 
 		const originalFetch = globalThis.fetch
 		globalThis.fetch = (input: RequestInfo | URL) => {
 			const requestUrl = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
-			if (requestUrl.includes('/marketdata/v1/pricehistory') && requestUrl.includes('symbol=AAPL') && requestUrl.includes('periodType=month')) {
+			if (
+				requestUrl.includes('/marketdata/v1/pricehistory') &&
+				requestUrl.includes('symbol=AAPL') &&
+				requestUrl.includes('periodType=year') &&
+				requestUrl.includes('period=5')
+			) {
 				return Promise.resolve(
 					new Response(
 						JSON.stringify({
@@ -391,21 +387,25 @@ describe('auth worker', () => {
 		}
 
 		try {
-			const request = new IncomingRequest('http://example.com/api/pricehistory?symbol=AAPL&periodType=month&period=3&frequencyType=daily&frequency=1')
+			const request = new IncomingRequest('http://example.com/api/market/history?symbol=AAPL')
 			const response = await worker.fetch(request, env)
 
 			expect(response.status).toBe(200)
 			const body = await response.json()
-			expect(body.candles).toHaveLength(2)
-			expect(body.symbol).toBe('AAPL')
-			expect(body.empty).toBe(false)
+			expect(body).toEqual({
+				symbol: 'AAPL',
+				candles: [
+					{ date: '2023-03-15', open: 150, high: 152, low: 149.5, close: 151, volume: 1000000 },
+					{ date: '2023-03-16', open: 151, high: 153, low: 150.5, close: 152, volume: 1100000 },
+				],
+			})
 		} finally {
 			globalThis.fetch = originalFetch
 		}
 	})
 
 	it('adds CORS headers to market data API responses', async () => {
-		const request = new IncomingRequest('http://example.com/api/quotes?symbols=AAPL', {
+		const request = new IncomingRequest('http://example.com/api/market/quotes?symbols=AAPL', {
 			headers: {
 				Origin: 'http://localhost:3000',
 			},
@@ -418,7 +418,7 @@ describe('auth worker', () => {
 	})
 
 	it('handles API preflight requests with CORS headers', async () => {
-		const request = new IncomingRequest('http://example.com/api/quotes', {
+		const request = new IncomingRequest('http://example.com/api/market/quotes', {
 			method: 'OPTIONS',
 			headers: {
 				Origin: 'http://localhost:3000',

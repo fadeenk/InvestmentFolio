@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { maskAccountNumber } from '~/utils/accounts'
+import { computed } from 'vue'
 import { useIncomeStore } from '~/stores/income.store'
 import { useMarketStore } from '~/stores/market.store'
 import { usePositionsStore } from '~/stores/positions.store'
 import { useVaultStore } from '~/stores/vault.store'
-import { TimeRange } from '~/types/enums'
-import { VaultStatus } from '~/types/vault'
+import { TimeRange, TransactionType } from '~/types/enums'
+import { TermType, VaultStatus } from '~/types/vault'
+import type { PortfolioSummary } from '~/types/vault'
 
 const vault = useVaultStore()
 const positionsStore = usePositionsStore()
@@ -15,32 +15,16 @@ const marketStore = useMarketStore()
 
 const isUnlocked = computed(() => vault.status === VaultStatus.UNLOCKED)
 const allAccounts = computed(() => vault.accounts)
-const positions = computed(() => positionsStore.latest)
+const accountFilter = computed(() => positionsStore.selectedAccountId)
+const selectedTimeRange = computed(() => positionsStore.selectedTimeRange)
 
 const accountNameById = computed(() => {
   return new Map(allAccounts.value.map((account) => [account.id, account.displayName]))
 })
 
-const positionsWithAccount = computed(() => {
-  return [...positions.value]
-    .map((position) => ({
-      ...position,
-      accountName: accountNameById.value.get(position.accountId) ?? 'Unknown account',
-    }))
-    .sort((a, b) => b.marketValue - a.marketValue)
-})
-
-const totals = computed(() => positionsStore.summary)
-
-const accountFilter = computed(() => positionsStore.selectedAccountId)
-const selectedTimeRange = computed(() => positionsStore.selectedTimeRange)
-
 const accountOptions = computed(() => {
   return [
-    {
-      id: null,
-      label: 'All',
-    },
+    { id: null as string | null, label: 'All' },
     ...allAccounts.value.map((account) => ({
       id: account.id,
       label: account.displayName,
@@ -49,6 +33,96 @@ const accountOptions = computed(() => {
 })
 
 const timeRangeOptions = [TimeRange.ONE_DAY, TimeRange.ONE_WEEK, TimeRange.ONE_MONTH, TimeRange.THREE_MONTHS, TimeRange.YTD, TimeRange.ONE_YEAR, TimeRange.ALL]
+
+const allAccountsSummary = computed<PortfolioSummary>(() => {
+  const positions = positionsStore.latest
+  const accounts = vault.accounts ?? []
+  const payload = vault.payload
+
+  const totalMarketValue = positions.reduce((s, p) => s + p.marketValue, 0)
+  const totalCostBasis = positions.reduce((s, p) => s + p.avgCost * p.quantity, 0)
+  const totalUnrealizedGainLoss = positions.reduce((s, p) => s + p.unrealizedGainLoss, 0)
+  const totalDayGainLoss = positions.reduce((s, p) => s + p.dayGainLoss, 0)
+  const unrealizedPct = totalCostBasis > 0 ? (totalUnrealizedGainLoss / totalCostBasis) * 100 : 0
+  const dayPct = totalCostBasis > 0 ? (totalDayGainLoss / (totalMarketValue - totalDayGainLoss)) * 100 : 0
+  const totalCashBalance = accounts.reduce((s, a) => s + a.cashBalance, 0)
+
+  const currentYear = new Date().getFullYear()
+  const closedLots = payload?.closedLots ?? []
+  const ytdRealizedClosed = closedLots.filter((l) => l.taxYear === currentYear)
+  const ytdRealizedShort = ytdRealizedClosed.filter((l) => l.termType === TermType.SHORT_TERM).reduce((s, l) => s + l.realizedGainLoss, 0)
+  const ytdRealizedLong = ytdRealizedClosed.filter((l) => l.termType === TermType.LONG_TERM).reduce((s, l) => s + l.realizedGainLoss, 0)
+
+  const dividends = payload?.dividends ?? []
+  const ytdDividends = dividends.filter((d) => d.taxYear === currentYear && d.incomeType === TransactionType.Dividend).reduce((s, d) => s + d.amount, 0)
+  const ytdInterest = dividends.filter((d) => d.taxYear === currentYear && d.incomeType === TransactionType.Interest).reduce((s, d) => s + d.amount, 0)
+
+  return {
+    totalMarketValue,
+    totalCostBasis,
+    totalUnrealizedGainLoss,
+    totalUnrealizedGainLossPct: unrealizedPct,
+    totalDayGainLoss,
+    totalDayGainLossPct: dayPct,
+    totalCashBalance,
+    ytdRealizedGainLossShortTerm: ytdRealizedShort,
+    ytdRealizedGainLossLongTerm: ytdRealizedLong,
+    ytdRealizedGainLossTotal: ytdRealizedShort + ytdRealizedLong,
+    ytdIncomeTotal: ytdDividends + ytdInterest,
+    ytdDividends,
+    ytdInterest,
+  }
+})
+
+const accountsSummary = computed(() => {
+  return allAccounts.value.map((account) => {
+    const accountPositions = positionsStore.latest.filter((p) => p.accountId === account.id)
+    const costBasis = accountPositions.reduce((s, p) => s + p.avgCost * p.quantity, 0)
+    const marketValue = accountPositions.reduce((s, p) => s + p.marketValue, 0)
+    const gain = marketValue - costBasis
+    const gainPct = costBasis > 0 ? (gain / costBasis) * 100 : 0
+    return {
+      id: account.id,
+      name: account.displayName,
+      costBasis,
+      cashBalance: account.cashBalance,
+      marketValue,
+      gain,
+      gainPct,
+    }
+  })
+})
+
+const incomeByAccount = computed(() => {
+  const records = accountFilter.value ? incomeStore.all.filter((r) => r.accountId === accountFilter.value) : incomeStore.all
+  const currentYear = incomeStore.selectedYear
+  const priorYear = currentYear - 1
+
+  const byAccount = new Map<string, { currentYear: number; priorYear: number }>()
+  for (const r of records) {
+    if (!byAccount.has(r.accountId)) {
+      byAccount.set(r.accountId, { currentYear: 0, priorYear: 0 })
+    }
+    const entry = byAccount.get(r.accountId)!
+    if (r.taxYear === currentYear) entry.currentYear += r.amount
+    if (r.taxYear === priorYear) entry.priorYear += r.amount
+  }
+
+  return Array.from(byAccount.entries())
+    .map(([accountId, totals]) => ({
+      accountId,
+      accountName: accountNameById.value.get(accountId) ?? 'Unknown',
+      currentYear: totals.currentYear,
+      priorYear: totals.priorYear,
+    }))
+    .filter((entry) => entry.currentYear > 0 || entry.priorYear > 0)
+    .sort((a, b) => b.currentYear - a.currentYear)
+})
+
+const filteredAccounts = computed(() => {
+  if (!accountFilter.value) return allAccounts.value
+  return allAccounts.value.filter((a) => a.id === accountFilter.value)
+})
 
 const portfolioValueChartData = computed(() => {
   return positionsStore.portfolioValueSeries.map((point) => ({
@@ -59,17 +133,8 @@ const portfolioValueChartData = computed(() => {
 
 const allocationChartData = computed(() => {
   return positionsStore.allocation.map((slice) => ({
-    category: slice.label,
+    label: slice.label,
     value: slice.marketValue,
-  }))
-})
-
-const incomeChartMode = ref<'DIVIDEND' | 'INTEREST'>('DIVIDEND')
-
-const monthlyIncomeChartData = computed(() => {
-  return incomeStore.monthlyGrid.map((month) => ({
-    category: month.yearMonth.slice(5),
-    value: incomeChartMode.value === 'DIVIDEND' ? month.totalDividends : month.interest,
   }))
 })
 
@@ -79,12 +144,6 @@ function selectAccount(accountId: string | null): void {
 
 function selectRange(range: TimeRange): void {
   positionsStore.selectTimeRange(range)
-}
-
-function signClass(value: number): string {
-  if (value > 0) return 'text-emerald-600 dark:text-emerald-300'
-  if (value < 0) return 'text-red-600 dark:text-red-300'
-  return 'text-(--ui-text-muted)'
 }
 </script>
 
@@ -108,251 +167,32 @@ function signClass(value: number): string {
     </template>
 
     <template v-else>
-      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <UCard>
-          <template #header>
-            <p class="text-sm text-(--ui-text-muted)">Total value</p>
-          </template>
-          <p class="text-2xl font-bold">{{ formatCurrency(totals.totalMarketValue + totals.totalCashBalance) }}</p>
-        </UCard>
+      <DashboardOverview :summary="allAccountsSummary" />
 
-        <UCard>
-          <template #header>
-            <p class="text-sm text-(--ui-text-muted)">Today's G/L</p>
-          </template>
-          <p class="text-2xl font-bold" :class="signClass(totals.totalDayGainLoss)">
-            {{ formatCurrency(totals.totalDayGainLoss) }}
-          </p>
-          <p class="text-xs text-(--ui-text-muted)">{{ formatPercent(totals.totalDayGainLossPct) }}</p>
-        </UCard>
+      <DashboardFilters
+        :account-options="accountOptions"
+        :selected-account-id="accountFilter"
+        :selected-time-range="selectedTimeRange"
+        :time-range-options="timeRangeOptions"
+        :is-syncing="marketStore.isSyncing"
+        :sync-status="marketStore.syncStatus"
+        :last-error="marketStore.lastError"
+        @select-account="selectAccount"
+        @select-range="selectRange"
+        @refresh="marketStore.refreshMarketData()"
+      />
 
-        <UCard>
-          <template #header>
-            <p class="text-sm text-(--ui-text-muted)">Unrealized G/L</p>
-          </template>
-          <p class="text-2xl font-bold" :class="signClass(totals.totalUnrealizedGainLoss)">
-            {{ formatCurrency(totals.totalUnrealizedGainLoss) }}
-          </p>
-          <p class="text-xs text-(--ui-text-muted)">{{ formatPercent(totals.totalUnrealizedGainLossPct) }}</p>
-        </UCard>
-
-        <UCard>
-          <template #header>
-            <p class="text-sm text-(--ui-text-muted)">Realized G/L YTD</p>
-          </template>
-          <p class="text-2xl font-bold" :class="signClass(totals.ytdRealizedGainLossTotal)">
-            {{ formatCurrency(totals.ytdRealizedGainLossTotal) }}
-          </p>
-          <p class="text-xs text-(--ui-text-muted)">
-            Short {{ formatCurrency(totals.ytdRealizedGainLossShortTerm) }} / Long {{ formatCurrency(totals.ytdRealizedGainLossLongTerm) }}
-          </p>
-        </UCard>
-
-        <UCard>
-          <template #header>
-            <p class="text-sm text-(--ui-text-muted)">Income YTD</p>
-          </template>
-          <p class="text-2xl font-bold">{{ formatCurrency(totals.ytdIncomeTotal) }}</p>
-          <p class="text-xs text-(--ui-text-muted)">Div {{ formatCurrency(totals.ytdDividends) }} / Int {{ formatCurrency(totals.ytdInterest) }}</p>
-        </UCard>
-
-        <UCard>
-          <template #header>
-            <p class="text-sm text-(--ui-text-muted)">Cash</p>
-          </template>
-          <p class="text-2xl font-bold">{{ formatCurrency(totals.totalCashBalance) }}</p>
-        </UCard>
-      </div>
-
-      <UCard>
-        <template #header>
-          <div class="space-y-3">
-            <div>
-              <h2 class="text-lg font-semibold">Filters</h2>
-              <p class="text-sm text-(--ui-text-muted)">Select account and time range for summary and chart data.</p>
-            </div>
-
-            <div class="space-y-2">
-              <p class="text-xs font-medium tracking-wide text-(--ui-text-muted) uppercase">Account</p>
-              <div class="flex flex-wrap gap-2">
-                <UButton
-                  v-for="option in accountOptions"
-                  :key="option.label"
-                  :label="option.label"
-                  size="xs"
-                  :color="accountFilter === option.id ? 'primary' : 'neutral'"
-                  :variant="accountFilter === option.id ? 'solid' : 'outline'"
-                  @click="selectAccount(option.id)"
-                />
-              </div>
-            </div>
-
-            <div class="space-y-2">
-              <p class="text-xs font-medium tracking-wide text-(--ui-text-muted) uppercase">Range</p>
-              <div class="flex flex-wrap gap-2">
-                <UButton
-                  v-for="option in timeRangeOptions"
-                  :key="option"
-                  :label="option"
-                  size="xs"
-                  :color="selectedTimeRange === option ? 'primary' : 'neutral'"
-                  :variant="selectedTimeRange === option ? 'solid' : 'outline'"
-                  @click="selectRange(option)"
-                />
-              </div>
-            </div>
-
-            <div class="border-t border-(--ui-border)/60 pt-3">
-              <div class="flex flex-wrap items-center gap-3">
-                <UButton
-                  label="Refresh Prices"
-                  color="primary"
-                  variant="outline"
-                  size="sm"
-                  :loading="marketStore.isSyncing"
-                  :disabled="marketStore.isSyncing"
-                  @click="marketStore.refreshMarketData()"
-                />
-                <span v-if="marketStore.lastError" class="text-xs text-red-600 dark:text-red-300">
-                  {{ marketStore.lastError }}
-                </span>
-                <span v-if="marketStore.syncStatus === 'SUCCESS' && !marketStore.isSyncing" class="text-xs text-emerald-600 dark:text-emerald-300">
-                  Prices updated
-                </span>
-              </div>
-            </div>
-          </div>
-        </template>
-      </UCard>
+      <DashboardAccountsTable :accounts="accountsSummary" />
 
       <div class="grid gap-4 xl:grid-cols-2">
-        <UCard>
-          <template #header>
-            <div class="flex items-center justify-between gap-3">
-              <h2 class="text-lg font-semibold">Portfolio value</h2>
-              <span class="text-xs text-(--ui-text-muted)">{{ selectedTimeRange }}</span>
-            </div>
-          </template>
-          <LineChart :data="portfolioValueChartData" y-key="value" />
-        </UCard>
-
-        <UCard>
-          <template #header>
-            <h2 class="text-lg font-semibold">Asset allocation</h2>
-          </template>
-          <BarChart :data="allocationChartData" orientation="horizontal" />
-        </UCard>
+        <DashboardPortfolioChart :data="portfolioValueChartData" :time-range="selectedTimeRange" />
+        <DashboardAllocationChart :data="allocationChartData" />
       </div>
 
-      <UCard>
-        <template #header>
-          <div class="flex items-center justify-between gap-3">
-            <div>
-              <h2 class="text-lg font-semibold">Monthly income</h2>
-              <p class="text-sm text-(--ui-text-muted)">Toggle between dividends and interest totals.</p>
-            </div>
-
-            <div class="flex gap-2">
-              <UButton
-                label="Dividend"
-                size="xs"
-                :color="incomeChartMode === 'DIVIDEND' ? 'primary' : 'neutral'"
-                :variant="incomeChartMode === 'DIVIDEND' ? 'solid' : 'outline'"
-                @click="incomeChartMode = 'DIVIDEND'"
-              />
-              <UButton
-                label="Interest"
-                size="xs"
-                :color="incomeChartMode === 'INTEREST' ? 'primary' : 'neutral'"
-                :variant="incomeChartMode === 'INTEREST' ? 'solid' : 'outline'"
-                @click="incomeChartMode = 'INTEREST'"
-              />
-            </div>
-          </div>
-        </template>
-
-        <BarChart :data="monthlyIncomeChartData" />
-      </UCard>
-
-      <UCard>
-        <template #header>
-          <div class="flex items-center justify-between gap-2">
-            <h2 class="text-lg font-semibold">Accounts</h2>
-            <span class="text-sm text-(--ui-text-muted)">{{ allAccounts.length }} total</span>
-          </div>
-        </template>
-
-        <div class="overflow-x-auto">
-          <table class="min-w-full text-sm">
-            <thead>
-              <tr class="border-b border-(--ui-border)">
-                <th class="px-3 py-2 text-left font-medium text-(--ui-text-muted)">Name</th>
-                <th class="px-3 py-2 text-left font-medium text-(--ui-text-muted)">Bank</th>
-                <th class="px-3 py-2 text-left font-medium text-(--ui-text-muted)">Type</th>
-                <th class="px-3 py-2 text-left font-medium text-(--ui-text-muted)">Acct #</th>
-                <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Current</th>
-                <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Cash</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="account in allAccounts" :key="account.id" class="border-b border-(--ui-border)/60">
-                <td class="px-3 py-2 font-medium">{{ account.displayName }}</td>
-                <td class="px-3 py-2">{{ account.bank }}</td>
-                <td class="px-3 py-2">{{ account.type }}</td>
-                <td class="px-3 py-2">{{ maskAccountNumber(account.accountNumber) }}</td>
-                <td class="px-3 py-2 text-right">{{ formatCurrency(account.currentBalance) }}</td>
-                <td class="px-3 py-2 text-right">{{ formatCurrency(account.cashBalance) }}</td>
-              </tr>
-              <tr v-if="allAccounts.length === 0">
-                <td class="px-3 py-6 text-center text-(--ui-text-muted)" colspan="6">No accounts found.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </UCard>
-
-      <UCard>
-        <template #header>
-          <div class="flex items-center justify-between gap-2">
-            <h2 class="text-lg font-semibold">Positions</h2>
-            <span class="text-sm text-(--ui-text-muted)">{{ positionsWithAccount.length }} total</span>
-          </div>
-        </template>
-
-        <div class="overflow-x-auto">
-          <table class="min-w-full text-sm">
-            <thead>
-              <tr class="border-b border-(--ui-border)">
-                <th class="px-3 py-2 text-left font-medium text-(--ui-text-muted)">Symbol</th>
-                <th class="px-3 py-2 text-left font-medium text-(--ui-text-muted)">Account</th>
-                <th class="px-3 py-2 text-left font-medium text-(--ui-text-muted)">Asset</th>
-                <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Quantity</th>
-                <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Avg Cost</th>
-                <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Price</th>
-                <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Market Value</th>
-                <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Unrealized</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="position in positionsWithAccount" :key="position.id" class="border-b border-(--ui-border)/60">
-                <td class="px-3 py-2 font-medium">{{ position.symbol }}</td>
-                <td class="px-3 py-2">{{ position.accountName }}</td>
-                <td class="px-3 py-2">{{ position.assetType }}</td>
-                <td class="px-3 py-2 text-right">{{ position.quantity }}</td>
-                <td class="px-3 py-2 text-right">{{ formatCurrency(position.avgCost) }}</td>
-                <td class="px-3 py-2 text-right">{{ formatCurrency(position.currentPrice) }}</td>
-                <td class="px-3 py-2 text-right">{{ formatCurrency(position.marketValue) }}</td>
-                <td class="px-3 py-2 text-right" :class="signClass(position.unrealizedGainLoss)">
-                  {{ formatCurrency(position.unrealizedGainLoss) }} ({{ formatPercent(position.unrealizedGainLossPct) }})
-                </td>
-              </tr>
-              <tr v-if="positionsWithAccount.length === 0">
-                <td class="px-3 py-6 text-center text-(--ui-text-muted)" colspan="8">No positions found.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </UCard>
+      <div class="grid gap-4 xl:grid-cols-2">
+        <DashboardBalancesChart :accounts="filteredAccounts" />
+        <DashboardIncomeChart :data="incomeByAccount" :current-year="incomeStore.selectedYear" :prior-year="incomeStore.selectedYear - 1" />
+      </div>
     </template>
   </div>
 </template>

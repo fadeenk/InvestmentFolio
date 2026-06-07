@@ -1,7 +1,9 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import { useRuntimeConfig } from '#imports'
 import { useVaultStore } from './vault.store'
-import { fetchMissingDailyData } from '@/utils/alpha-vantage'
+import { fetchBatchQuotes, fetchMissingHistoricalData } from '@/utils/fmp'
+import type { FmpQuote } from '@/utils/fmp'
 import { AssetType, TransactionType } from '@/types/enums'
 import { SyncStatus } from '@/types/vault'
 import { transactionCashDelta } from '@/utils/ledger'
@@ -41,11 +43,16 @@ export const useMarketStore = defineStore('market', () => {
 
       const uniqueSymbolsToFetch = [...new Set(symbolsToFetch)]
 
+      const apiKey = useRuntimeConfig().public.fmpApiKey
+
+      const quotes = await fetchBatchQuotes(uniqueSymbolsToFetch, apiKey)
+
       progress.value = { current: 0, total: uniqueSymbolsToFetch.length }
 
-      const mergedData = await fetchMissingDailyData(
+      const mergedData = await fetchMissingHistoricalData(
         uniqueSymbolsToFetch,
         (symbol) => payload.priceHistory[symbol] ?? [],
+        apiKey,
         (current) => {
           progress.value = { ...progress.value!, current }
         },
@@ -62,7 +69,7 @@ export const useMarketStore = defineStore('market', () => {
       })
 
       vaultStore.mutatePayload((p) => {
-        updatePositionPrices(p, cashEqSymbols)
+        updatePositionPrices(p, cashEqSymbols, quotes)
       })
 
       if (vaultStore.fileHandle) {
@@ -168,7 +175,7 @@ function generateBalanceHistories(payload: VaultPayload, symbolToAssetType: Map<
   }
 }
 
-function updatePositionPrices(payload: VaultPayload, cashEqSymbols: Set<string>): void {
+function updatePositionPrices(payload: VaultPayload, cashEqSymbols: Set<string>, quotes?: Map<string, FmpQuote>): void {
   const latestIdx = new Map<string, number>()
   for (let i = payload.positions.length - 1; i >= 0; i--) {
     const p = payload.positions[i]!
@@ -188,22 +195,29 @@ function updatePositionPrices(payload: VaultPayload, cashEqSymbols: Set<string>)
       currentPrice = 1
       previousClose = 1
     } else {
-      const prices = payload.priceHistory[position.symbol] ?? []
+      const quote = quotes?.get(position.symbol)
 
-      if (prices.length === 0) {
-        currentPrice = position.currentPrice || position.avgCost || 0
-        previousClose = currentPrice
+      if (quote) {
+        currentPrice = quote.price
+        previousClose = quote.previousClose
       } else {
-        const latest = prices[prices.length - 1]!
-        const prev = prices.length > 1 ? prices[prices.length - 2] : undefined
+        const prices = payload.priceHistory[position.symbol] ?? []
 
-        const price = typeof latest.close === 'number' ? latest.close : 0
-        if (price > 0) {
-          currentPrice = price
-          previousClose = prev && typeof prev.close === 'number' ? prev.close : currentPrice
-        } else {
+        if (prices.length === 0) {
           currentPrice = position.currentPrice || position.avgCost || 0
           previousClose = currentPrice
+        } else {
+          const latest = prices[prices.length - 1]!
+          const prev = prices.length > 1 ? prices[prices.length - 2] : undefined
+
+          const price = typeof latest.close === 'number' ? latest.close : 0
+          if (price > 0) {
+            currentPrice = price
+            previousClose = prev && typeof prev.close === 'number' ? prev.close : currentPrice
+          } else {
+            currentPrice = position.currentPrice || position.avgCost || 0
+            previousClose = currentPrice
+          }
         }
       }
     }

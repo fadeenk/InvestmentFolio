@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { maskAccountNumber } from '~/utils/accounts'
 import { useIncomeStore } from '~/stores/income.store'
+import { useMarketStore } from '~/stores/market.store'
 import { usePositionsStore } from '~/stores/positions.store'
 import { useVaultStore } from '~/stores/vault.store'
 import { TimeRange } from '~/types/enums'
@@ -10,6 +11,7 @@ import { VaultStatus } from '~/types/vault'
 const vault = useVaultStore()
 const positionsStore = usePositionsStore()
 const incomeStore = useIncomeStore()
+const marketStore = useMarketStore()
 
 const isUnlocked = computed(() => vault.status === VaultStatus.UNLOCKED)
 const allAccounts = computed(() => vault.accounts)
@@ -197,6 +199,26 @@ function signClass(value: number): string {
                   :variant="selectedTimeRange === option ? 'solid' : 'outline'"
                   @click="selectRange(option)"
                 />
+              </div>
+            </div>
+
+            <div class="border-t border-(--ui-border)/60 pt-3">
+              <div class="flex flex-wrap items-center gap-3">
+                <UButton
+                  label="Refresh Prices"
+                  color="primary"
+                  variant="outline"
+                  size="sm"
+                  :loading="marketStore.isSyncing"
+                  :disabled="marketStore.isSyncing"
+                  @click="marketStore.refreshMarketData()"
+                />
+                <span v-if="marketStore.lastError" class="text-xs text-red-600 dark:text-red-300">
+                  {{ marketStore.lastError }}
+                </span>
+                <span v-if="marketStore.syncStatus === 'SUCCESS' && !marketStore.isSyncing" class="text-xs text-emerald-600 dark:text-emerald-300">
+                  Prices updated
+                </span>
               </div>
             </div>
           </div>

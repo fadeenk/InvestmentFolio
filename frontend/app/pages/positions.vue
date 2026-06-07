@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useAccountsStore } from '~/stores/accounts.store'
+import { useMarketStore } from '~/stores/market.store'
 import { usePositionsStore } from '~/stores/positions.store'
 import { useTaxLotsStore } from '~/stores/taxLots.store'
 
 const accountsStore = useAccountsStore()
 const positionsStore = usePositionsStore()
 const taxLotsStore = useTaxLotsStore()
+const marketStore = useMarketStore()
 
 const activeTab = ref<'OPEN' | 'CLOSED'>('OPEN')
 const expandedPositionIds = ref<Set<string>>(new Set())
@@ -153,6 +155,26 @@ function holdingPeriodLabel(accountId: string, symbol: string): string {
           :variant="positionsStore.selectedAccountId === option.id ? 'solid' : 'outline'"
           @click="positionsStore.selectAccount(option.id)"
         />
+      </div>
+
+      <div class="mt-3 border-t border-(--ui-border)/60 pt-3">
+        <div class="flex flex-wrap items-center gap-3">
+          <UButton
+            label="Refresh Prices"
+            color="primary"
+            variant="outline"
+            size="sm"
+            :loading="marketStore.isSyncing"
+            :disabled="marketStore.isSyncing"
+            @click="marketStore.refreshMarketData()"
+          />
+          <span v-if="marketStore.lastError" class="text-xs text-red-600 dark:text-red-300">
+            {{ marketStore.lastError }}
+          </span>
+          <span v-if="marketStore.syncStatus === 'SUCCESS' && !marketStore.isSyncing" class="text-xs text-emerald-600 dark:text-emerald-300">
+            Prices updated
+          </span>
+        </div>
       </div>
     </UCard>
 

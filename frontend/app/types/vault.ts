@@ -66,6 +66,14 @@ export interface Account {
   /** Uninvested cash. For CASH accounts this equals currentBalance. */
   cashBalance: number
   lastUpdatedAt: string // ISO 8601
+  /** Daily balance history for charting. Populated by market data sync. */
+  balanceHistory?: BalancePoint[]
+}
+
+/** A single day's total account balance for time-series charting. */
+export interface BalancePoint {
+  date: string // YYYY-MM-DD
+  balance: number
 }
 
 export interface Transaction {

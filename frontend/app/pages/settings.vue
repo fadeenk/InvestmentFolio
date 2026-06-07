@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { maskAccountNumber } from '~/utils/accounts'
 import { useAccountsStore } from '~/stores/accounts.store'
+import { useMarketStore } from '~/stores/market.store'
 import { useSyncStore } from '~/stores/sync.store'
 import { useVaultStore } from '~/stores/vault.store'
 import { AccountType, Bank, CostBasisMethod, DateFormat, Theme, TimeRange } from '~/types/enums'
@@ -10,6 +11,7 @@ import type { Account } from '~/types/vault'
 const vaultStore = useVaultStore()
 const syncStore = useSyncStore()
 const accountsStore = useAccountsStore()
+const marketStore = useMarketStore()
 
 const editAccountId = ref<string | null>(null)
 
@@ -308,6 +310,44 @@ async function changePassphrase(): Promise<void> {
 
       <div class="mt-3 flex flex-wrap gap-2">
         <UButton label="Import CSV" color="primary" :loading="syncStore.isSyncing" @click="importTransactions" />
+      </div>
+    </UCard>
+
+    <UCard>
+      <template #header>
+        <h2 class="text-lg font-semibold">Market data</h2>
+      </template>
+
+      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="rounded-md border border-(--ui-border) p-3">
+          <p class="text-sm text-(--ui-text-muted)">Status</p>
+          <p class="text-base font-semibold">{{ marketStore.syncStatus }}</p>
+        </div>
+
+        <div class="rounded-md border border-(--ui-border) p-3">
+          <p class="text-sm text-(--ui-text-muted)">Symbols cached</p>
+          <p class="text-base font-semibold">{{ Object.keys(vaultStore.payload?.priceHistory ?? {}).length }}</p>
+        </div>
+
+        <div class="rounded-md border border-(--ui-border) p-3">
+          <p class="text-sm text-(--ui-text-muted)">
+            {{ marketStore.progress ? `Fetching ${marketStore.progress.current} / ${marketStore.progress.total}` : 'Progress' }}
+          </p>
+        </div>
+      </div>
+
+      <div v-if="marketStore.lastError" class="mt-3 rounded-md bg-red-500/15 p-2 text-sm text-red-700 dark:text-red-200">
+        {{ marketStore.lastError }}
+      </div>
+
+      <div class="mt-3 flex flex-wrap gap-2">
+        <UButton
+          label="Refresh Prices"
+          color="primary"
+          :loading="marketStore.isSyncing"
+          :disabled="marketStore.isSyncing"
+          @click="marketStore.refreshMarketData()"
+        />
       </div>
     </UCard>
 

@@ -1,5 +1,5 @@
+import { AssetType, TransactionType } from '@/types/enums'
 import type { CostBasisMethod } from '@/types/enums'
-import { TransactionType } from '@/types/enums'
 import { TermType } from '@/types/vault'
 import type { ClosedLot, IncomeRecord, Position, TaxLot, Transaction, VaultPayload } from '@/types/vault'
 
@@ -243,8 +243,19 @@ export function recalculateDerivedDataFromTransactions(payload: VaultPayload): v
     }
 
     const avgCost = openCost / openQuantity
-    const currentPrice = avgCost
+
+    const currentPrice =
+      meta.assetType === AssetType.CashEquivalent
+        ? 1
+        : (() => {
+            const cachedPrices = payload.priceHistory[meta.symbol] ?? []
+            const latestCached = cachedPrices.length > 0 ? cachedPrices[cachedPrices.length - 1] : null
+            const cachedClose = latestCached && typeof latestCached.close === 'number' ? latestCached.close : null
+            return cachedClose ?? avgCost
+          })()
     const marketValue = openQuantity * currentPrice
+    const unrealizedGainLoss = marketValue - openCost
+    const unrealizedGainLossPct = openCost > 0 ? (unrealizedGainLoss / openCost) * 100 : 0
 
     nextPositions.push({
       id: `pos-${meta.accountId}-${meta.symbol}`,
@@ -255,8 +266,8 @@ export function recalculateDerivedDataFromTransactions(payload: VaultPayload): v
       avgCost: roundCurrency(avgCost),
       currentPrice: roundCurrency(currentPrice),
       marketValue: roundCurrency(marketValue),
-      unrealizedGainLoss: 0,
-      unrealizedGainLossPct: 0,
+      unrealizedGainLoss: roundCurrency(unrealizedGainLoss),
+      unrealizedGainLossPct: roundCurrency(unrealizedGainLossPct),
       dayGainLoss: 0,
       dayGainLossPct: 0,
       costBasisMethod: getCostBasisMethod(payload, meta.accountId),

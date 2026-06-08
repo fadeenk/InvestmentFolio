@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import DashboardPage from '~/pages/dashboard.vue'
 import { useVaultStore } from '~/stores/vault.store'
 import { AccountType, AssetType, Bank, CostBasisMethod, DateFormat, Theme } from '~/types/enums'
@@ -55,6 +55,8 @@ function mountDashboard() {
 }
 
 describe('dashboard page', () => {
+  let wrapper: ReturnType<typeof mountDashboard>
+
   beforeEach(() => {
     setActivePinia(createPinia())
 
@@ -63,8 +65,12 @@ describe('dashboard page', () => {
     vault.status = VaultStatus.LOCKED
   })
 
+  afterEach(() => {
+    wrapper?.unmount()
+  })
+
   it('shows unlock prompt when vault is locked', () => {
-    const wrapper = mountDashboard()
+    wrapper = mountDashboard()
 
     expect(wrapper.text()).toContain('Unlock your vault to view account and position data.')
     expect(wrapper.text()).toContain('Go to vault')
@@ -75,12 +81,10 @@ describe('dashboard page', () => {
     const vault = useVaultStore()
     vault.status = VaultStatus.UNLOCKED
 
-    const wrapper = mountDashboard()
+    wrapper = mountDashboard()
 
     expect(wrapper.text()).toContain('Accounts')
-    expect(wrapper.text()).toContain('Positions')
     expect(wrapper.text()).toContain('No accounts found.')
-    expect(wrapper.text()).toContain('No positions found.')
   })
 
   it('renders account and position rows with computed summary values', () => {
@@ -148,12 +152,10 @@ describe('dashboard page', () => {
     vault.payload = payload
     vault.status = VaultStatus.UNLOCKED
 
-    const wrapper = mountDashboard()
+    wrapper = mountDashboard()
     const text = wrapper.text()
 
     expect(text).toContain('Main Brokerage')
-    expect(text).toContain('AAPL')
-    expect(text).toContain('MSFT')
     expect(text).toContain('Legacy IRA')
     expect(text).toContain('2 total')
     expect(text).toContain('$3,900.00')

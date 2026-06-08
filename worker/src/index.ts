@@ -14,12 +14,12 @@ function isCorsPath(pathname: string): boolean {
 	return isAuthPath(pathname) || isApiPath(pathname)
 }
 
-function withAuthCors(request: Request, env: Env, response: Response): Response {
+function withAuthCors(request: Request, response: Response, env: Env): Response {
 	if (!isCorsPath(new URL(request.url).pathname)) {
 		return response
 	}
 
-	return withCors(request, response, env.FRONTEND_ORIGIN ?? '')
+	return withCors(request, response, env.FRONTEND_ORIGIN)
 }
 
 export default {
@@ -28,52 +28,52 @@ export default {
 		const method = request.method.toUpperCase()
 
 		if (method === 'OPTIONS' && isCorsPath(url.pathname)) {
-			return corsPreflight(request, env.FRONTEND_ORIGIN ?? '')
+			return corsPreflight(request, env.FRONTEND_ORIGIN)
 		}
 
 		// ── Auth routes ──────────────────────────────────────────────────────────
 
 		if (url.pathname === '/auth/login') {
 			if (method !== 'GET') {
-				return withAuthCors(request, env, jsonError('Method not allowed', 405))
+				return withAuthCors(request, jsonError('Method not allowed', 405), env)
 			}
-			return withAuthCors(request, env, await handleAuthLogin(request, env))
+			return withAuthCors(request, await handleAuthLogin(request, env), env)
 		}
 
 		if (url.pathname === '/auth/callback') {
 			if (method !== 'GET') {
-				return withAuthCors(request, env, jsonError('Method not allowed', 405))
+				return withAuthCors(request, jsonError('Method not allowed', 405), env)
 			}
-			return withAuthCors(request, env, await handleAuthCallback(request, env))
+			return withAuthCors(request, await handleAuthCallback(request, env), env)
 		}
 
 		if (url.pathname === '/auth/refresh') {
 			if (method !== 'POST') {
-				return withAuthCors(request, env, jsonError('Method not allowed', 405))
+				return withAuthCors(request, jsonError('Method not allowed', 405), env)
 			}
-			return withAuthCors(request, env, await handleAuthRefresh(env))
+			return withAuthCors(request, await handleAuthRefresh(env), env)
 		}
 
 		if (url.pathname === '/auth/status') {
 			if (method !== 'GET') {
-				return withAuthCors(request, env, jsonError('Method not allowed', 405))
+				return withAuthCors(request, jsonError('Method not allowed', 405), env)
 			}
-			return withAuthCors(request, env, await handleAuthStatus(env))
+			return withAuthCors(request, await handleAuthStatus(env), env)
 		}
 		// ── Simplified Market Data routes ──────────────────────────────────────────
 
 		if (url.pathname === '/api/market/quotes') {
 			if (method !== 'GET') {
-				return withAuthCors(request, env, jsonError('Method not allowed', 405))
+				return withAuthCors(request, jsonError('Method not allowed', 405), env)
 			}
-			return withAuthCors(request, env, await handleMarketQuotes(request, env))
+			return withAuthCors(request, await handleMarketQuotes(request, env), env)
 		}
 
 		if (url.pathname === '/api/market/history') {
 			if (method !== 'GET') {
-				return withAuthCors(request, env, jsonError('Method not allowed', 405))
+				return withAuthCors(request, jsonError('Method not allowed', 405), env)
 			}
-			return withAuthCors(request, env, await handleMarketHistory(request, env))
+			return withAuthCors(request, await handleMarketHistory(request, env), env)
 		}
 
 		return jsonError('Not found', 404)

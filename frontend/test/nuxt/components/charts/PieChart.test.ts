@@ -13,6 +13,7 @@ describe('PieChart', () => {
       },
     })
     expect(wrapper.find('.w-full.h-64.p-4').exists()).toBe(true)
+    wrapper.unmount()
   })
 
   it('should show fallback for empty data', () => {
@@ -20,5 +21,6 @@ describe('PieChart', () => {
       props: { data: [] },
     })
     expect(wrapper.text()).toContain('No data available')
+    wrapper.unmount()
   })
 })

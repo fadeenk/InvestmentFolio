@@ -14,6 +14,7 @@ describe('LineChart', () => {
     })
     expect(wrapper.find('.w-full.h-64.p-4').exists()).toBe(true)
     expect(wrapper.text()).not.toContain('No data available')
+    wrapper.unmount()
   })
 
   it('should show fallback for empty data', () => {
@@ -21,6 +22,7 @@ describe('LineChart', () => {
       props: { data: [] },
     })
     expect(wrapper.text()).toContain('No data available')
+    wrapper.unmount()
   })
 
   it('should use xKey and yKey props', () => {
@@ -35,5 +37,6 @@ describe('LineChart', () => {
       },
     })
     expect(wrapper.find('.w-full.h-64.p-4').exists()).toBe(true)
+    wrapper.unmount()
   })
 })

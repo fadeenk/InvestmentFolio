@@ -25,15 +25,11 @@ const CORS_ALLOWED_HEADERS = 'Content-Type,Authorization'
 
 function resolveCorsOrigin(request: Request, frontendOrigin: string): string {
 	const requestOrigin = request.headers.get('Origin')
-	if (!requestOrigin) {
-		return frontendOrigin
-	}
+	const list = frontendOrigin.split(',').map((s) => s.trim())
 
-	if (!frontendOrigin || requestOrigin === frontendOrigin) {
-		return requestOrigin
-	}
+	if (requestOrigin && list.includes(requestOrigin)) return requestOrigin
 
-	return frontendOrigin
+	return list[0] ?? ''
 }
 
 export function withCors(request: Request, response: Response, frontendOrigin: string): Response {

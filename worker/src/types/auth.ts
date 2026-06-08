@@ -14,6 +14,7 @@ export interface WorkerEnv {
 export interface OAuthStateRecord {
 	createdAt: string
 	redirectUri: string
+	frontendOrigin: string | undefined
 }
 
 export interface SchwabTokenResponse {

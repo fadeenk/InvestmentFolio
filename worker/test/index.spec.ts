@@ -431,4 +431,33 @@ describe('auth worker', () => {
 		expect(response.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:3000')
 		expect(response.headers.get('Access-Control-Allow-Methods')).toContain('OPTIONS')
 	})
+
+	it('accepts CORS from any origin in FRONTEND_ORIGIN list', async () => {
+		const env = createEnv({ FRONTEND_ORIGIN: 'http://localhost:3000,https://folio.example.com' })
+
+		const preflight = await worker.fetch(
+			new IncomingRequest('http://example.com/auth/status', {
+				method: 'OPTIONS',
+				headers: { Origin: 'https://folio.example.com' },
+			}),
+			env,
+		)
+		expect(preflight.status).toBe(204)
+		expect(preflight.headers.get('Access-Control-Allow-Origin')).toBe('https://folio.example.com')
+
+		const response = await worker.fetch(
+			new IncomingRequest('http://example.com/auth/status', {
+				headers: { Origin: 'https://folio.example.com' },
+			}),
+			env,
+		)
+		expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://folio.example.com')
+	})
+
+	it('falls back to first origin when no Origin header is present', async () => {
+		const env = createEnv({ FRONTEND_ORIGIN: 'http://localhost:3000,https://folio.example.com' })
+
+		const response = await worker.fetch(new IncomingRequest('http://example.com/auth/status'), env)
+		expect(response.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:3000')
+	})
 })

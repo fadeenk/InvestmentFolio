@@ -16,7 +16,7 @@
 		"SCHWAB_AUTH_URL": "https://api.schwabapi.com/v1/oauth/authorize",
 		"SCHWAB_TOKEN_URL": "https://api.schwabapi.com/v1/oauth/token",
 		"SCHWAB_SCOPE": "readonly",
-		"FRONTEND_ORIGIN": "https://dev.local.mrkannah.com",
+		"FRONTEND_ORIGIN": "https://ifolio.mrkannah.com,https://dev.local.mrkannah.com",
 	},
 	"kv_namespaces": [
 		{

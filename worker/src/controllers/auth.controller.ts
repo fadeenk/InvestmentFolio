@@ -88,11 +88,11 @@ function getCallbackUrl(request: Request, env: WorkerEnv): string {
 }
 
 function getFrontendRedirect(env: WorkerEnv): string {
-	return env.FRONTEND_ORIGIN ?? '/'
+	return env.FRONTEND_ORIGIN?.split(',')[0]?.trim() ?? '/'
 }
 
-function buildFrontendRedirect(env: WorkerEnv, auth: 'connected' | 'error', reason?: string): string {
-	const target = new URL(getFrontendRedirect(env))
+function buildFrontendRedirect(env: WorkerEnv, auth: 'connected' | 'error', frontendOrigin?: string, reason?: string): string {
+	const target = new URL(frontendOrigin ?? getFrontendRedirect(env))
 	target.searchParams.set('auth', auth)
 	if (reason) {
 		target.searchParams.set('reason', reason)
@@ -124,6 +124,7 @@ async function refreshEnvelope(workerEnv: WorkerEnv, current: TokenEnvelope): Pr
 export async function handleAuthLogin(request: Request, env: WorkerEnv): Promise<Response> {
 	const state = crypto.randomUUID()
 	const callbackUrl = getCallbackUrl(request, env)
+	const frontendOrigin = request.headers.get('Origin') ?? undefined
 
 	await putOAuthState(
 		env,
@@ -131,6 +132,7 @@ export async function handleAuthLogin(request: Request, env: WorkerEnv): Promise
 		{
 			createdAt: new Date().toISOString(),
 			redirectUri: callbackUrl,
+			frontendOrigin,
 		},
 		OAUTH_STATE_TTL_SECONDS,
 	)
@@ -146,22 +148,22 @@ export async function handleAuthCallback(request: Request, env: WorkerEnv): Prom
 	const oauthError = url.searchParams.get('error')
 
 	if (oauthError) {
-		return redirectResponse(buildFrontendRedirect(env, 'error', 'Authorization was denied'))
+		return redirectResponse(buildFrontendRedirect(env, 'error', undefined, 'Authorization was denied'))
 	}
 
 	if (!code || !state) {
-		return redirectResponse(buildFrontendRedirect(env, 'error', 'Missing required callback parameters'))
+		return redirectResponse(buildFrontendRedirect(env, 'error', undefined, 'Missing required callback parameters'))
 	}
 
 	const stateRecord = await consumeOAuthState(env, state)
 	if (stateRecord === null) {
-		return redirectResponse(buildFrontendRedirect(env, 'error', 'Invalid or expired authorization state'))
+		return redirectResponse(buildFrontendRedirect(env, 'error', undefined, 'Invalid or expired authorization state'))
 	}
 
 	try {
 		const tokenResult = await exchangeCodeForTokens(env, code, stateRecord.redirectUri)
 		if (!tokenResult.refresh_token) {
-			return redirectResponse(buildFrontendRedirect(env, 'error', 'Missing refresh token in callback response'))
+			return redirectResponse(buildFrontendRedirect(env, 'error', stateRecord.frontendOrigin, 'Missing refresh token in callback response'))
 		}
 
 		const nowIso = new Date().toISOString()
@@ -179,9 +181,9 @@ export async function handleAuthCallback(request: Request, env: WorkerEnv): Prom
 		const encryptedRecord = await encryptTokenEnvelope(env, envelope)
 		await putEncryptedTokens(env, encryptedRecord)
 
-		return redirectResponse(buildFrontendRedirect(env, 'connected'))
+		return redirectResponse(buildFrontendRedirect(env, 'connected', stateRecord.frontendOrigin))
 	} catch {
-		return redirectResponse(buildFrontendRedirect(env, 'error', 'Failed to complete OAuth callback'))
+		return redirectResponse(buildFrontendRedirect(env, 'error', stateRecord.frontendOrigin, 'Failed to complete OAuth callback'))
 	}
 }
 

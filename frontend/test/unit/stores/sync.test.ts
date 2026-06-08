@@ -32,6 +32,7 @@ function initVault(bank: Bank): void {
     dividends: [],
     priceHistory: {},
     lastSyncSummary: null,
+    googleSheetsClientId: '',
     metadata: {
       displayPreferences: {
         theme: Theme.SYSTEM,

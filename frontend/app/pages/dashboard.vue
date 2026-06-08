@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useIncomeStore } from '~/stores/income.store'
 import { useMarketStore } from '~/stores/market.store'
 import { usePositionsStore } from '~/stores/positions.store'
 import { useVaultStore } from '~/stores/vault.store'
+import { useGoogleSheetsSync } from '~/composables/useGoogleSheetsSync'
 import { TimeRange, TransactionType } from '~/types/enums'
 import { TermType, VaultStatus } from '~/types/vault'
 import type { PortfolioSummary } from '~/types/vault'
@@ -12,6 +13,38 @@ const vault = useVaultStore()
 const positionsStore = usePositionsStore()
 const incomeStore = useIncomeStore()
 const marketStore = useMarketStore()
+
+const { state, error, sync, reset } = useGoogleSheetsSync()
+const sheetsError = ref<string | null>(null)
+const sheetsSuccess = ref(false)
+
+const hasGoogleClientId = computed(() => !!vault.payload?.googleSheetsClientId)
+
+const syncLabel = computed(() => {
+  switch (state.value) {
+    case 'authenticating':
+      return 'Authenticating...'
+    case 'loading':
+      return 'Syncing...'
+    default:
+      return 'Sync to Sheets'
+  }
+})
+
+async function syncToSheets(): Promise<void> {
+  sheetsError.value = null
+  sheetsSuccess.value = false
+  reset()
+  await sync()
+  if (state.value === 'error') {
+    sheetsError.value = error.value
+  } else if (state.value === 'success') {
+    sheetsSuccess.value = true
+    setTimeout(() => {
+      sheetsSuccess.value = false
+    }, 3000)
+  }
+}
 
 const isUnlocked = computed(() => vault.status === VaultStatus.UNLOCKED)
 const allAccounts = computed(() => vault.accounts)
@@ -154,7 +187,20 @@ function selectRange(range: TimeRange): void {
         <h1 class="text-2xl font-bold">Dashboard</h1>
         <p class="text-sm text-(--ui-text-muted)">Accounts and latest position snapshots</p>
       </div>
-      <UButton label="Home" color="neutral" variant="outline" to="/" />
+      <div class="flex flex-wrap items-center gap-3">
+        <UButton
+          v-if="hasGoogleClientId && isUnlocked"
+          :label="syncLabel"
+          color="primary"
+          variant="outline"
+          :loading="state === 'authenticating' || state === 'loading'"
+          :disabled="state === 'authenticating' || state === 'loading'"
+          @click="syncToSheets"
+        />
+        <span v-if="sheetsError" class="text-xs text-red-600 dark:text-red-300">{{ sheetsError }}</span>
+        <span v-if="sheetsSuccess" class="text-xs text-emerald-600 dark:text-emerald-300">Synced!</span>
+        <UButton label="Home" color="neutral" variant="outline" to="/" />
+      </div>
     </div>
 
     <template v-if="!isUnlocked">

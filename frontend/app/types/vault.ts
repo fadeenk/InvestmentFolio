@@ -30,6 +30,8 @@ export interface VaultPayload {
   priceHistory: Record<string, PricePoint[]>
   metadata: VaultMetadata
   lastSyncSummary: SyncSummary | null
+  /** Google OAuth client ID for syncing balances to Google Sheets. */
+  googleSheetsClientId: string
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

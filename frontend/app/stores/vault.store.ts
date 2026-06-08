@@ -20,6 +20,7 @@ function createDefaultPayload(): VaultPayload {
     dividends: [],
     priceHistory: {},
     lastSyncSummary: null,
+    googleSheetsClientId: '',
     metadata: {
       displayPreferences: {
         theme: Theme.SYSTEM,
@@ -105,6 +106,7 @@ export const useVaultStore = defineStore('vault', () => {
       _cryptoKey.value = key
       _sessionSalt.value = salt
       decryptedPayload.closedLots ??= []
+      decryptedPayload.googleSheetsClientId ??= ''
       if (decryptedPayload.closedLots.length === 0 && decryptedPayload.taxLots.some((l) => !l.isOpen)) {
         backfillClosedLots(decryptedPayload)
         isDirty.value = true

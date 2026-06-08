@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { maskAccountNumber } from '~/utils/accounts'
 import { useAccountsStore } from '~/stores/accounts.store'
 import { useMarketStore } from '~/stores/market.store'
@@ -26,6 +26,9 @@ const editForm = ref({
   costBasisMethod: CostBasisMethod.FIFO,
   initialBalance: 0,
 })
+
+const googleSheetsClientId = ref('')
+const googleSheetsClientIdSaved = ref(false)
 
 const passphraseForm = ref({
   current: '',
@@ -57,6 +60,29 @@ const displayPreferences = computed(() => {
       defaultTimeRange: TimeRange.YTD,
     }
   )
+})
+
+watch(
+  () => vaultStore.payload?.googleSheetsClientId,
+  (val) => {
+    googleSheetsClientId.value = val ?? ''
+  },
+  { immediate: true },
+)
+
+function saveGoogleSheetsClientId(): void {
+  vaultStore.mutatePayload((p) => {
+    p.googleSheetsClientId = googleSheetsClientId.value
+  })
+  googleSheetsClientIdSaved.value = true
+  setTimeout(() => {
+    googleSheetsClientIdSaved.value = false
+  }, 2000)
+}
+
+const origin = computed(() => {
+  if (import.meta.client) return window.location.origin
+  return ''
 })
 
 const importStatusLabel = computed(() => {
@@ -475,6 +501,32 @@ async function changePassphrase(): Promise<void> {
           <UButton v-if="editAccountId" label="Cancel" color="neutral" variant="outline" @click="resetForm" />
         </div>
       </div>
+    </UCard>
+
+    <UCard>
+      <template #header>
+        <h2 class="text-lg font-semibold">Google Sheets sync</h2>
+      </template>
+
+      <p class="mb-3 text-sm text-(--ui-text-muted)">
+        Paste your Google OAuth Client ID to enable syncing portfolio balances to the Google Sheet.
+        <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" class="text-(--ui-primary) underline"
+          >Create one in Google Cloud Console</a
+        >
+        (Web application type, authorised JavaScript origin: <code class="rounded bg-(--ui-bg-elevated) px-1 py-0.5 text-xs">{{ origin }}</code
+        >).
+      </p>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <input
+          v-model="googleSheetsClientId"
+          class="min-w-0 flex-1 rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
+          placeholder="Paste your Google OAuth Client ID"
+        />
+        <UButton label="Save" color="primary" :disabled="!googleSheetsClientId" @click="saveGoogleSheetsClientId" />
+      </div>
+
+      <p v-if="googleSheetsClientIdSaved" class="mt-2 text-xs text-emerald-600 dark:text-emerald-300">Saved to vault</p>
     </UCard>
 
     <UCard>

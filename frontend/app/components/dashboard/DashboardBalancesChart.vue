@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { VisSingleContainer, VisArea } from '@unovis/vue'
+import { VisXYContainer, VisArea, VisAxis } from '@unovis/vue'
 import type { Account } from '~/types/vault'
+import { formatCurrency } from '~/utils/format'
 
 const props = defineProps<{
   accounts: Account[]
@@ -42,10 +43,20 @@ const chartConfig = computed(() => {
 
   const series: SeriesInfo[] = withHistory.map((a: Account) => ({ id: a.id, name: a.displayName }))
 
+  const latestByAccount = new Map<string, number>()
+  for (const a of withHistory) {
+    latestByAccount.set(a.id, 0)
+  }
+
+  // Carry each account's most recent known balance forward to avoid false drop-offs to zero.
   const data: BalanceRow[] = sortedDates.map((date: string) => {
     const row: BalanceRow = { date: new Date(date) }
     for (const a of withHistory) {
-      row[a.id] = balanceIndex.get(a.id)?.get(date) ?? 0
+      const currentValue = balanceIndex.get(a.id)?.get(date)
+      if (typeof currentValue === 'number') {
+        latestByAccount.set(a.id, currentValue)
+      }
+      row[a.id] = latestByAccount.get(a.id) ?? 0
     }
     return row
   })
@@ -54,6 +65,12 @@ const chartConfig = computed(() => {
 
   return { data, accessors, series }
 })
+
+const dateFormat = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
+
+function xTickFormat(d: Date): string {
+  return dateFormat.format(d)
+}
 </script>
 
 <template>
@@ -63,9 +80,11 @@ const chartConfig = computed(() => {
     </template>
 
     <div v-if="chartConfig.data.length > 0" class="h-64 w-full p-4">
-      <VisSingleContainer :data="chartConfig.data">
+      <VisXYContainer :data="chartConfig.data" :height="224" :margin="{ top: 16, right: 16, bottom: 32, left: 48 }">
         <VisArea :x="(d: BalanceRow) => d.date" :y="chartConfig.accessors" :color="(d: unknown, i: number) => COLORS[i % COLORS.length]" />
-      </VisSingleContainer>
+        <VisAxis type="x" :grid-line="false" :tick-format="xTickFormat" />
+        <VisAxis type="y" :num-ticks="6" :tick-format="formatCurrency" />
+      </VisXYContainer>
     </div>
     <div v-else class="flex h-64 w-full items-center justify-center text-gray-500">No data available</div>
     <div v-if="chartConfig.series.length > 0" class="flex flex-wrap gap-3 px-4 pb-3">

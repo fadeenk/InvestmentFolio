@@ -22,6 +22,7 @@ describe('ui store', () => {
       dividends: [],
       priceHistory: {},
       lastSyncSummary: null,
+      googleSheetsClientId: '',
       metadata: {
         displayPreferences: {
           theme: Theme.SYSTEM,

@@ -69,13 +69,33 @@ async function handleCreate() {
         },
       ],
     })
-    vault.setFileHandle(handle)
+    await vault.setFileHandle(handle)
     await vault.createVault(passphrase.value)
     showCreateDialog.value = false
     resetForm()
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') return
     // lastError is set by the store
+  }
+}
+
+async function handleQuickOpen() {
+  passphraseError.value = ''
+  if (!passphrase.value) {
+    passphraseError.value = 'Enter your vault passphrase'
+    return
+  }
+  try {
+    const handle = await vault.tryQuickOpen()
+    if (!handle) {
+      passphraseError.value = 'Could not access the remembered vault file — please select it manually'
+      vault.forgetHandle()
+      return
+    }
+    await vault.openVault(handle, passphrase.value)
+    resetForm()
+  } catch {
+    if (vault.lastError) passphraseError.value = vault.lastError
   }
 }
 
@@ -128,7 +148,12 @@ async function handleLock() {
 }
 
 async function handleSave() {
-  await vault.saveVault()
+  passphraseError.value = ''
+  try {
+    await vault.saveVault()
+  } catch {
+    passphraseError.value = vault.lastError ?? 'Save failed'
+  }
 }
 
 async function refreshAuthStatus() {
@@ -235,6 +260,15 @@ onMounted(async () => {
 
         <div v-if="vault.lastError" class="rounded-lg bg-(--ui-error) p-3 text-sm text-white">
           {{ vault.lastError }}
+        </div>
+
+        <div v-if="vault.isRemembered && vault.status === VaultStatus.LOCKED" class="mb-4 rounded-lg border border-(--ui-border) p-4">
+          <p class="text-sm text-(--ui-text-muted)">Previously opened:</p>
+          <p class="font-semibold">{{ vault.rememberedFileName }}</p>
+          <div class="mt-3 flex gap-2">
+            <UButton label="Quick Open" @click="handleQuickOpen" />
+            <UButton label="Forget" color="neutral" variant="ghost" @click="vault.forgetHandle()" />
+          </div>
         </div>
 
         <div class="mx-auto flex max-w-xs flex-col gap-3">

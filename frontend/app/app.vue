@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, onUnmounted, watch } from 'vue'
 import { useOAuthStore } from '~/stores/oauth.store'
 import { useSyncStore } from '~/stores/sync.store'
 import { useUiStore } from '~/stores/ui'
@@ -52,6 +52,21 @@ const bannerClasses = computed(() => {
   }
 
   return ['border-red-200 bg-red-50 text-red-800', 'dark:border-red-800 dark:bg-red-950/30 dark:text-red-200'].join(' ')
+})
+
+function onBeforeUnload(event: BeforeUnloadEvent) {
+  if (vault.hasUnsavedChanges) {
+    event.preventDefault()
+    event.returnValue = ''
+  }
+}
+
+if (import.meta.client) {
+  window.addEventListener('beforeunload', onBeforeUnload)
+}
+
+onUnmounted(() => {
+  window.removeEventListener('beforeunload', onBeforeUnload)
 })
 
 watch(

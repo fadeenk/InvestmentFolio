@@ -58,10 +58,12 @@ export async function forgetHandle(): Promise<void> {
 }
 
 export function getLastFileName(): string | null {
+  if (typeof localStorage === 'undefined') return null
   return localStorage.getItem(LS_FILE_NAME)
 }
 
 export function getLastOpenedAt(): string | null {
+  if (typeof localStorage === 'undefined') return null
   return localStorage.getItem(LS_OPENED_AT)
 }
 

@@ -50,12 +50,15 @@ function makeMockFile(): File {
   return new File([buf.buffer], 'ifolio.foli', { type: 'application/octet-stream' })
 }
 
-function makeMockFileSystemFileHandle(): FileSystemFileHandle {
+function makeMockFileSystemFileHandle(permissionResult?: 'granted' | 'denied' | 'prompt'): FileSystemFileHandle {
   const file = makeMockFile()
+  const perm = permissionResult ?? 'granted'
   return {
     name: 'ifolio.foli',
     kind: 'file',
     getFile: vi.fn().mockResolvedValue(file),
+    requestPermission: vi.fn().mockResolvedValue(perm),
+    queryPermission: vi.fn().mockResolvedValue(perm),
   } as unknown as FileSystemFileHandle
 }
 
@@ -444,6 +447,17 @@ describe('vault store', () => {
       await store.saveVault()
 
       expect(encryptSpy).toHaveBeenCalled()
+    })
+
+    it('clears fileHandle and falls back to download when handle permission is denied', async () => {
+      const store = useVaultStore()
+      const handle = makeMockFileSystemFileHandle('denied')
+      await store.createVault('passphrase')
+      store.setFileHandle(handle)
+      stubDOM()
+      await store.saveVault()
+      expect(store.fileHandle).toBeNull()
+      expect(store.lastError).toContain('handle expired')
     })
   })
 

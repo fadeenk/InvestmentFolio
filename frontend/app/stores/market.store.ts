@@ -100,7 +100,9 @@ export const useMarketStore = defineStore('market', () => {
       })
 
       if (vaultStore.fileHandle) {
-        await vaultStore.saveVault()
+        await vaultStore.saveVault().catch(() => {
+          // _writeBuffer already set lastError and cleared stale handle
+        })
       }
 
       syncStatus.value = SyncStatus.SUCCESS

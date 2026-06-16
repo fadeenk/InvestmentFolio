@@ -238,16 +238,18 @@ export const useVaultStore = defineStore('vault', () => {
   async function _writeBuffer(buffer: ArrayBuffer): Promise<void> {
     if (fileHandle.value) {
       try {
-        const writable = await (
-          fileHandle.value as FileSystemFileHandle & {
-            createWritable(): Promise<FileSystemWritableFileStream>
-          }
-        ).createWritable()
+        const permission = await fileHandle.value.requestPermission({ mode: 'readwrite' })
+        if (permission !== 'granted') {
+          throw new DOMException('Permission denied for vault file handle', 'NotAllowedError')
+        }
+        const writable = await fileHandle.value.createWritable()
         await writable.write(buffer)
         await writable.close()
         return
-      } catch {
-        // handle may be stale — fall through to download
+      } catch (err) {
+        fileHandle.value = null
+        const msg = err instanceof Error ? err.message : 'Failed to write to vault file'
+        lastError.value = `Vault file handle expired: ${msg}. Please re-select your vault file.`
       }
     }
 

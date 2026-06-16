@@ -566,6 +566,14 @@ async function changePassphrase(): Promise<void> {
         </div>
       </div>
 
+      <div v-if="vaultStore.isRemembered" class="mb-4 rounded-md border border-(--ui-border) p-3">
+        <p class="mb-1 text-sm font-medium">Remembered vault</p>
+        <p class="text-sm text-(--ui-text-muted)">
+          Last used: <strong>{{ vaultStore.rememberedFileName }}</strong>
+        </p>
+        <UButton label="Forget this vault" color="neutral" variant="outline" class="mt-2" @click="vaultStore.forgetHandle()" />
+      </div>
+
       <div class="flex flex-wrap gap-2">
         <UButton label="Export vault JSON" color="neutral" variant="outline" @click="exportVaultJson" />
         <UButton label="Delete vault data" color="error" variant="outline" @click="clearVaultData" />

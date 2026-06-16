@@ -219,5 +219,6 @@ describe('oauth store', () => {
 
     expect(vaultStore.payload?.metadata.schwabTokenMeta).not.toBeNull()
     expect(vaultStore.payload?.metadata.schwabTokenMeta?.connectedAccountCount).toBe(1)
+    expect(vaultStore.isDirty).toBe(false)
   })
 })

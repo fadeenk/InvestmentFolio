@@ -47,7 +47,7 @@ export const useOAuthStore = defineStore('oauth', () => {
       _syncStatusWarningBanner(data.warning)
 
       if (vaultStore.payload && data.isConnected) {
-        vaultStore.mutatePayload((p) => {
+        vaultStore.mutatePayloadSilent((p) => {
           p.metadata.schwabTokenMeta = {
             accessTokenExpiresAt: data.accessTokenExpiresAt ?? '',
             refreshTokenExpiresAt: data.refreshTokenExpiresAt ?? '',

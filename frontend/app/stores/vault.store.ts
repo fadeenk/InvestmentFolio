@@ -235,6 +235,14 @@ export const useVaultStore = defineStore('vault', () => {
     markDirty()
   }
 
+  function mutatePayloadSilent(fn: (p: VaultPayload) => void): void {
+    if (!payload.value) throw new Error('Vault is locked')
+    fn(payload.value)
+    // Intentionally does NOT set isDirty — used for auto-synced system metadata
+    // (e.g. OAuth token status) that should not trigger the "unsaved changes"
+    // indicator.
+  }
+
   async function _writeBuffer(buffer: ArrayBuffer): Promise<void> {
     if (fileHandle.value) {
       try {
@@ -291,6 +299,7 @@ export const useVaultStore = defineStore('vault', () => {
     lockVault,
     markDirty,
     mutatePayload,
+    mutatePayloadSilent,
     tryQuickOpen,
     forgetHandle: clearPersistedHandle,
     isRemembered,

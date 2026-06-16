@@ -638,6 +638,25 @@ describe('vault store', () => {
       const store = useVaultStore()
       expect(() => store.mutatePayload((_p: VaultPayload) => {})).toThrow('Vault is locked')
     })
+
+    it('mutatePayloadSilent modifies payload without marking dirty', async () => {
+      const store = useVaultStore()
+      await store.createVault('test-passphrase')
+      expect(store.isDirty).toBe(false)
+
+      store.mutatePayloadSilent((p: VaultPayload) => {
+        p.accounts.push({ id: 'silent-acc' })
+      })
+
+      expect(store.payload!.accounts).toHaveLength(1)
+      expect(store.payload!.accounts[0]!.id).toBe('silent-acc')
+      expect(store.isDirty).toBe(false)
+    })
+
+    it('mutatePayloadSilent throws when vault is locked', () => {
+      const store = useVaultStore()
+      expect(() => store.mutatePayloadSilent((_p: VaultPayload) => {})).toThrow('Vault is locked')
+    })
   })
 
   describe('setFileHandle', () => {

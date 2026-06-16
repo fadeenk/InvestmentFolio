@@ -94,15 +94,17 @@ export const useSyncStore = defineStore('sync', () => {
       const added = transactionsStore.insertMany(incoming)
       const duplicates = incoming.length - added
 
-      vaultStore.payload.lastSyncSummary = {
-        startedAt,
-        completedAt: new Date().toISOString(),
-        accountsSynced: 0,
-        transactionsAdded: added,
-        positionsUpdated: 0,
-        deduplicatedCount: duplicates,
-        errors,
-      }
+      vaultStore.mutatePayload((p) => {
+        p.lastSyncSummary = {
+          startedAt,
+          completedAt: new Date().toISOString(),
+          accountsSynced: 0,
+          transactionsAdded: added,
+          positionsUpdated: 0,
+          deduplicatedCount: duplicates,
+          errors,
+        }
+      })
 
       syncStatus.value = SyncStatus.SUCCESS
 

@@ -2,6 +2,8 @@ interface FileSystemFileHandle {
   name: string
   kind: 'file'
   getFile(): Promise<File>
+  queryPermission(descriptor?: { mode: 'read' | 'readwrite' }): Promise<'granted' | 'denied' | 'prompt'>
+  requestPermission(descriptor?: { mode: 'read' | 'readwrite' }): Promise<'granted' | 'denied' | 'prompt'>
   createWritable(): Promise<FileSystemWritableFileStream>
 }
 

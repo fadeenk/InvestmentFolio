@@ -5,6 +5,7 @@ import { VaultStatus } from '@/types/vault'
 import { CostBasisMethod, Theme, DateFormat } from '@/types/enums'
 import { deriveKey, randomSalt, encryptPayload, decryptPayload, buildVaultBuffer, parseVaultBuffer } from '@/utils/vault'
 import { backfillClosedLots } from '@/utils/ledger'
+import { saveHandle, loadHandle, forgetHandle as clearPersistedHandle, getLastFileName, isAvailable as isHandleStoreAvailable } from '@/utils/vaultHandleStore'
 
 function createDefaultPayload(): VaultPayload {
   const now = new Date().toISOString()
@@ -53,6 +54,9 @@ export const useVaultStore = defineStore('vault', () => {
 
   const isDirty = ref(false)
 
+  const rememberedFileName = ref<string | null>(getLastFileName())
+  const isRemembered = computed(() => isHandleStoreAvailable() && rememberedFileName.value !== null)
+
   const isUnlocked = computed(() => status.value === VaultStatus.UNLOCKED)
   const isSaving = computed(() => status.value === VaultStatus.SAVING)
   const hasUnsavedChanges = computed(() => isDirty.value)
@@ -96,7 +100,16 @@ export const useVaultStore = defineStore('vault', () => {
         file = input
       } else {
         fileHandle.value = input
+        const permission = await input.requestPermission({ mode: 'readwrite' })
+        if (permission !== 'granted') {
+          fileHandle.value = null
+          throw new DOMException('Permission denied for vault file', 'NotAllowedError')
+        }
         file = await input.getFile()
+        if (isHandleStoreAvailable()) {
+          await saveHandle(input).catch(() => {})
+          rememberedFileName.value = input.name
+        }
       }
       const buffer = await file.arrayBuffer()
       const { salt, iv, ciphertext } = parseVaultBuffer(buffer)
@@ -130,8 +143,12 @@ export const useVaultStore = defineStore('vault', () => {
     }
   }
 
-  function setFileHandle(handle: FileSystemFileHandle): void {
+  async function setFileHandle(handle: FileSystemFileHandle): Promise<void> {
     fileHandle.value = handle
+    rememberedFileName.value = handle.name
+    if (isHandleStoreAvailable()) {
+      await saveHandle(handle).catch(() => {})
+    }
   }
 
   async function saveVault(): Promise<void> {
@@ -204,6 +221,7 @@ export const useVaultStore = defineStore('vault', () => {
     fileHandle.value = null
     isDirty.value = false
     lastError.value = null
+    rememberedFileName.value = null
     status.value = VaultStatus.LOCKED
   }
 
@@ -242,6 +260,16 @@ export const useVaultStore = defineStore('vault', () => {
     URL.revokeObjectURL(url)
   }
 
+  async function tryQuickOpen(): Promise<FileSystemFileHandle | null> {
+    if (!isHandleStoreAvailable()) return null
+    const handle = await loadHandle()
+    if (!handle) return null
+    const permission = await handle.queryPermission({ mode: 'read' })
+    if (permission === 'granted') return handle
+    const result = await handle.requestPermission({ mode: 'read' })
+    return result === 'granted' ? handle : null
+  }
+
   return {
     status,
     lastError,
@@ -261,5 +289,9 @@ export const useVaultStore = defineStore('vault', () => {
     lockVault,
     markDirty,
     mutatePayload,
+    tryQuickOpen,
+    forgetHandle: clearPersistedHandle,
+    isRemembered,
+    rememberedFileName,
   }
 })

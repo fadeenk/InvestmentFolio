@@ -127,7 +127,7 @@ function latestByAccountSymbol(positions: Position[]): Position[] {
   const seen = new Map<string, Position>()
   for (const p of positions) {
     const key = `${p.accountId}::${p.symbol}`
-    if (!seen.has(key)) seen.set(key, p)
+    seen.set(key, p)
   }
   return Array.from(seen.values())
 }
@@ -136,10 +136,17 @@ function getCloseForSymbol(symbol: string, date: string, priceHistory: VaultPayl
   if (symbolToAssetType.get(symbol) === AssetType.CashEquivalent) return 1
   const prices = priceHistory[symbol] ?? []
   const point = prices.find((p) => p.date === date)
-  return typeof point?.close === 'number' ? point.close : 0
+  if (typeof point?.close === 'number') return point.close
+  for (let i = prices.length - 1; i >= 0; i--) {
+    const close = prices[i]!.close
+    if (prices[i]!.date < date && typeof close === 'number') {
+      return close
+    }
+  }
+  return 0
 }
 
-function generateBalanceHistories(payload: VaultPayload, symbolToAssetType: Map<string, AssetType>): void {
+export function generateBalanceHistories(payload: VaultPayload, symbolToAssetType: Map<string, AssetType>): void {
   const allTxs = [...payload.transactions].sort((a, b) => a.date.localeCompare(b.date))
 
   const txByAccount = new Map<string, typeof allTxs>()

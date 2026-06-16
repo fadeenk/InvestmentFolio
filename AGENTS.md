@@ -61,3 +61,4 @@ For detailed documentation of available UI components refernce [NuxtUI Documenta
 
 - The frontend `tsconfig.json` uses project references to `.nuxt/` generated configs -- these are created by `nuxt prepare` (runs automatically via `postinstall`).
 - Run `wrangler types` after changing `worker/wrangler.jsonc` bindings.
+- DO NOT run any testing, linting, typecheck commands. Give me the cammands and I will run them then give you the results

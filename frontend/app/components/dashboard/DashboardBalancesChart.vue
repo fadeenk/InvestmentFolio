@@ -21,12 +21,12 @@ interface BalanceRow {
 }
 
 const chartConfig = computed(() => {
-  const withHistory = props.accounts.filter((a: Account) => a.balanceHistory?.length)
+  const withHistory = props.accounts
   if (!withHistory.length) return { data: [] as BalanceRow[], accessors: [] as ((d: BalanceRow) => number)[], series: [] as SeriesInfo[] }
 
   const dates = new Set<string>()
   for (const a of withHistory) {
-    for (const bp of a.balanceHistory!) {
+    for (const bp of a.balanceHistory ?? []) {
       dates.add(bp.date)
     }
   }
@@ -35,8 +35,17 @@ const chartConfig = computed(() => {
   const balanceIndex = new Map<string, Map<string, number>>()
   for (const a of withHistory) {
     const m = new Map<string, number>()
-    for (const bp of a.balanceHistory!) {
-      m.set(bp.date, bp.balance)
+    if (a.balanceHistory?.length) {
+      for (const bp of a.balanceHistory) {
+        m.set(bp.date, bp.balance)
+      }
+    }
+    // For accounts without balanceHistory, synthesize a flat series
+    // using their currentBalance across all dates.
+    if (m.size === 0 && a.currentBalance) {
+      for (const date of sortedDates) {
+        m.set(date, a.currentBalance)
+      }
     }
     balanceIndex.set(a.id, m)
   }

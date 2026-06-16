@@ -8,10 +8,22 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { useVaultStore } from './vault.store'
-import type { Transaction } from '@/types/vault'
+import type { Transaction, VaultPayload } from '@/types/vault'
+import type { AssetType } from '@/types/enums'
 import { ImportSource, TransactionType } from '@/types/enums'
 import { randomUUID } from '@/utils/crypto'
 import { recalculateDerivedDataFromTransactions } from '@/utils/ledger'
+import { generateBalanceHistories } from '@/stores/market.store'
+
+function buildSymbolToAssetType(payload: VaultPayload): Map<string, AssetType> {
+  const map = new Map<string, AssetType>()
+  for (const pos of payload.positions) {
+    if (!map.has(pos.symbol)) {
+      map.set(pos.symbol, pos.assetType)
+    }
+  }
+  return map
+}
 
 // ---------------------------------------------------------------------------
 // Filter shape
@@ -148,6 +160,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
     vaultStore.mutatePayload((p) => {
       p.transactions.push(...toInsert)
       recalculateDerivedDataFromTransactions(p)
+      generateBalanceHistories(p, buildSymbolToAssetType(p))
     })
 
     return toInsert.length
@@ -173,6 +186,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
     vaultStore.mutatePayload((p) => {
       p.transactions.push(tx)
       recalculateDerivedDataFromTransactions(p)
+      generateBalanceHistories(p, buildSymbolToAssetType(p))
     })
 
     return id
@@ -192,6 +206,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
       if (tx.externalId) throw new Error('Cannot edit API-synced transactions')
       Object.assign(tx, updates)
       recalculateDerivedDataFromTransactions(p)
+      generateBalanceHistories(p, buildSymbolToAssetType(p))
     })
   }
 
@@ -209,6 +224,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
       }
       p.transactions.splice(idx, 1)
       recalculateDerivedDataFromTransactions(p)
+      generateBalanceHistories(p, buildSymbolToAssetType(p))
     })
   }
 

@@ -40,7 +40,7 @@ export const usePositionsStore = defineStore('positions', () => {
   const latest = computed<Position[]>(() => {
     const seen = new Map<string, Position>()
     // Positions are appended on each sync; iterate newest-first by snapshotAt
-    const sorted = [...all.value]
+    const sorted = [...all.value].sort((a, b) => (b.snapshotAt ?? '').localeCompare(a.snapshotAt ?? ''))
     for (const p of sorted) {
       const key = `${p.accountId}::${p.symbol}`
       if (!seen.has(key)) seen.set(key, p)

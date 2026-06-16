@@ -158,10 +158,17 @@ const filteredAccounts = computed(() => {
 })
 
 const portfolioValueChartData = computed(() => {
-  return positionsStore.portfolioValueSeries.map((point) => ({
-    date: point.date,
-    value: point.totalValue,
-  }))
+  const cutoff = cutoffDate(selectedTimeRange.value)
+  const byDate = new Map<string, number>()
+  for (const account of filteredAccounts.value) {
+    for (const bp of account.balanceHistory ?? []) {
+      if (bp.date < cutoff) continue
+      byDate.set(bp.date, (byDate.get(bp.date) ?? 0) + bp.balance)
+    }
+  }
+  return Array.from(byDate.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, value]) => ({ date, value }))
 })
 
 const allocationChartData = computed(() => {
@@ -177,6 +184,42 @@ function selectAccount(accountId: string | null): void {
 
 function selectRange(range: TimeRange): void {
   positionsStore.selectTimeRange(range)
+}
+
+function cutoffDate(range: TimeRange): string {
+  const now = new Date()
+  switch (range) {
+    case TimeRange.ONE_DAY: {
+      const d = new Date(now)
+      d.setDate(d.getDate() - 1)
+      return d.toISOString().slice(0, 10)
+    }
+    case TimeRange.ONE_WEEK: {
+      const d = new Date(now)
+      d.setDate(d.getDate() - 7)
+      return d.toISOString().slice(0, 10)
+    }
+    case TimeRange.ONE_MONTH: {
+      const d = new Date(now)
+      d.setMonth(d.getMonth() - 1)
+      return d.toISOString().slice(0, 10)
+    }
+    case TimeRange.THREE_MONTHS: {
+      const d = new Date(now)
+      d.setMonth(d.getMonth() - 3)
+      return d.toISOString().slice(0, 10)
+    }
+    case TimeRange.YTD:
+      return `${now.getFullYear()}-01-01`
+    case TimeRange.ONE_YEAR: {
+      const d = new Date(now)
+      d.setFullYear(d.getFullYear() - 1)
+      return d.toISOString().slice(0, 10)
+    }
+    case TimeRange.ALL:
+    default:
+      return '1970-01-01'
+  }
 }
 </script>
 

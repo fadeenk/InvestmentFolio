@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useDataStore } from '~/stores/data.store'
+import { useDataStore, cutoffDate } from '~/stores/data.store'
 import { useMarketStore } from '~/stores/market.store'
 import { useVaultStore } from '~/stores/vault.store'
 import { useGoogleSheetsSync } from '~/composables/useGoogleSheetsSync'
@@ -184,41 +184,6 @@ function selectRange(range: TimeRange): void {
   dataStore.selectTimeRange(range)
 }
 
-function cutoffDate(range: TimeRange): string {
-  const now = new Date()
-  switch (range) {
-    case TimeRange.ONE_DAY: {
-      const d = new Date(now)
-      d.setDate(d.getDate() - 1)
-      return d.toISOString().slice(0, 10)
-    }
-    case TimeRange.ONE_WEEK: {
-      const d = new Date(now)
-      d.setDate(d.getDate() - 7)
-      return d.toISOString().slice(0, 10)
-    }
-    case TimeRange.ONE_MONTH: {
-      const d = new Date(now)
-      d.setMonth(d.getMonth() - 1)
-      return d.toISOString().slice(0, 10)
-    }
-    case TimeRange.THREE_MONTHS: {
-      const d = new Date(now)
-      d.setMonth(d.getMonth() - 3)
-      return d.toISOString().slice(0, 10)
-    }
-    case TimeRange.YTD:
-      return `${now.getFullYear()}-01-01`
-    case TimeRange.ONE_YEAR: {
-      const d = new Date(now)
-      d.setFullYear(d.getFullYear() - 1)
-      return d.toISOString().slice(0, 10)
-    }
-    case TimeRange.ALL:
-    default:
-      return '1970-01-01'
-  }
-}
 </script>
 
 <template>

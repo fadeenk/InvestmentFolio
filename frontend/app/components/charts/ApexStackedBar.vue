@@ -25,7 +25,7 @@ const chartKey = computed(() => props.categories.length)
 </script>
 
 <template>
-  <div v-if="categories.length > 0" class="w-full px-2 py-2">
+  <div v-if="categories.length > 0 && series.some((s) => s.data.length > 0)" class="w-full px-2 py-2">
     <apexchart :key="chartKey" type="bar" :height="height" :options="options" :series="series" />
   </div>
   <div v-else class="flex h-64 w-full items-center justify-center text-(--ui-text-muted) text-sm">

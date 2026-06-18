@@ -338,7 +338,7 @@ export const useDataStore = defineStore('data', () => {
   const portfolioValueSeries = computed<PortfolioValuePoint[]>(() => {
     const allPos = allPositions.value
     if (allPos.length === 0) return []
-    const cutoff = _cutoffDate(selectedTimeRange.value)
+    const cutoff = cutoffDate(selectedTimeRange.value)
     const byDate = new Map<string, number>()
     for (const p of allPos) {
       const date = p.snapshotAt.slice(0, 10)
@@ -434,8 +434,12 @@ export const useDataStore = defineStore('data', () => {
     const priorRecords = incomePriorYear.value.filter((d) => d.symbol)
     const map = new Map<string, SecurityIncomeSummary>()
     function getOrCreate(symbol: string): SecurityIncomeSummary {
-      if (!map.has(symbol)) map.set(symbol, { symbol, description: symbol, ytdTotal: 0, priorYearTotal: 0, dividend: 0, interest: 0 })
-      return map.get(symbol)!
+      let entry = map.get(symbol)
+      if (!entry) {
+        entry = { symbol, description: symbol, ytdTotal: 0, priorYearTotal: 0, dividend: 0, interest: 0 }
+        map.set(symbol, entry)
+      }
+      return entry
     }
     for (const r of currentRecords) {
       const entry = getOrCreate(r.symbol!)
@@ -742,7 +746,7 @@ export const useDataStore = defineStore('data', () => {
 
 // ── Helpers ────────────────────────────────────────────────────
 
-function _cutoffDate(range: TimeRange): string {
+export function cutoffDate(range: TimeRange): string {
   const now = new Date()
   switch (range) {
     case TimeRange.ONE_DAY: {

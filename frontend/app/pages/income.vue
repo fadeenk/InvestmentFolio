@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useDataStore } from '~/stores/data.store'
 import { TransactionType } from '~/types/enums'
 import type { IncomeRecord } from '~/types/vault'
 
 const dataStore = useDataStore()
 
-const selectedYear = ref<number>(dataStore.selectedYear)
+const selectedYear = computed({
+  get: () => dataStore.selectedYear,
+  set: (year: number) => dataStore.setSelectedTaxYear(year),
+})
 const selectedAccountId = ref<string>('ALL')
 
 const availableYears = computed(() => {

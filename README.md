@@ -22,7 +22,7 @@ iFolio is designed with a strict privacy-first approach to ensure your financial
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: Nuxt 4, TypeScript, Nuxt UI, Pinia, Unovis, Tailwind CSS.
+- **Frontend**: Nuxt 4, TypeScript, Nuxt UI, Pinia, ApexCharts, Tailwind CSS.
 - **Infrastructure**: GitHub Pages (Frontend).
 - **Security**: Web Crypto API (AES-256-GCM, PBKDF2-HMAC-SHA256).
 

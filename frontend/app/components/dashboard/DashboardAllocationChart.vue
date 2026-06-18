@@ -9,7 +9,6 @@ defineProps<{
     <template #header>
       <h2 class="text-lg font-semibold">Asset Allocation</h2>
     </template>
-
-    <PieChart :data="data" />
+    <ApexDonutChart :data="data" />
   </UCard>
 </template>

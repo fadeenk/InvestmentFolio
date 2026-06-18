@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import type { PricePoint } from '~/types/vault'
-
 defineProps<{
-  data: PricePoint[]
+  data: { date: string; value: number }[]
   timeRange: string
 }>()
 </script>
@@ -15,7 +13,6 @@ defineProps<{
         <span class="text-xs text-(--ui-text-muted)">{{ timeRange }}</span>
       </div>
     </template>
-
-    <LineChart :data="data" />
+    <ApexLineChart :data="data" />
   </UCard>
 </template>

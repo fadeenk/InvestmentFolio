@@ -1,10 +1,10 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
-import LineChart from '~/components/charts/LineChart.vue'
+import ApexLineChart from '~/components/charts/ApexLineChart.vue'
 
-describe('LineChart', () => {
+describe('ApexLineChart', () => {
   it('should render with data', () => {
-    const wrapper = mount(LineChart, {
+    const wrapper = mount(ApexLineChart, {
       props: {
         data: [
           { date: '2026-01-01', value: 10000 },
@@ -12,31 +12,15 @@ describe('LineChart', () => {
         ],
       },
     })
-    expect(wrapper.find('.w-full.h-64.p-4').exists()).toBe(true)
     expect(wrapper.text()).not.toContain('No data available')
     wrapper.unmount()
   })
 
   it('should show fallback for empty data', () => {
-    const wrapper = mount(LineChart, {
+    const wrapper = mount(ApexLineChart, {
       props: { data: [] },
     })
     expect(wrapper.text()).toContain('No data available')
-    wrapper.unmount()
-  })
-
-  it('should use xKey and yKey props', () => {
-    const wrapper = mount(LineChart, {
-      props: {
-        data: [
-          { date: '2026-01-01', value: 10000 },
-          { date: '2026-01-02', value: 10500 },
-        ],
-        xKey: 'date',
-        yKey: 'value',
-      },
-    })
-    expect(wrapper.find('.w-full.h-64.p-4').exists()).toBe(true)
     wrapper.unmount()
   })
 })

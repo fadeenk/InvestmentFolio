@@ -1,10 +1,10 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
-import PieChart from '~/components/charts/PieChart.vue'
+import ApexDonutChart from '~/components/charts/ApexDonutChart.vue'
 
-describe('PieChart', () => {
+describe('ApexDonutChart', () => {
   it('should render with data', () => {
-    const wrapper = mount(PieChart, {
+    const wrapper = mount(ApexDonutChart, {
       props: {
         data: [
           { label: 'Stocks', value: 6000 },
@@ -12,12 +12,12 @@ describe('PieChart', () => {
         ],
       },
     })
-    expect(wrapper.find('.w-full.h-64.p-4').exists()).toBe(true)
+    expect(wrapper.text()).not.toContain('No data available')
     wrapper.unmount()
   })
 
   it('should show fallback for empty data', () => {
-    const wrapper = mount(PieChart, {
+    const wrapper = mount(ApexDonutChart, {
       props: { data: [] },
     })
     expect(wrapper.text()).toContain('No data available')

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { maskAccountNumber } from '~/utils/accounts'
-import { useAccountsStore } from '~/stores/accounts.store'
+import { useDataStore } from '~/stores/data.store'
 import { useMarketStore } from '~/stores/market.store'
 import { useOAuthStore } from '~/stores/oauth.store'
 import { useSyncStore } from '~/stores/sync.store'
@@ -13,7 +13,7 @@ import type { Account } from '~/types/vault'
 const vaultStore = useVaultStore()
 const oauthStore = useOAuthStore()
 const syncStore = useSyncStore()
-const accountsStore = useAccountsStore()
+const dataStore = useDataStore()
 const marketStore = useMarketStore()
 
 const editAccountId = ref<string | null>(null)
@@ -105,7 +105,7 @@ const tokenLabel = computed(() => {
   }
 })
 
-const orderedAccounts = computed(() => accountsStore.all)
+const orderedAccounts = computed(() => dataStore.allAccounts)
 
 const accountOptions = computed(() => {
   return [
@@ -113,7 +113,7 @@ const accountOptions = computed(() => {
       id: 'ALL',
       label: 'All accounts',
     },
-    ...accountsStore.all.map((account) => ({
+    ...dataStore.allAccounts.map((account) => ({
       id: account.id,
       label: account.displayName,
     })),
@@ -169,7 +169,7 @@ function saveEdit(): void {
   if (!editAccountId.value) return
   if (!editForm.value.displayName || !editForm.value.accountNumber) return
 
-  accountsStore.updateAccount(editAccountId.value, {
+  dataStore.updateAccount(editAccountId.value, {
     displayName: editForm.value.displayName,
     accountNumber: editForm.value.accountNumber,
     bank: editForm.value.bank,
@@ -186,7 +186,7 @@ function saveEdit(): void {
 function addAccount(): void {
   if (!editForm.value.displayName || !editForm.value.accountNumber) return
 
-  const accountId = accountsStore.addAccount({
+  const accountId = dataStore.addAccount({
     bank: editForm.value.bank,
     type: editForm.value.type,
     displayName: editForm.value.displayName,
@@ -213,7 +213,7 @@ function moveAccount(accountId: string, direction: -1 | 1): void {
   ids[index] = ids[target]!
   ids[target] = temp!
 
-  accountsStore.reorderAccounts(ids)
+  dataStore.reorderAccounts(ids)
 }
 
 function exportVaultJson(): void {
@@ -386,9 +386,9 @@ async function changePassphrase(): Promise<void> {
       <div class="mt-3 grid gap-3 md:grid-cols-2">
         <select v-model="importAccountId" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
           <option :value="null">Select account</option>
-          <option v-for="account in accountsStore.all" :key="account.id" :value="account.id">{{ account.displayName }}</option>
+          <option v-for="account in dataStore.allAccounts" :key="account.id" :value="account.id">{{ account.displayName }}</option>
         </select>
-        <input type="file" accept=".csv,text/csv" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" @change="onImportFileChange" >
+        <input type="file" accept=".csv,text/csv" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" @change="onImportFileChange" />
       </div>
 
       <div v-if="importErrors.length > 0" class="mt-3 rounded-md bg-red-500/15 p-2 text-sm text-red-700 dark:text-red-200">
@@ -471,8 +471,8 @@ async function changePassphrase(): Promise<void> {
         <p class="mb-3 text-sm font-medium">{{ editAccountId ? 'Edit account' : 'Add account' }}</p>
 
         <div class="grid gap-3 md:grid-cols-2">
-          <input v-model="editForm.displayName" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" placeholder="Display name" >
-          <input v-model="editForm.accountNumber" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" placeholder="Account number" >
+          <input v-model="editForm.displayName" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" placeholder="Display name" />
+          <input v-model="editForm.accountNumber" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" placeholder="Account number" />
 
           <select v-model="editForm.bank" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
             <option v-for="bank in bankOptions" :key="bank" :value="bank">{{ bank }}</option>
@@ -493,7 +493,7 @@ async function changePassphrase(): Promise<void> {
             placeholder="Initial balance"
             type="number"
             step="0.01"
-          >
+          />
         </div>
 
         <div class="mt-3 flex flex-wrap gap-2">
@@ -522,7 +522,7 @@ async function changePassphrase(): Promise<void> {
           v-model="googleSheetsClientId"
           class="min-w-0 flex-1 rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
           placeholder="Paste your Google OAuth Client ID"
-        >
+        />
         <UButton label="Save" color="primary" :disabled="!googleSheetsClientId" @click="saveGoogleSheetsClientId" />
       </div>
 
@@ -543,19 +543,19 @@ async function changePassphrase(): Promise<void> {
             class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
             placeholder="Current passphrase"
             type="password"
-          >
+          />
           <input
             v-model="passphraseForm.next"
             class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
             placeholder="New passphrase"
             type="password"
-          >
+          />
           <input
             v-model="passphraseForm.confirm"
             class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
             placeholder="Confirm new passphrase"
             type="password"
-          >
+          />
         </div>
 
         <div v-if="passphraseError" class="mt-3 rounded-md bg-red-500/15 p-2 text-sm text-red-700 dark:text-red-200">{{ passphraseError }}</div>

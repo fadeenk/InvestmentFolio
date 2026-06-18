@@ -1,26 +1,22 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useAccountsStore } from '~/stores/accounts.store'
+import { useDataStore } from '~/stores/data.store'
 import { useMarketStore } from '~/stores/market.store'
-import { usePositionsStore } from '~/stores/positions.store'
-import { useTaxLotsStore } from '~/stores/taxLots.store'
 
-const accountsStore = useAccountsStore()
-const positionsStore = usePositionsStore()
-const taxLotsStore = useTaxLotsStore()
+const dataStore = useDataStore()
 const marketStore = useMarketStore()
 
 const activeTab = ref<'OPEN' | 'CLOSED'>('OPEN')
 const expandedPositionIds = ref<Set<string>>(new Set())
 
-const totals = computed(() => positionsStore.summary)
+const totals = computed(() => dataStore.portfolioSummary)
 
 const positions = computed(() => {
-  return [...positionsStore.visible].sort((a, b) => b.marketValue - a.marketValue)
+  return [...dataStore.visiblePositions].sort((a, b) => b.marketValue - a.marketValue)
 })
 
 const accountNameById = computed(() => {
-  return new Map(accountsStore.all.map((account) => [account.id, account.displayName]))
+  return new Map(dataStore.allAccounts.map((account) => [account.id, account.displayName]))
 })
 
 const accountOptions = computed(() => {
@@ -29,7 +25,7 @@ const accountOptions = computed(() => {
       id: null,
       label: 'All accounts',
     },
-    ...accountsStore.all.map((account) => ({
+    ...dataStore.allAccounts.map((account) => ({
       id: account.id,
       label: account.displayName,
     })),
@@ -37,12 +33,12 @@ const accountOptions = computed(() => {
 })
 
 const availableTaxYears = computed(() => {
-  if (taxLotsStore.availableTaxYears.length > 0) return taxLotsStore.availableTaxYears
+  if (dataStore.availableTaxYears.length > 0) return dataStore.availableTaxYears
   return [new Date().getFullYear()]
 })
 
 const closedLotsForYear = computed(() => {
-  return taxLotsStore.closedLots.filter((lot) => lot.taxYear === taxLotsStore.selectedTaxYear)
+  return dataStore.closedLots.filter((lot) => lot.taxYear === dataStore.selectedTaxYear)
 })
 
 function formatDate(value: string): string {
@@ -70,7 +66,7 @@ function isExpanded(positionId: string): boolean {
 }
 
 function lotsForPosition(accountId: string, symbol: string) {
-  return taxLotsStore.openLots.filter((lot) => lot.accountId === accountId && lot.symbol.toUpperCase() === symbol.toUpperCase())
+  return dataStore.openLots.filter((lot) => lot.accountId === accountId && lot.symbol.toUpperCase() === symbol.toUpperCase())
 }
 
 function holdingPeriodLabel(accountId: string, symbol: string): string {
@@ -151,9 +147,9 @@ function holdingPeriodLabel(accountId: string, symbol: string): string {
           :key="option.label"
           :label="option.label"
           size="xs"
-          :color="positionsStore.selectedAccountId === option.id ? 'primary' : 'neutral'"
-          :variant="positionsStore.selectedAccountId === option.id ? 'solid' : 'outline'"
-          @click="positionsStore.selectAccount(option.id)"
+          :color="dataStore.selectedAccountId === option.id ? 'primary' : 'neutral'"
+          :variant="dataStore.selectedAccountId === option.id ? 'solid' : 'outline'"
+          @click="dataStore.selectAccount(option.id)"
         />
       </div>
 
@@ -297,8 +293,8 @@ function holdingPeriodLabel(accountId: string, symbol: string): string {
             <select
               id="tax-year"
               class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-2 py-1 text-sm"
-              :value="taxLotsStore.selectedTaxYear"
-              @change="taxLotsStore.setSelectedTaxYear(Number(($event.target as HTMLSelectElement).value))"
+              :value="dataStore.selectedTaxYear"
+              @change="dataStore.setSelectedTaxYear(Number(($event.target as HTMLSelectElement).value))"
             >
               <option v-for="year in availableTaxYears" :key="year" :value="year">{{ year }}</option>
             </select>

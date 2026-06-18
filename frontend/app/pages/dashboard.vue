@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useIncomeStore } from '~/stores/income.store'
+import { useDataStore } from '~/stores/data.store'
 import { useMarketStore } from '~/stores/market.store'
-import { usePositionsStore } from '~/stores/positions.store'
 import { useVaultStore } from '~/stores/vault.store'
 import { useGoogleSheetsSync } from '~/composables/useGoogleSheetsSync'
 import { TimeRange, TransactionType } from '~/types/enums'
@@ -10,8 +9,7 @@ import { TermType, VaultStatus } from '~/types/vault'
 import type { PortfolioSummary } from '~/types/vault'
 
 const vault = useVaultStore()
-const positionsStore = usePositionsStore()
-const incomeStore = useIncomeStore()
+const dataStore = useDataStore()
 const marketStore = useMarketStore()
 
 const { state, error, sync, reset } = useGoogleSheetsSync()
@@ -48,8 +46,8 @@ async function syncToSheets(): Promise<void> {
 
 const isUnlocked = computed(() => vault.status === VaultStatus.UNLOCKED)
 const allAccounts = computed(() => vault.accounts)
-const accountFilter = computed(() => positionsStore.selectedAccountId)
-const selectedTimeRange = computed(() => positionsStore.selectedTimeRange)
+const accountFilter = computed(() => dataStore.selectedAccountId)
+const selectedTimeRange = computed(() => dataStore.selectedTimeRange)
 
 const accountNameById = computed(() => {
   return new Map(allAccounts.value.map((account) => [account.id, account.displayName]))
@@ -68,7 +66,7 @@ const accountOptions = computed(() => {
 const timeRangeOptions = [TimeRange.ONE_DAY, TimeRange.ONE_WEEK, TimeRange.ONE_MONTH, TimeRange.THREE_MONTHS, TimeRange.YTD, TimeRange.ONE_YEAR, TimeRange.ALL]
 
 const allAccountsSummary = computed<PortfolioSummary>(() => {
-  const positions = positionsStore.latest
+  const positions = dataStore.latestPositions
   const accounts = vault.accounts ?? []
   const payload = vault.payload
 
@@ -109,7 +107,7 @@ const allAccountsSummary = computed<PortfolioSummary>(() => {
 
 const accountsSummary = computed(() => {
   return allAccounts.value.map((account) => {
-    const accountPositions = positionsStore.latest.filter((p) => p.accountId === account.id)
+    const accountPositions = dataStore.latestPositions.filter((p) => p.accountId === account.id)
     const costBasis = accountPositions.reduce((s, p) => s + p.avgCost * p.quantity, 0)
     const marketValue = accountPositions.reduce((s, p) => s + p.marketValue, 0)
     const gain = marketValue - costBasis
@@ -127,8 +125,8 @@ const accountsSummary = computed(() => {
 })
 
 const incomeByAccount = computed(() => {
-  const records = accountFilter.value ? incomeStore.all.filter((r) => r.accountId === accountFilter.value) : incomeStore.all
-  const currentYear = incomeStore.selectedYear
+  const records = accountFilter.value ? dataStore.allIncome.filter((r) => r.accountId === accountFilter.value) : dataStore.allIncome
+  const currentYear = dataStore.selectedYear
   const priorYear = currentYear - 1
 
   const byAccount = new Map<string, { currentYear: number; priorYear: number }>()
@@ -172,18 +170,18 @@ const portfolioValueChartData = computed(() => {
 })
 
 const allocationChartData = computed(() => {
-  return positionsStore.allocation.map((slice) => ({
+  return dataStore.allocation.map((slice) => ({
     label: slice.label,
     value: slice.marketValue,
   }))
 })
 
 function selectAccount(accountId: string | null): void {
-  positionsStore.selectAccount(accountId)
+  dataStore.selectAccount(accountId)
 }
 
 function selectRange(range: TimeRange): void {
-  positionsStore.selectTimeRange(range)
+  dataStore.selectTimeRange(range)
 }
 
 function cutoffDate(range: TimeRange): string {
@@ -280,7 +278,7 @@ function cutoffDate(range: TimeRange): string {
 
       <div class="grid gap-4 xl:grid-cols-2">
         <DashboardBalancesChart :accounts="filteredAccounts" />
-        <DashboardIncomeChart :data="incomeByAccount" :current-year="incomeStore.selectedYear" :prior-year="incomeStore.selectedYear - 1" />
+        <DashboardIncomeChart :data="incomeByAccount" :current-year="dataStore.selectedYear" :prior-year="dataStore.selectedYear - 1" />
       </div>
     </template>
   </div>

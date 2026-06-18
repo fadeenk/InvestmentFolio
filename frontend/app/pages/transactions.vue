@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { createColumnHelper, createTable, getCoreRowModel } from '@tanstack/table-core'
-import { useAccountsStore } from '~/stores/accounts.store'
-import { useTransactionsStore } from '~/stores/transactions.store'
+import { useDataStore } from '~/stores/data.store'
 import { useUiStore } from '~/stores/ui'
 import type { ImportSource } from '~/types/enums'
 import { AssetType, TransactionType } from '~/types/enums'
@@ -39,8 +38,7 @@ type TransactionRow = {
   editable: boolean
 }
 
-const accountsStore = useAccountsStore()
-const transactionsStore = useTransactionsStore()
+const dataStore = useDataStore()
 const uiStore = useUiStore()
 
 const activeTab = ref<TransactionTab>('ALL')
@@ -54,7 +52,7 @@ const formOpen = ref(false)
 const formMode = ref<FormMode>('add')
 const editingId = ref<string | null>(null)
 const transactionForm = ref<TransactionForm>({
-  accountId: accountsStore.all[0]?.id ?? '',
+  accountId: dataStore.allAccounts[0]?.id ?? '',
   date: '',
   type: TransactionType.Buy,
   assetType: AssetType.Stock,
@@ -67,7 +65,7 @@ const transactionForm = ref<TransactionForm>({
 })
 
 const accountNameById = computed(() => {
-  return new Map(accountsStore.all.map((account) => [account.id, account.displayName]))
+  return new Map(dataStore.allAccounts.map((account) => [account.id, account.displayName]))
 })
 
 const typeOptions = Object.values(TransactionType)
@@ -76,29 +74,29 @@ const isEditMode = computed(() => formMode.value === 'edit')
 const formTitle = computed(() => (isEditMode.value ? 'Edit transaction' : 'New transaction'))
 
 const tabCounts = computed(() => ({
-  ALL: transactionsStore.all.length,
-  TRADES: transactionsStore.trades.length,
-  DIVIDENDS: transactionsStore.dividends.length,
-  INTEREST: transactionsStore.interest.length,
-  TRANSFERS: transactionsStore.transfers.length,
-  MANUAL: transactionsStore.manual.length,
+  ALL: dataStore.allTransactions.length,
+  TRADES: dataStore.trades.length,
+  DIVIDENDS: dataStore.dividendTransactions.length,
+  INTEREST: dataStore.interestTransactions.length,
+  TRANSFERS: dataStore.transfers.length,
+  MANUAL: dataStore.manualTransactions.length,
 }))
 
 const tabbedTransactions = computed(() => {
   switch (activeTab.value) {
     case 'TRADES':
-      return transactionsStore.trades
+      return dataStore.trades
     case 'DIVIDENDS':
-      return transactionsStore.dividends
+      return dataStore.dividendTransactions
     case 'INTEREST':
-      return transactionsStore.interest
+      return dataStore.interestTransactions
     case 'TRANSFERS':
-      return transactionsStore.transfers
+      return dataStore.transfers
     case 'MANUAL':
-      return transactionsStore.manual
+      return dataStore.manualTransactions
     case 'ALL':
     default:
-      return transactionsStore.all
+      return dataStore.allTransactions
   }
 })
 
@@ -209,7 +207,7 @@ function normalizeInput(value: string | number | null | undefined): string {
 
 function getDefaultForm(): TransactionForm {
   return {
-    accountId: accountsStore.all[0]?.id ?? '',
+    accountId: dataStore.allAccounts[0]?.id ?? '',
     date: new Date().toISOString().slice(0, 10),
     type: TransactionType.Buy,
     assetType: AssetType.Stock,
@@ -223,7 +221,7 @@ function getDefaultForm(): TransactionForm {
 }
 
 function openEdit(row: TransactionRow): void {
-  const tx = transactionsStore.all.find((item) => item.id === row.id)
+  const tx = dataStore.allTransactions.find((item) => item.id === row.id)
   if (!tx || tx.externalId) return
 
   formMode.value = 'edit'
@@ -265,7 +263,7 @@ function saveTransaction(): void {
   if (isEditMode.value) {
     if (!editingId.value) return
 
-    transactionsStore.updateTransaction(editingId.value, {
+    dataStore.updateTransaction(editingId.value, {
       date: transactionForm.value.date,
       type: transactionForm.value.type,
       assetType: transactionForm.value.assetType,
@@ -277,7 +275,7 @@ function saveTransaction(): void {
       notes: notesInput === '' ? null : notesInput,
     })
   } else {
-    transactionsStore.addManual({
+    dataStore.addManual({
       accountId: transactionForm.value.accountId,
       date: transactionForm.value.date,
       type: transactionForm.value.type,
@@ -298,7 +296,7 @@ function saveTransaction(): void {
 }
 
 function deleteTransaction(id: string): void {
-  transactionsStore.deleteTransaction(id)
+  dataStore.deleteTransaction(id)
 }
 </script>
 
@@ -368,7 +366,7 @@ function deleteTransaction(id: string): void {
           <span class="text-(--ui-text-muted)">Account</span>
           <select v-model="selectedAccountId" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
             <option value="ALL">All</option>
-            <option v-for="account in accountsStore.all" :key="account.id" :value="account.id">{{ account.displayName }}</option>
+            <option v-for="account in dataStore.allAccounts" :key="account.id" :value="account.id">{{ account.displayName }}</option>
           </select>
         </label>
 
@@ -382,17 +380,17 @@ function deleteTransaction(id: string): void {
 
         <label class="space-y-1 text-sm">
           <span class="text-(--ui-text-muted)">Symbol</span>
-          <input v-model="symbolFilter" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" placeholder="AAPL" type="text" >
+          <input v-model="symbolFilter" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" placeholder="AAPL" type="text" />
         </label>
 
         <label class="space-y-1 text-sm">
           <span class="text-(--ui-text-muted)">From</span>
-          <input v-model="dateFrom" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="date" >
+          <input v-model="dateFrom" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="date" />
         </label>
 
         <label class="space-y-1 text-sm">
           <span class="text-(--ui-text-muted)">To</span>
-          <input v-model="dateTo" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="date" >
+          <input v-model="dateTo" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="date" />
         </label>
       </div>
 
@@ -462,13 +460,13 @@ function deleteTransaction(id: string): void {
               :disabled="isEditMode"
               class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
             >
-              <option v-for="account in accountsStore.all" :key="account.id" :value="account.id">{{ account.displayName }}</option>
+              <option v-for="account in dataStore.allAccounts" :key="account.id" :value="account.id">{{ account.displayName }}</option>
             </select>
           </label>
 
           <label class="space-y-1 text-sm">
             <span class="text-(--ui-text-muted)">Date</span>
-            <input v-model="transactionForm.date" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="date" >
+            <input v-model="transactionForm.date" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="date" />
           </label>
 
           <label class="space-y-1 text-sm">
@@ -487,12 +485,12 @@ function deleteTransaction(id: string): void {
 
           <label class="space-y-1 text-sm">
             <span class="text-(--ui-text-muted)">Symbol</span>
-            <input v-model="transactionForm.symbol" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="text" >
+            <input v-model="transactionForm.symbol" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="text" />
           </label>
 
           <label class="space-y-1 text-sm">
             <span class="text-(--ui-text-muted)">Description</span>
-            <input v-model="transactionForm.description" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="text" >
+            <input v-model="transactionForm.description" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="text" />
           </label>
 
           <label class="space-y-1 text-sm">
@@ -502,7 +500,7 @@ function deleteTransaction(id: string): void {
               class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
               type="number"
               step="0.0001"
-            >
+            />
           </label>
 
           <label class="space-y-1 text-sm">
@@ -512,7 +510,7 @@ function deleteTransaction(id: string): void {
               class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
               type="number"
               step="0.0001"
-            >
+            />
           </label>
 
           <label class="space-y-1 text-sm">
@@ -522,7 +520,7 @@ function deleteTransaction(id: string): void {
               class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
               type="number"
               step="0.01"
-            >
+            />
           </label>
           <label class="space-y-1 text-sm md:col-span-2">
             <span class="text-(--ui-text-muted)">Notes</span>

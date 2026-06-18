@@ -1,6 +1,6 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { usePositionsStore } from '~/stores/positions.store'
+import { useDataStore } from '~/stores/data.store'
 import { useVaultStore } from '~/stores/vault.store'
 import { AssetType, CostBasisMethod, DateFormat, Theme } from '~/types/enums'
 
@@ -45,7 +45,7 @@ describe('positions store dedupe', () => {
   })
 
   it('skips identical snapshot that already exists', () => {
-    const store = usePositionsStore()
+    const store = useDataStore()
 
     const snapshot = {
       accountId: 'acc-1',
@@ -66,11 +66,11 @@ describe('positions store dedupe', () => {
     store.upsertSnapshots([snapshot])
     store.upsertSnapshots([snapshot])
 
-    expect(store.all).toHaveLength(1)
+    expect(store.allPositions).toHaveLength(1)
   })
 
   it('dedupes identical snapshots within the same incoming batch', () => {
-    const store = usePositionsStore()
+    const store = useDataStore()
 
     const duplicate = {
       accountId: 'acc-1',
@@ -90,11 +90,11 @@ describe('positions store dedupe', () => {
 
     store.upsertSnapshots([duplicate, duplicate])
 
-    expect(store.all).toHaveLength(1)
+    expect(store.allPositions).toHaveLength(1)
   })
 
   it('keeps snapshots when same symbol/account changes', () => {
-    const store = usePositionsStore()
+    const store = useDataStore()
 
     const base = {
       accountId: 'acc-1',
@@ -122,6 +122,6 @@ describe('positions store dedupe', () => {
       },
     ])
 
-    expect(store.all).toHaveLength(2)
+    expect(store.allPositions).toHaveLength(2)
   })
 })

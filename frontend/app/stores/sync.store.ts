@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { useTransactionsStore } from './transactions.store'
+import { useDataStore } from './data.store'
 import { useUiStore } from './ui'
 import { useVaultStore } from './vault.store'
 import { ImportSource } from '@/types/enums'
@@ -21,7 +21,7 @@ export interface SyncSummary {
 export const useSyncStore = defineStore('sync', () => {
   const vaultStore = useVaultStore()
   const uiStore = useUiStore()
-  const transactionsStore = useTransactionsStore()
+  const dataStore = useDataStore()
 
   const syncStatus = ref<SyncStatus>(SyncStatus.IDLE)
   const lastSyncSummary = ref<SyncSummary | null>(null)
@@ -91,7 +91,7 @@ export const useSyncStore = defineStore('sync', () => {
         }
       }
 
-      const added = transactionsStore.insertMany(incoming)
+      const added = dataStore.insertMany(incoming)
       const duplicates = incoming.length - added
 
       vaultStore.mutatePayload((p) => {

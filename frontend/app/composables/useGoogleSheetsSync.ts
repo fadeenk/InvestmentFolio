@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { useVaultStore } from '~/stores/vault.store'
-import { usePositionsStore } from '~/stores/positions.store'
+import { useDataStore } from '~/stores/data.store'
 
 export type SyncState = 'idle' | 'authenticating' | 'loading' | 'success' | 'error'
 
@@ -64,7 +64,7 @@ export function useGoogleSheetsSync() {
 
   async function sync(): Promise<void> {
     const vaultStore = useVaultStore()
-    const positionsStore = usePositionsStore()
+    const dataStore = useDataStore()
 
     const clientId = vaultStore.payload?.googleSheetsClientId
     if (!clientId) {
@@ -84,7 +84,7 @@ export function useGoogleSheetsSync() {
 
       const year = new Date().getFullYear()
       const accounts = vaultStore.accounts
-      const positions = positionsStore.latest
+      const positions = dataStore.latestPositions
 
       const marketValueForAccount = (displayName: string): number => {
         const account = accounts.find((a) => a.displayName === displayName)

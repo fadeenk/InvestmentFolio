@@ -1,23 +1,21 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useAccountsStore } from '~/stores/accounts.store'
-import { useIncomeStore } from '~/stores/income.store'
+import { useDataStore } from '~/stores/data.store'
 import { TransactionType } from '~/types/enums'
 import type { IncomeRecord } from '~/types/vault'
 
-const incomeStore = useIncomeStore()
-const accountsStore = useAccountsStore()
+const dataStore = useDataStore()
 
-const selectedYear = ref<number>(incomeStore.selectedYear)
+const selectedYear = ref<number>(dataStore.selectedYear)
 const selectedAccountId = ref<string>('ALL')
 
 const availableYears = computed(() => {
-  if (incomeStore.availableYears.length > 0) return incomeStore.availableYears
+  if (dataStore.availableYears.length > 0) return dataStore.availableYears
   return [new Date().getFullYear()]
 })
 
 const filteredRecords = computed(() => {
-  return incomeStore.all.filter((record) => {
+  return dataStore.allIncome.filter((record) => {
     if (record.taxYear !== selectedYear.value) return false
     if (selectedAccountId.value === 'ALL') return true
     return record.accountId === selectedAccountId.value
@@ -25,7 +23,7 @@ const filteredRecords = computed(() => {
 })
 
 const priorYearRecords = computed(() => {
-  return incomeStore.all.filter((record) => {
+  return dataStore.allIncome.filter((record) => {
     if (record.taxYear !== selectedYear.value - 1) return false
     if (selectedAccountId.value === 'ALL') return true
     return record.accountId === selectedAccountId.value
@@ -156,7 +154,7 @@ function monthLabel(month: number): string {
           <span class="text-(--ui-text-muted)">Account</span>
           <select v-model="selectedAccountId" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
             <option value="ALL">All accounts</option>
-            <option v-for="account in accountsStore.all" :key="account.id" :value="account.id">{{ account.displayName }}</option>
+            <option v-for="account in dataStore.allAccounts" :key="account.id" :value="account.id">{{ account.displayName }}</option>
           </select>
         </label>
       </div>

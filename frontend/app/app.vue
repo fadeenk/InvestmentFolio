@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onUnmounted, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import { useOAuthStore } from '~/stores/oauth.store'
 import { useSyncStore } from '~/stores/sync.store'
 import { useUiStore } from '~/stores/ui'
@@ -10,6 +10,8 @@ const vault = useVaultStore()
 const oauth = useOAuthStore()
 const sync = useSyncStore()
 const ui = useUiStore()
+
+const mobileMenuOpen = ref(false)
 
 const title = 'iFolio'
 const description = 'Private portfolio tracker — all data encrypted at rest'
@@ -100,12 +102,22 @@ function dismissBanner() {
             <NuxtLink to="/">
               <AppLogo class="h-6 w-auto shrink-0" />
             </NuxtLink>
-            <UButton label="Home" to="/" size="xs" color="neutral" variant="ghost" />
-            <UButton label="Dashboard" to="/dashboard" size="xs" color="neutral" variant="ghost" />
-            <UButton label="Positions" to="/positions" size="xs" color="neutral" variant="ghost" />
-            <UButton label="Transactions" to="/transactions" size="xs" color="neutral" variant="ghost" />
-            <UButton label="Income" to="/income" size="xs" color="neutral" variant="ghost" />
-            <UButton label="Settings" to="/settings" size="xs" color="neutral" variant="ghost" />
+            <div class="hidden sm:flex sm:items-center sm:gap-1">
+              <UButton label="Home" to="/" size="xs" color="neutral" variant="ghost" />
+              <UButton label="Dashboard" to="/dashboard" size="xs" color="neutral" variant="ghost" />
+              <UButton label="Positions" to="/positions" size="xs" color="neutral" variant="ghost" />
+              <UButton label="Transactions" to="/transactions" size="xs" color="neutral" variant="ghost" />
+              <UButton label="Income" to="/income" size="xs" color="neutral" variant="ghost" />
+              <UButton label="Settings" to="/settings" size="xs" color="neutral" variant="ghost" />
+            </div>
+            <UButton
+              icon="i-lucide-menu"
+              size="sm"
+              color="neutral"
+              variant="ghost"
+              class="sm:hidden"
+              @click="mobileMenuOpen = !mobileMenuOpen"
+            />
           </div>
         </template>
 
@@ -193,5 +205,15 @@ function dismissBanner() {
         </template>
       </UFooter>
     </template>
+    <USheet v-model:open="mobileMenuOpen" title="Navigation" side="left" :ui="{ width: 'max-w-64' }">
+      <div class="flex flex-col gap-1 p-4">
+        <UButton label="Home" to="/" color="neutral" variant="ghost" block @click="mobileMenuOpen = false" />
+        <UButton label="Dashboard" to="/dashboard" color="neutral" variant="ghost" block @click="mobileMenuOpen = false" />
+        <UButton label="Positions" to="/positions" color="neutral" variant="ghost" block @click="mobileMenuOpen = false" />
+        <UButton label="Transactions" to="/transactions" color="neutral" variant="ghost" block @click="mobileMenuOpen = false" />
+        <UButton label="Income" to="/income" color="neutral" variant="ghost" block @click="mobileMenuOpen = false" />
+        <UButton label="Settings" to="/settings" color="neutral" variant="ghost" block @click="mobileMenuOpen = false" />
+      </div>
+    </USheet>
   </UApp>
 </template>

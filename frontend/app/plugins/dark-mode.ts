@@ -1,48 +1,25 @@
 import { defineNuxtPlugin } from '#app'
-import { usePreferencesStore } from '~/stores/preferences'
+import { useVaultStore } from '~/stores/vault.store'
+import { Theme } from '~/types/enums'
 
 export default defineNuxtPlugin(() => {
-  const preferences = usePreferencesStore()
-
-  // Apply dark class on initial load with error handling for corrupted data
-  // Only access localStorage on client-side
   if (import.meta.client) {
-    try {
-      const stored = localStorage.getItem('preferences')
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        if (parsed.darkMode !== undefined) {
-          preferences.darkMode = parsed.darkMode
-        }
-      }
-    } catch (e) {
-      console.error(e)
-      console.warn('Corrupted preferences data, resetting to defaults')
-      localStorage.removeItem('preferences')
-      // Reset manually since setup stores don't have $reset
-      preferences.darkMode = false
-      preferences.setCurrency('USD')
-    }
-  }
+    const colorMode = useColorMode()
+    const vault = useVaultStore()
 
-  useHead({
-    htmlAttrs: {
-      class: preferences.darkMode ? 'dark' : '',
-    },
-  })
-
-  // Watch for changes and update reactively (client-side only)
-  watch(
-    () => preferences.darkMode,
-    (isDark) => {
-      if (import.meta.client) {
-        if (isDark) {
-          document.documentElement.classList.add('dark')
+    watch(
+      () => vault.displayPreferences?.theme,
+      (theme) => {
+        if (!theme) return
+        if (theme === Theme.SYSTEM) {
+          colorMode.preference = 'system'
+        } else if (theme === Theme.LIGHT) {
+          colorMode.preference = 'light'
         } else {
-          document.documentElement.classList.remove('dark')
+          colorMode.preference = 'dark'
         }
-      }
-    },
-    { immediate: true },
-  )
+      },
+      { immediate: true },
+    )
+  }
 })

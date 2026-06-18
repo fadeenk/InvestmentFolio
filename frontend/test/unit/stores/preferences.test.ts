@@ -2,7 +2,6 @@ import { setActivePinia, createPinia } from 'pinia'
 import piniaPersist from 'pinia-plugin-persistedstate'
 import { usePreferencesStore } from '~/stores/preferences'
 
-// Setup localStorage mock
 const localStorageStore: Record<string, string> = {}
 Object.defineProperty(global, 'localStorage', {
   value: {
@@ -10,12 +9,10 @@ Object.defineProperty(global, 'localStorage', {
     setItem: (key: string, value: string) => {
       localStorageStore[key] = value
     },
-
     removeItem: (key: string) => {
       // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete localStorageStore[key]
     },
-
     clear: () => {
       Object.keys(localStorageStore).forEach((k) => {
         // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
@@ -30,17 +27,10 @@ Object.defineProperty(global, 'localStorage', {
 
 describe('preferences store', () => {
   beforeEach(() => {
-    localStorageStore['preferences'] = JSON.stringify({ currency: 'USD', darkMode: false })
+    localStorageStore['preferences'] = JSON.stringify({ currency: 'USD' })
     const pinia = createPinia()
     pinia.use(piniaPersist)
     setActivePinia(pinia)
-  })
-
-  it('should toggle dark mode', () => {
-    const store = usePreferencesStore()
-    expect(store.darkMode).toBe(false)
-    store.toggleDarkMode()
-    expect(store.darkMode).toBe(true)
   })
 
   it('should set currency', () => {

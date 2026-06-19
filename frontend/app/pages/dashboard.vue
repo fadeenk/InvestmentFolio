@@ -186,35 +186,37 @@ function selectRange(range: TimeRange): void {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-7xl space-y-6 px-4 py-8">
-    <div class="flex items-center justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-bold">Dashboard</h1>
-        <p class="text-sm text-(--ui-text-muted)">Accounts and latest position snapshots</p>
-      </div>
-      <div class="flex flex-wrap items-center gap-3">
-        <UButton
-          v-if="hasGoogleClientId && isUnlocked"
-          :label="syncLabel"
-          color="primary"
-          variant="outline"
-          :loading="state === 'authenticating' || state === 'loading'"
-          :disabled="state === 'authenticating' || state === 'loading'"
-          @click="syncToSheets"
-        />
-        <span v-if="sheetsError" class="text-xs text-red-600 dark:text-red-300">{{ sheetsError }}</span>
-        <span v-if="sheetsSuccess" class="text-xs text-emerald-600 dark:text-emerald-300">Synced!</span>
-        <UButton label="Home" color="neutral" variant="outline" to="/" />
-      </div>
+  <div class="mx-auto w-full max-w-7xl space-y-4 px-4 py-4">
+    <!-- Breadcrumb header -->
+    <div class="flex items-center justify-between">
+      <h1 class="text-sm font-[var(--font-mono)] text-(--ui-text-muted)">
+        <NuxtLink to="/" class="hover:text-(--ui-text)">~</NuxtLink>
+        <span class="mx-1">/</span>
+        <span class="text-(--ui-text)">dashboard</span>
+      </h1>
+      <UButton
+        v-if="hasGoogleClientId && isUnlocked"
+        :label="syncLabel"
+        size="xs"
+        color="primary"
+        variant="outline"
+        :loading="state === 'authenticating' || state === 'loading'"
+        :disabled="state === 'authenticating' || state === 'loading'"
+        @click="syncToSheets"
+      />
+    </div>
+
+    <!-- Sync status indicators -->
+    <div v-if="sheetsError || sheetsSuccess" class="flex items-center gap-2">
+      <span v-if="sheetsError" class="text-xs font-[var(--font-mono)] text-[var(--color-signal-red)]">{{ sheetsError }}</span>
+      <span v-if="sheetsSuccess" class="text-xs font-[var(--font-mono)] text-[var(--color-accent)]">Synced!</span>
     </div>
 
     <template v-if="!isUnlocked">
-      <UCard>
-        <div class="space-y-3">
-          <p class="text-sm text-(--ui-text-muted)">Unlock your vault to view account and position data.</p>
-          <UButton label="Go to vault" color="primary" to="/" />
-        </div>
-      </UCard>
+      <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) px-4 py-4">
+        <p class="text-sm text-(--ui-text-muted)">Unlock your vault to view account and position data.</p>
+        <UButton label="Go to vault" color="primary" size="xs" to="/" class="mt-2" />
+      </div>
     </template>
 
     <template v-else>

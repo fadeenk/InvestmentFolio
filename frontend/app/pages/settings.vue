@@ -310,157 +310,173 @@ async function changePassphrase(): Promise<void> {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-7xl space-y-6 px-4 py-8">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-bold">Settings</h1>
-        <p class="text-sm text-(--ui-text-muted)">Schwab connection, transaction imports, account management, vault controls, and display preferences.</p>
-      </div>
-      <UButton label="Dashboard" to="/dashboard" color="neutral" variant="outline" />
+  <div class="mx-auto w-full max-w-7xl space-y-6 px-4 py-4">
+    <!-- Breadcrumb header -->
+    <div class="flex items-center justify-between">
+      <h1 class="text-sm font-[var(--font-mono)] text-(--ui-text-muted)">
+        <NuxtLink to="/" class="hover:text-(--ui-text)">~</NuxtLink>
+        <span class="mx-1">/</span>
+        <span class="text-(--ui-text)">settings</span>
+      </h1>
+      <UButton label="Dashboard" to="/dashboard" color="neutral" variant="ghost" size="xs" />
     </div>
 
-    <UCard>
-      <template #header>
-        <h2 class="text-lg font-semibold">Schwab connection</h2>
-      </template>
-
+    <!-- Schwab connection section -->
+    <section>
+      <h2 class="text-2xs mb-3 font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Schwab connection</h2>
       <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div class="rounded-md border border-(--ui-border) p-3">
-          <p class="text-sm text-(--ui-text-muted)">Status</p>
-          <p class="text-base font-semibold">{{ tokenLabel }}</p>
+        <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
+          <p class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Status</p>
+          <p class="text-sm font-[var(--font-mono)] font-semibold text-(--ui-text)">{{ tokenLabel }}</p>
         </div>
-
-        <div class="rounded-md border border-(--ui-border) p-3">
-          <p class="text-sm text-(--ui-text-muted)">Connected accounts</p>
-          <p class="text-base font-semibold">{{ oauthStore.connectedAccountCount }}</p>
+        <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
+          <p class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Connected accounts</p>
+          <p class="text-sm font-[var(--font-mono)] font-semibold text-(--ui-text)">{{ oauthStore.connectedAccountCount }}</p>
         </div>
-
-        <div class="rounded-md border border-(--ui-border) p-3">
-          <p class="text-sm text-(--ui-text-muted)">Access token</p>
-          <p class="text-base font-semibold">{{ formatRemaining(oauthStore.accessTokenSecondsRemaining) }}</p>
+        <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
+          <p class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Access token</p>
+          <p class="text-sm font-[var(--font-mono)] font-semibold text-(--ui-text)">{{ formatRemaining(oauthStore.accessTokenSecondsRemaining) }}</p>
         </div>
-
-        <div class="rounded-md border border-(--ui-border) p-3">
-          <p class="text-sm text-(--ui-text-muted)">Refresh token</p>
-          <p class="text-base font-semibold">{{ formatRemaining(oauthStore.refreshTokenSecondsRemaining) }}</p>
+        <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
+          <p class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Refresh token</p>
+          <p class="text-sm font-[var(--font-mono)] font-semibold text-(--ui-text)">{{ formatRemaining(oauthStore.refreshTokenSecondsRemaining) }}</p>
         </div>
       </div>
-
-      <div v-if="oauthStore.expirationWarning" class="mt-3 rounded-md bg-amber-500/15 p-2 text-sm text-amber-700 dark:text-amber-200">
+      <div
+        v-if="oauthStore.expirationWarning"
+        :class="
+          'mt-3 rounded-sm border ' +
+          'border-[var(--color-signal-amber)]/30 bg-[var(--color-signal-amber)]/10 px-3 py-2 text-xs font-[var(--font-mono)] text-[var(--color-signal-amber)]'
+        "
+      >
         Re-authorization is recommended within 24 hours to avoid sync interruptions.
       </div>
-
       <div class="mt-3 flex flex-wrap gap-2">
-        <UButton label="Refresh status" color="neutral" variant="outline" @click="oauthStore.pollTokenStatus" />
-        <UButton :label="oauthStore.requiresReauth ? 'Connect Schwab' : 'Re-authorize Schwab'" color="primary" @click="oauthStore.initiateOAuthFlow" />
+        <UButton label="Refresh status" size="xs" color="neutral" variant="outline" @click="oauthStore.pollTokenStatus" />
+        <UButton
+          :label="oauthStore.requiresReauth ? 'Connect Schwab' : 'Re-authorize Schwab'"
+          size="xs"
+          color="primary"
+          @click="oauthStore.initiateOAuthFlow"
+        />
       </div>
-    </UCard>
+    </section>
 
-    <UCard>
-      <template #header>
-        <h2 class="text-lg font-semibold">Transaction import</h2>
-      </template>
-
+    <!-- Transaction import section -->
+    <section>
+      <h2 class="text-2xs mb-3 font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Transaction import</h2>
       <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div class="rounded-md border border-(--ui-border) p-3">
-          <p class="text-sm text-(--ui-text-muted)">Status</p>
-          <p class="text-base font-semibold">{{ importStatusLabel }}</p>
+        <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
+          <p class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Status</p>
+          <p class="text-sm font-[var(--font-mono)] font-semibold text-(--ui-text)">{{ importStatusLabel }}</p>
         </div>
-
-        <div class="rounded-md border border-(--ui-border) p-3">
-          <p class="text-sm text-(--ui-text-muted)">Last import</p>
-          <p class="text-base font-semibold">
+        <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
+          <p class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Last import</p>
+          <p class="text-sm font-[var(--font-mono)] font-semibold text-(--ui-text)">
             {{ vaultStore.payload?.lastSyncSummary?.completedAt ? new Date(vaultStore.payload.lastSyncSummary.completedAt).toLocaleString() : 'Never' }}
           </p>
         </div>
-
-        <div class="rounded-md border border-(--ui-border) p-3">
-          <p class="text-sm text-(--ui-text-muted)">Imported rows</p>
-          <p class="text-base font-semibold">{{ vaultStore.payload?.lastSyncSummary?.transactionsAdded ?? 0 }}</p>
+        <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
+          <p class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Imported rows</p>
+          <p class="text-sm font-[var(--font-mono)] font-semibold text-(--ui-text)">{{ vaultStore.payload?.lastSyncSummary?.transactionsAdded ?? 0 }}</p>
         </div>
-
-        <div class="rounded-md border border-(--ui-border) p-3">
-          <p class="text-sm text-(--ui-text-muted)">Deduplicated</p>
-          <p class="text-base font-semibold">{{ vaultStore.payload?.lastSyncSummary?.deduplicatedCount ?? 0 }}</p>
+        <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
+          <p class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Deduplicated</p>
+          <p class="text-sm font-[var(--font-mono)] font-semibold text-(--ui-text)">{{ vaultStore.payload?.lastSyncSummary?.deduplicatedCount ?? 0 }}</p>
         </div>
       </div>
-
       <div class="mt-3 grid gap-3 md:grid-cols-2">
-        <select v-model="importAccountId" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
-          <option :value="null">Select account</option>
-          <option v-for="account in dataStore.allAccounts" :key="account.id" :value="account.id">{{ account.displayName }}</option>
-        </select>
-        <input type="file" accept=".csv,text/csv" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" @change="onImportFileChange" />
+        <USelect
+          v-model="importAccountId"
+          :items="[{ label: 'Select account', value: null }, ...dataStore.allAccounts.map((a) => ({ label: a.displayName, value: a.id }))]"
+          size="xs"
+          variant="outline"
+          color="neutral"
+        />
+        <!-- File input needs native <input> -- UInput doesn't support file type -->
+        <input
+          type="file"
+          accept=".csv,text/csv"
+          :class="
+            'rounded-sm border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-xs ' +
+            'file:mr-3 file:rounded-sm file:border-0 file:bg-(--ui-bg-elevated) file:px-2 file:py-1 file:text-xs file:text-(--ui-text)'
+          "
+          @change="onImportFileChange"
+        />
       </div>
-
-      <div v-if="importErrors.length > 0" class="mt-3 rounded-md bg-red-500/15 p-2 text-sm text-red-700 dark:text-red-200">
+      <div
+        v-if="importErrors.length > 0"
+        :class="
+          'mt-3 rounded-sm border ' +
+          'border-[var(--color-signal-red)]/30 bg-[var(--color-signal-red)]/10 px-3 py-2 text-xs font-[var(--font-mono)] text-[var(--color-signal-red)]'
+        "
+      >
         {{ importErrors.join(' ') }}
       </div>
-
       <div class="mt-3 flex flex-wrap gap-2">
-        <UButton label="Import CSV" color="primary" :loading="syncStore.isSyncing" @click="importTransactions" />
+        <UButton label="Import CSV" size="xs" color="primary" :loading="syncStore.isSyncing" @click="importTransactions" />
       </div>
-    </UCard>
+    </section>
 
-    <UCard>
-      <template #header>
-        <h2 class="text-lg font-semibold">Market data</h2>
-      </template>
-
-      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div class="rounded-md border border-(--ui-border) p-3">
-          <p class="text-sm text-(--ui-text-muted)">Status</p>
-          <p class="text-base font-semibold">{{ marketStore.syncStatus }}</p>
+    <!-- Market data section -->
+    <section>
+      <h2 class="text-2xs mb-3 font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Market data</h2>
+      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
+          <p class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Status</p>
+          <p class="text-sm font-[var(--font-mono)] font-semibold text-(--ui-text)">{{ marketStore.syncStatus }}</p>
         </div>
-
-        <div class="rounded-md border border-(--ui-border) p-3">
-          <p class="text-sm text-(--ui-text-muted)">Symbols cached</p>
-          <p class="text-base font-semibold">{{ Object.keys(vaultStore.payload?.priceHistory ?? {}).length }}</p>
+        <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
+          <p class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Symbols cached</p>
+          <p class="text-sm font-[var(--font-mono)] font-semibold text-(--ui-text)">{{ Object.keys(vaultStore.payload?.priceHistory ?? {}).length }}</p>
         </div>
-
-        <div class="rounded-md border border-(--ui-border) p-3">
-          <p class="text-sm text-(--ui-text-muted)">
+        <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
+          <p class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">
             {{ marketStore.progress ? `Fetching ${marketStore.progress.current} / ${marketStore.progress.total}` : 'Progress' }}
           </p>
         </div>
       </div>
-
-      <div v-if="marketStore.lastError" class="mt-3 rounded-md bg-red-500/15 p-2 text-sm text-red-700 dark:text-red-200">
+      <div
+        v-if="marketStore.lastError"
+        :class="
+          'mt-3 rounded-sm border ' +
+          'border-[var(--color-signal-red)]/30 bg-[var(--color-signal-red)]/10 px-3 py-2 text-xs font-[var(--font-mono)] text-[var(--color-signal-red)]'
+        "
+      >
         {{ marketStore.lastError }}
       </div>
-
       <div class="mt-3 flex flex-wrap gap-2">
         <UButton
           label="Refresh Prices"
+          size="xs"
           color="primary"
           :loading="marketStore.isSyncing"
           :disabled="marketStore.isSyncing"
           @click="marketStore.refreshMarketData()"
         />
       </div>
-    </UCard>
+    </section>
 
-    <UCard>
-      <template #header>
-        <h2 class="text-lg font-semibold">Account management</h2>
-      </template>
-
-      <div class="space-y-3">
-        <div v-for="(account, index) in orderedAccounts" :key="account.id" class="rounded-md border border-(--ui-border) p-3">
-          <div class="flex flex-wrap items-start justify-between gap-2">
+    <!-- Account management section -->
+    <section>
+      <h2 class="text-2xs mb-3 font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Account management</h2>
+      <div class="space-y-2">
+        <div v-for="(account, index) in orderedAccounts" :key="account.id" class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) px-3 py-2">
+          <div class="flex items-center justify-between gap-2">
             <div>
-              <p class="font-medium">{{ account.displayName }}</p>
-              <p class="text-xs text-(--ui-text-muted)">{{ account.bank }} · {{ account.type }} · {{ maskAccountNumber(account.accountNumber) }}</p>
+              <p class="text-sm font-medium text-(--ui-text)">{{ account.displayName }}</p>
+              <p class="text-2xs text-(--ui-text-muted)">
+                {{ account.bank }} &middot; {{ account.type }} &middot; {{ maskAccountNumber(account.accountNumber) }}
+              </p>
             </div>
-
-            <div class="flex gap-2">
-              <UButton label="Edit" size="xs" color="neutral" variant="outline" @click="startEdit(account)" />
-              <UButton label="Up" size="xs" color="neutral" variant="outline" :disabled="index === 0" @click="moveAccount(account.id, -1)" />
+            <div class="flex gap-1">
+              <UButton label="Edit" size="xs" color="neutral" variant="ghost" @click="startEdit(account)" />
+              <UButton icon="i-lucide-chevron-up" size="xs" color="neutral" variant="ghost" :disabled="index === 0" @click="moveAccount(account.id, -1)" />
               <UButton
-                label="Down"
+                icon="i-lucide-chevron-down"
                 size="xs"
                 color="neutral"
-                variant="outline"
+                variant="ghost"
                 :disabled="index === orderedAccounts.length - 1"
                 @click="moveAccount(account.id, 1)"
               />
@@ -468,197 +484,198 @@ async function changePassphrase(): Promise<void> {
           </div>
         </div>
       </div>
-
-      <div class="mt-4 rounded-md border border-(--ui-border) p-3">
-        <p class="mb-3 text-sm font-medium">{{ editAccountId ? 'Edit account' : 'Add account' }}</p>
-
+      <!-- Add/edit form -->
+      <div class="mt-3 rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
+        <p class="mb-3 text-xs font-medium text-(--ui-text)">{{ editAccountId ? 'Edit account' : 'Add account' }}</p>
         <div class="grid gap-3 md:grid-cols-2">
-          <input v-model="editForm.displayName" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" placeholder="Display name" />
-          <input v-model="editForm.accountNumber" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" placeholder="Account number" />
-
-          <select v-model="editForm.bank" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
-            <option v-for="bank in bankOptions" :key="bank" :value="bank">{{ bank }}</option>
-          </select>
-
-          <select v-model="editForm.type" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
-            <option v-for="type in Object.values(AccountType)" :key="type" :value="type">{{ type }}</option>
-          </select>
-
-          <select v-model="editForm.costBasisMethod" class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
-            <option v-for="option in costBasisOptions" :key="option" :value="option">{{ option }}</option>
-          </select>
-
-          <input
+          <UInput v-model="editForm.displayName" placeholder="Display name" size="xs" variant="outline" color="neutral" />
+          <UInput v-model="editForm.accountNumber" placeholder="Account number" size="xs" variant="outline" color="neutral" />
+          <USelect v-model="editForm.bank" :items="bankOptions.map((b) => ({ label: b, value: b }))" size="xs" variant="outline" color="neutral" />
+          <USelect
+            v-model="editForm.type"
+            :items="Object.values(AccountType).map((t) => ({ label: t, value: t }))"
+            size="xs"
+            variant="outline"
+            color="neutral"
+          />
+          <USelect
+            v-model="editForm.costBasisMethod"
+            :items="costBasisOptions.map((c) => ({ label: c, value: c }))"
+            size="xs"
+            variant="outline"
+            color="neutral"
+          />
+          <UInput
             v-if="!editAccountId"
-            v-model.number="editForm.initialBalance"
-            class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
+            :model-value="editForm.initialBalance"
             placeholder="Initial balance"
             type="number"
             step="0.01"
+            size="xs"
+            variant="outline"
+            color="neutral"
+            @update:model-value="editForm.initialBalance = Number($event)"
           />
         </div>
-
         <div class="mt-3 flex flex-wrap gap-2">
-          <UButton :label="editAccountId ? 'Save changes' : 'Add account'" color="primary" @click="editAccountId ? saveEdit() : addAccount()" />
-          <UButton v-if="editAccountId" label="Cancel" color="neutral" variant="outline" @click="resetForm" />
+          <UButton :label="editAccountId ? 'Save changes' : 'Add account'" size="xs" color="primary" @click="editAccountId ? saveEdit() : addAccount()" />
+          <UButton v-if="editAccountId" label="Cancel" size="xs" color="neutral" variant="outline" @click="resetForm" />
         </div>
       </div>
-    </UCard>
+    </section>
 
-    <UCard>
-      <template #header>
-        <h2 class="text-lg font-semibold">Google Sheets sync</h2>
-      </template>
-
-      <p class="mb-3 text-sm text-(--ui-text-muted)">
-        Paste your Google OAuth Client ID to enable syncing portfolio balances to the Google Sheet.
-        <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" class="text-(--ui-primary) underline"
-          >Create one in Google Cloud Console</a
-        >
-        (Web application type, authorised JavaScript origin: <code class="rounded bg-(--ui-bg-elevated) px-1 py-0.5 text-xs">{{ origin }}</code
-        >).
-      </p>
-
-      <div class="flex flex-wrap items-center gap-3">
-        <input
-          v-model="googleSheetsClientId"
-          class="min-w-0 flex-1 rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
-          placeholder="Paste your Google OAuth Client ID"
-        />
-        <UButton label="Save" color="primary" :disabled="!googleSheetsClientId" @click="saveGoogleSheetsClientId" />
+    <!-- Google Sheets sync section -->
+    <section>
+      <h2 class="text-2xs mb-3 font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Google Sheets sync</h2>
+      <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
+        <p class="mb-3 text-xs text-(--ui-text-muted)">
+          Paste your Google OAuth Client ID to enable syncing portfolio balances to the Google Sheet.
+          <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" class="text-(--ui-primary) underline"
+            >Create one in Google Cloud Console</a
+          >
+          (Web application type, authorised JavaScript origin: <code class="text-2xs rounded-sm bg-(--ui-bg) px-1 py-0.5">{{ origin }}</code
+          >).
+        </p>
+        <div class="flex flex-wrap items-center gap-3">
+          <UInput
+            v-model="googleSheetsClientId"
+            placeholder="Paste your Google OAuth Client ID"
+            size="xs"
+            variant="outline"
+            color="neutral"
+            class="min-w-0 flex-1"
+          />
+          <UButton label="Save" size="xs" color="primary" :disabled="!googleSheetsClientId" @click="saveGoogleSheetsClientId" />
+        </div>
+        <p v-if="googleSheetsClientIdSaved" class="mt-2 text-xs text-[var(--color-accent)]">Saved to vault</p>
       </div>
+    </section>
 
-      <p v-if="googleSheetsClientIdSaved" class="mt-2 text-xs text-emerald-600 dark:text-emerald-300">Saved to vault</p>
-    </UCard>
-
-    <UCard>
-      <template #header>
-        <h2 class="text-lg font-semibold">Vault management</h2>
-      </template>
-
-      <div class="mb-4 rounded-md border border-(--ui-border) p-3">
-        <p class="mb-3 text-sm font-medium">Change passphrase</p>
-
+    <!-- Vault management section -->
+    <section>
+      <h2 class="text-2xs mb-3 font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Vault management</h2>
+      <!-- Change passphrase -->
+      <div class="mb-3 rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
+        <p class="mb-3 text-xs font-medium text-(--ui-text)">Change passphrase</p>
         <div class="grid gap-3 md:grid-cols-3">
-          <input
-            v-model="passphraseForm.current"
-            class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
-            placeholder="Current passphrase"
-            type="password"
-          />
-          <input
-            v-model="passphraseForm.next"
-            class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
-            placeholder="New passphrase"
-            type="password"
-          />
-          <input
-            v-model="passphraseForm.confirm"
-            class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
-            placeholder="Confirm new passphrase"
-            type="password"
-          />
+          <UInput v-model="passphraseForm.current" placeholder="Current passphrase" type="password" size="xs" variant="outline" color="neutral" />
+          <UInput v-model="passphraseForm.next" placeholder="New passphrase" type="password" size="xs" variant="outline" color="neutral" />
+          <UInput v-model="passphraseForm.confirm" placeholder="Confirm new passphrase" type="password" size="xs" variant="outline" color="neutral" />
         </div>
-
-        <div v-if="passphraseError" class="mt-3 rounded-md bg-red-500/15 p-2 text-sm text-red-700 dark:text-red-200">{{ passphraseError }}</div>
-        <div v-if="passphraseSuccess" class="mt-3 rounded-md bg-emerald-500/15 p-2 text-sm text-emerald-700 dark:text-emerald-200">{{ passphraseSuccess }}</div>
-
+        <div
+          v-if="passphraseError"
+          :class="
+            'mt-3 rounded-sm border ' +
+            'border-[var(--color-signal-red)]/30 bg-[var(--color-signal-red)]/10 px-3 py-2 text-xs font-[var(--font-mono)] text-[var(--color-signal-red)]'
+          "
+        >
+          {{ passphraseError }}
+        </div>
+        <div
+          v-if="passphraseSuccess"
+          :class="
+            'mt-3 rounded-sm border ' +
+            'border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 px-3 py-2 text-xs font-[var(--font-mono)] text-[var(--color-accent)]'
+          "
+        >
+          {{ passphraseSuccess }}
+        </div>
         <div class="mt-3">
-          <UButton :label="passphraseSaving ? 'Updating...' : 'Change passphrase'" color="primary" :disabled="passphraseSaving" @click="changePassphrase" />
+          <UButton
+            :label="passphraseSaving ? 'Updating...' : 'Change passphrase'"
+            size="xs"
+            color="primary"
+            :disabled="passphraseSaving"
+            @click="changePassphrase"
+          />
         </div>
       </div>
-
-      <div v-if="vaultStore.isRemembered" class="mb-4 rounded-md border border-(--ui-border) p-3">
-        <p class="mb-1 text-sm font-medium">Remembered vault</p>
-        <p class="text-sm text-(--ui-text-muted)">
+      <!-- Remembered vault -->
+      <div v-if="vaultStore.isRemembered" class="mb-3 rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) px-3 py-2">
+        <p class="mb-1 text-xs font-medium text-(--ui-text)">Remembered vault</p>
+        <p class="text-xs text-(--ui-text-muted)">
           Last used: <strong>{{ vaultStore.rememberedFileName }}</strong>
         </p>
-        <UButton label="Forget this vault" color="neutral" variant="outline" class="mt-2" @click="vaultStore.forgetHandle()" />
+        <UButton label="Forget this vault" size="xs" color="neutral" variant="outline" class="mt-2" @click="vaultStore.forgetHandle()" />
       </div>
-
+      <!-- Export / Delete -->
       <div class="flex flex-wrap gap-2">
-        <UButton label="Export vault JSON" color="neutral" variant="outline" @click="exportVaultJson" />
-        <UButton label="Delete vault data" color="error" variant="outline" @click="clearVaultData" />
+        <UButton label="Export vault JSON" size="xs" color="neutral" variant="outline" @click="exportVaultJson" />
+        <UButton label="Delete vault data" size="xs" color="error" variant="outline" @click="clearVaultData" />
       </div>
-    </UCard>
+    </section>
 
-    <UCard>
-      <template #header>
-        <h2 class="text-lg font-semibold">Display preferences</h2>
-      </template>
-
-      <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        <label class="space-y-1 text-sm">
-          <span class="text-(--ui-text-muted)">Theme</span>
-          <select
+    <!-- Display preferences section -->
+    <section>
+      <h2 class="text-2xs mb-3 font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Display preferences</h2>
+      <div class="grid gap-3 rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3 md:grid-cols-2 xl:grid-cols-3">
+        <div>
+          <p class="text-2xs mb-1 text-(--ui-text-muted)">Theme</p>
+          <USelect
             :value="displayPreferences.theme"
-            class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
-            @change="updateDisplayPreference('theme', ($event.target as HTMLSelectElement).value as Theme)"
-          >
-            <option v-for="theme in themeOptions" :key="theme" :value="theme">{{ theme }}</option>
-          </select>
-        </label>
-
-        <label class="space-y-1 text-sm">
-          <span class="text-(--ui-text-muted)">Currency format</span>
-          <select
+            :items="themeOptions.map((t) => ({ label: t, value: t }))"
+            size="xs"
+            variant="outline"
+            color="neutral"
+            @update:model-value="updateDisplayPreference('theme', $event as Theme)"
+          />
+        </div>
+        <div>
+          <p class="text-2xs mb-1 text-(--ui-text-muted)">Currency format</p>
+          <USelect
             :value="displayPreferences.currencyFormat"
-            class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
-            @change="updateDisplayPreference('currencyFormat', ($event.target as HTMLSelectElement).value)"
-          >
-            <option v-for="currency in currencyOptions" :key="currency" :value="currency">{{ currency }}</option>
-          </select>
-        </label>
-
-        <label class="space-y-1 text-sm">
-          <span class="text-(--ui-text-muted)">Date format</span>
-          <select
+            :items="currencyOptions.map((c) => ({ label: c, value: c }))"
+            size="xs"
+            variant="outline"
+            color="neutral"
+            @update:model-value="updateDisplayPreference('currencyFormat', $event)"
+          />
+        </div>
+        <div>
+          <p class="text-2xs mb-1 text-(--ui-text-muted)">Date format</p>
+          <USelect
             :value="displayPreferences.dateFormat"
-            class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
-            @change="updateDisplayPreference('dateFormat', ($event.target as HTMLSelectElement).value as DateFormat)"
-          >
-            <option v-for="format in dateFormatOptions" :key="format" :value="format">{{ format }}</option>
-          </select>
-        </label>
-
-        <label class="space-y-1 text-sm">
-          <span class="text-(--ui-text-muted)">Default account filter</span>
-          <select
+            :items="dateFormatOptions.map((d) => ({ label: d, value: d }))"
+            size="xs"
+            variant="outline"
+            color="neutral"
+            @update:model-value="updateDisplayPreference('dateFormat', $event as DateFormat)"
+          />
+        </div>
+        <div>
+          <p class="text-2xs mb-1 text-(--ui-text-muted)">Default account filter</p>
+          <USelect
             :value="displayPreferences.defaultAccountFilter ?? 'ALL'"
-            class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
-            @change="
-              updateDisplayPreference(
-                'defaultAccountFilter',
-                ($event.target as HTMLSelectElement).value === 'ALL' ? null : ($event.target as HTMLSelectElement).value,
-              )
-            "
-          >
-            <option v-for="account in accountOptions" :key="account.id" :value="account.id">{{ account.label }}</option>
-          </select>
-        </label>
-
-        <label class="space-y-1 text-sm">
-          <span class="text-(--ui-text-muted)">Default cost basis</span>
-          <select
+            :items="accountOptions.map((a) => ({ label: a.label, value: a.id }))"
+            size="xs"
+            variant="outline"
+            color="neutral"
+            @update:model-value="updateDisplayPreference('defaultAccountFilter', $event === 'ALL' ? null : $event)"
+          />
+        </div>
+        <div>
+          <p class="text-2xs mb-1 text-(--ui-text-muted)">Default cost basis</p>
+          <USelect
             :value="displayPreferences.defaultCostBasisMethod"
-            class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
-            @change="updateDisplayPreference('defaultCostBasisMethod', ($event.target as HTMLSelectElement).value as CostBasisMethod)"
-          >
-            <option v-for="option in costBasisOptions" :key="option" :value="option">{{ option }}</option>
-          </select>
-        </label>
-
-        <label class="space-y-1 text-sm">
-          <span class="text-(--ui-text-muted)">Default time range</span>
-          <select
+            :items="costBasisOptions.map((c) => ({ label: c, value: c }))"
+            size="xs"
+            variant="outline"
+            color="neutral"
+            @update:model-value="updateDisplayPreference('defaultCostBasisMethod', $event as CostBasisMethod)"
+          />
+        </div>
+        <div>
+          <p class="text-2xs mb-1 text-(--ui-text-muted)">Default time range</p>
+          <USelect
             :value="displayPreferences.defaultTimeRange"
-            class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
-            @change="updateDisplayPreference('defaultTimeRange', ($event.target as HTMLSelectElement).value as TimeRange)"
-          >
-            <option v-for="range in timeRangeOptions" :key="range" :value="range">{{ range }}</option>
-          </select>
-        </label>
+            :items="timeRangeOptions.map((r) => ({ label: r, value: r }))"
+            size="xs"
+            variant="outline"
+            color="neutral"
+            @update:model-value="updateDisplayPreference('defaultTimeRange', $event as TimeRange)"
+          />
+        </div>
       </div>
-    </UCard>
+    </section>
   </div>
 </template>

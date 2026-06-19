@@ -4,33 +4,90 @@
 @theme static {
   --font-sans: 'Public Sans', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-
-  /* Green palette */
-  --color-green-50: #f0fdf4;
-  --color-green-100: #dcfce7;
-  --color-green-200: #bbf7d0;
-  --color-green-300: #86efac;
-  --color-green-400: #4ade80;
-  --color-green-500: #22c55e;
-  --color-green-600: #16a34a;
-  --color-green-700: #15803d;
-  --color-green-800: #166534;
-  --color-green-900: #14532d;
-  --color-green-950: #052e16;
-
-  /* Semantic colors - light mode defaults */
-  --color-primary: var(--color-green-600);
-  --color-secondary: var(--color-blue-600);
-  --color-background: var(--color-white);
-  --color-surface: var(--color-gray-50);
-  --color-text: var(--color-gray-900);
 }
 
-/* Dark mode overrides - applied when .dark class is on html element */
+/* ── Light theme (default) ── */
+:root {
+  --color-bg: #f5f5f7;
+  --color-bg-elevated: #ffffff;
+  --color-text: #1a1a2e;
+  --color-text-muted: #6b7280;
+  --color-text-disabled: #9ca3af;
+  --color-border: #e5e7eb;
+  --color-border-visible: #d1d5db;
+  --color-accent: #059669;
+  --color-accent-hover: #047857;
+  --color-accent-active: #065f46;
+  --color-signal-red: #dc2626;
+  --color-signal-amber: #d97706;
+  --color-signal-blue: #2563eb;
+  --color-chart-bg: #ffffff;
+  --color-chart-grid: #e5e7eb;
+}
+
+/* ── Dark theme ── */
 .dark {
-  --color-primary: var(--color-green-400);
-  --color-secondary: var(--color-blue-400);
-  --color-background: var(--color-gray-900);
-  --color-surface: var(--color-gray-800);
-  --color-text: var(--color-gray-100);
+  --color-bg: #0f1117;
+  --color-bg-elevated: #1a1d27;
+  --color-text: #e8eaed;
+  --color-text-muted: #9aa0a6;
+  --color-text-disabled: #5f6368;
+  --color-border: #2d3140;
+  --color-border-visible: #3a3f52;
+  --color-accent: #00c853;
+  --color-accent-hover: #00e676;
+  --color-accent-active: #009624;
+  --color-signal-red: #ff5252;
+  --color-signal-amber: #ffd740;
+  --color-signal-blue: #40c4ff;
+  --color-chart-bg: #1a1d27;
+  --color-chart-grid: #2d3140;
+}
+
+/* Override NuxtUI CSS variables */
+:root {
+  --ui-bg: var(--color-bg);
+  --ui-bg-elevated: var(--color-bg-elevated);
+  --ui-text: var(--color-text);
+  --ui-text-muted: var(--color-text-muted);
+  --ui-border: var(--color-border);
+  --ui-primary: var(--color-accent);
+}
+.dark {
+  --ui-bg: var(--color-bg);
+  --ui-bg-elevated: var(--color-bg-elevated);
+  --ui-text: var(--color-text);
+  --ui-text-muted: var(--color-text-muted);
+  --ui-border: var(--color-border);
+  --ui-primary: var(--color-accent);
+}
+
+/* Custom thin scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-visible);
+}
+
+/* Page transition */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 80ms ease, transform 80ms ease;
+}
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(4px);
+}
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
 }

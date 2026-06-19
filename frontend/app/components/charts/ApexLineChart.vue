@@ -8,7 +8,7 @@ const props = withDefaults(
     height?: number
   }>(),
   {
-    color: '#10b981',
+    color: 'var(--color-accent, #00c853)',
     height: 260,
   },
 )
@@ -25,23 +25,27 @@ const options = computed(() => ({
     type: 'line' as const,
     zoom: { enabled: true, type: 'x' as const, autoScaleYaxis: true },
     toolbar: { show: true, tools: { download: true, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true } },
+    background: 'transparent',
+    foreColor: 'var(--color-text-muted, #9aa0a6)',
   },
   colors: [props.color],
   stroke: { curve: 'smooth' as const, width: 2 },
-  xaxis: { type: 'datetime' as const, labels: { format: 'MMM dd' } },
-  yaxis: { labels: { formatter: (v: number) => `$${v.toLocaleString()}` } },
-  tooltip: { x: { format: 'MMM dd, yyyy' }, y: { formatter: (v: number) => `$${v.toLocaleString()}` } },
-  grid: { borderColor: 'var(--ui-border)', strokeDashArray: 3 },
+  xaxis: { type: 'datetime' as const, labels: { format: 'MMM dd', style: { colors: 'var(--color-text-muted, #9aa0a6)' } } },
+  yaxis: { labels: { formatter: (v: number) => `$${v.toLocaleString()}`, style: { colors: 'var(--color-text-muted, #9aa0a6)' } } },
+  tooltip: {
+    x: { format: 'MMM dd, yyyy' },
+    y: { formatter: (v: number) => `$${v.toLocaleString()}` },
+    theme: 'dark' as const,
+  },
+  grid: { borderColor: 'var(--color-chart-grid, #2d3140)', strokeDashArray: 3 },
 }))
 
 const chartKey = computed(() => props.data.length)
 </script>
 
 <template>
-  <div v-if="data.length > 0" class="w-full px-2 py-2">
+  <div v-if="data.length > 0" class="w-full">
     <apexchart :key="chartKey" type="line" :height="height" :options="options" :series="series" />
   </div>
-  <div v-else class="flex h-64 w-full items-center justify-center text-(--ui-text-muted) text-sm">
-    No data available
-  </div>
+  <div v-else class="flex h-64 w-full items-center justify-center text-sm text-(--ui-text-muted)">No data available</div>
 </template>

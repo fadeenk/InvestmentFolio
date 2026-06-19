@@ -221,7 +221,6 @@ export const useVaultStore = defineStore('vault', () => {
     fileHandle.value = null
     isDirty.value = false
     lastError.value = null
-    rememberedFileName.value = null
     status.value = VaultStatus.LOCKED
   }
 

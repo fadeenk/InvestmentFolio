@@ -42,13 +42,22 @@ function mountPage() {
   return mount(SettingsPage, {
     global: {
       stubs: {
-        UCard: {
-          template: '<section><header><slot name="header" /></header><div><slot /></div></section>',
-        },
+        NuxtLink: { template: '<a><slot /></a>' },
         UButton: {
           props: ['label', 'disabled'],
           emits: ['click'],
           template: '<button :disabled="disabled" @click="$emit(\'click\')">{{ label }}</button>',
+        },
+        USelect: {
+          props: ['modelValue', 'items', 'value'],
+          template:
+            '<select :value="modelValue ?? value"><option v-for="item in items" :key="item.value" :value="item.value">{{ item.label }}</option></select>',
+        },
+        UInput: {
+          props: ['modelValue', 'type', 'placeholder'],
+          emits: ['update:modelValue'],
+          template:
+            '<input :type="type ?? \'text\'" :placeholder="placeholder" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
         },
       },
     },

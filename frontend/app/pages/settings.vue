@@ -610,66 +610,66 @@ async function changePassphrase(): Promise<void> {
       <h2 class="text-2xs mb-3 font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Display preferences</h2>
       <div class="grid gap-3 rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3 md:grid-cols-2 xl:grid-cols-3">
         <div>
-          <p class="text-2xs mb-1 text-(--ui-text-muted)">Theme</p>
+          <p class="mb-1 text-xs text-(--ui-text-muted)">Theme</p>
           <USelect
             :value="displayPreferences.theme"
             :items="themeOptions.map((t) => ({ label: t, value: t }))"
-            size="xs"
+            size="sm"
             variant="outline"
             color="neutral"
             @update:model-value="updateDisplayPreference('theme', $event as Theme)"
           />
         </div>
         <div>
-          <p class="text-2xs mb-1 text-(--ui-text-muted)">Currency format</p>
+          <p class="mb-1 text-xs text-(--ui-text-muted)">Currency format</p>
           <USelect
             :value="displayPreferences.currencyFormat"
             :items="currencyOptions.map((c) => ({ label: c, value: c }))"
-            size="xs"
+            size="sm"
             variant="outline"
             color="neutral"
             @update:model-value="updateDisplayPreference('currencyFormat', $event)"
           />
         </div>
         <div>
-          <p class="text-2xs mb-1 text-(--ui-text-muted)">Date format</p>
+          <p class="mb-1 text-xs text-(--ui-text-muted)">Date format</p>
           <USelect
             :value="displayPreferences.dateFormat"
             :items="dateFormatOptions.map((d) => ({ label: d, value: d }))"
-            size="xs"
+            size="sm"
             variant="outline"
             color="neutral"
             @update:model-value="updateDisplayPreference('dateFormat', $event as DateFormat)"
           />
         </div>
         <div>
-          <p class="text-2xs mb-1 text-(--ui-text-muted)">Default account filter</p>
+          <p class="mb-1 text-xs text-(--ui-text-muted)">Default account filter</p>
           <USelect
             :value="displayPreferences.defaultAccountFilter ?? 'ALL'"
             :items="accountOptions.map((a) => ({ label: a.label, value: a.id }))"
-            size="xs"
+            size="sm"
             variant="outline"
             color="neutral"
             @update:model-value="updateDisplayPreference('defaultAccountFilter', $event === 'ALL' ? null : $event)"
           />
         </div>
         <div>
-          <p class="text-2xs mb-1 text-(--ui-text-muted)">Default cost basis</p>
+          <p class="mb-1 text-xs text-(--ui-text-muted)">Default cost basis</p>
           <USelect
             :value="displayPreferences.defaultCostBasisMethod"
             :items="costBasisOptions.map((c) => ({ label: c, value: c }))"
-            size="xs"
+            size="sm"
             variant="outline"
             color="neutral"
             @update:model-value="updateDisplayPreference('defaultCostBasisMethod', $event as CostBasisMethod)"
           />
         </div>
         <div>
-          <p class="text-2xs mb-1 text-(--ui-text-muted)">Default time range</p>
+          <p class="mb-1 text-xs text-(--ui-text-muted)">Default time range</p>
           <USelect
             :value="displayPreferences.defaultTimeRange"
             :items="timeRangeOptions.map((r) => ({ label: r, value: r }))"
-            size="xs"
+            size="sm"
             variant="outline"
             color="neutral"
             @update:model-value="updateDisplayPreference('defaultTimeRange', $event as TimeRange)"

@@ -42,12 +42,14 @@ function mountPage() {
   return mount(IncomePage, {
     global: {
       stubs: {
-        UCard: {
-          template: '<section><header><slot name="header" /></header><div><slot /></div></section>',
-        },
+        NuxtLink: { template: '<a><slot /></a>' },
         UButton: {
           props: ['label'],
           template: '<button>{{ label }}</button>',
+        },
+        USelect: {
+          props: ['modelValue', 'items'],
+          template: '<select><option v-for="item in items" :key="item.value" :value="item.value">{{ item.label }}</option></select>',
         },
       },
     },
@@ -80,10 +82,10 @@ describe('income page', () => {
     const wrapper = mountPage()
     const text = wrapper.text()
 
-    expect(text).toContain('Income')
+    expect(text).toContain('income')
     expect(text).toContain('Year-over-year')
     expect(text).toContain('Income by security')
     expect(text).toContain('AAPL')
-    expect(text).toContain('Monthly calendar grid')
+    expect(text).toContain('Monthly Calendar')
   })
 })

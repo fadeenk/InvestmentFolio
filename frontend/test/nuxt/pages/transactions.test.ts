@@ -42,9 +42,7 @@ function mountPage() {
   return mount(TransactionsPage, {
     global: {
       stubs: {
-        UCard: {
-          template: '<section><header><slot name="header" /></header><div><slot /></div></section>',
-        },
+        NuxtLink: { template: '<a><slot /></a>' },
         UButton: {
           props: ['label'],
           emits: ['click'],
@@ -52,6 +50,14 @@ function mountPage() {
         },
         UModal: {
           template: '<div><slot name="body" /><slot name="footer" /></div>',
+        },
+        USelect: {
+          props: ['modelValue', 'items'],
+          template: '<select><option v-for="item in items" :key="item.value" :value="item.value">{{ item.label }}</option></select>',
+        },
+        UInput: {
+          props: ['modelValue', 'type'],
+          template: '<input :type="type ?? \'text\'" :value="modelValue" />',
         },
       },
     },

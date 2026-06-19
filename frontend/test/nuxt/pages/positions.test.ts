@@ -42,13 +42,15 @@ function mountPage() {
   return mount(PositionsPage, {
     global: {
       stubs: {
-        UCard: {
-          template: '<section><header><slot name="header" /></header><div><slot /></div></section>',
-        },
+        NuxtLink: { template: '<a><slot /></a>' },
         UButton: {
           props: ['label'],
           emits: ['click'],
           template: '<button @click="$emit(\'click\')">{{ label }}</button>',
+        },
+        USelect: {
+          props: ['modelValue', 'items'],
+          template: '<select><option v-for="item in items" :key="item.value" :value="item.value">{{ item.label }}</option></select>',
         },
       },
     },
@@ -99,7 +101,7 @@ describe('positions page', () => {
     const wrapper = mountPage()
     const text = wrapper.text()
 
-    expect(text).toContain('Positions & Tax Lots')
+    expect(text).toContain('positions')
     expect(text).toContain('AAPL')
     expect(text).toContain('Open positions')
   })

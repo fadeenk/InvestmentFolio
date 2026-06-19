@@ -380,17 +380,17 @@ function deleteTransaction(id: string): void {
 
         <label class="space-y-1 text-sm">
           <span class="text-(--ui-text-muted)">Symbol</span>
-          <input v-model="symbolFilter" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" placeholder="AAPL" type="text" />
+          <input v-model="symbolFilter" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" placeholder="AAPL" type="text" >
         </label>
 
         <label class="space-y-1 text-sm">
           <span class="text-(--ui-text-muted)">From</span>
-          <input v-model="dateFrom" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="date" />
+          <input v-model="dateFrom" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="date" >
         </label>
 
         <label class="space-y-1 text-sm">
           <span class="text-(--ui-text-muted)">To</span>
-          <input v-model="dateTo" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="date" />
+          <input v-model="dateTo" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="date" >
         </label>
       </div>
 
@@ -466,7 +466,7 @@ function deleteTransaction(id: string): void {
 
           <label class="space-y-1 text-sm">
             <span class="text-(--ui-text-muted)">Date</span>
-            <input v-model="transactionForm.date" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="date" />
+            <input v-model="transactionForm.date" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="date" >
           </label>
 
           <label class="space-y-1 text-sm">
@@ -485,12 +485,12 @@ function deleteTransaction(id: string): void {
 
           <label class="space-y-1 text-sm">
             <span class="text-(--ui-text-muted)">Symbol</span>
-            <input v-model="transactionForm.symbol" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="text" />
+            <input v-model="transactionForm.symbol" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="text" >
           </label>
 
           <label class="space-y-1 text-sm">
             <span class="text-(--ui-text-muted)">Description</span>
-            <input v-model="transactionForm.description" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="text" />
+            <input v-model="transactionForm.description" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="text" >
           </label>
 
           <label class="space-y-1 text-sm">
@@ -500,7 +500,7 @@ function deleteTransaction(id: string): void {
               class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
               type="number"
               step="0.0001"
-            />
+            >
           </label>
 
           <label class="space-y-1 text-sm">
@@ -510,7 +510,7 @@ function deleteTransaction(id: string): void {
               class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
               type="number"
               step="0.0001"
-            />
+            >
           </label>
 
           <label class="space-y-1 text-sm">
@@ -520,7 +520,7 @@ function deleteTransaction(id: string): void {
               class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
               type="number"
               step="0.01"
-            />
+            >
           </label>
           <label class="space-y-1 text-sm md:col-span-2">
             <span class="text-(--ui-text-muted)">Notes</span>

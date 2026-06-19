@@ -244,130 +244,121 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-2xl px-4 py-12">
+  <div class="flex min-h-screen items-center justify-center bg-(--ui-bg) px-4">
     <!-- LOCKED STATE -->
     <template v-if="vault.status === VaultStatus.LOCKED">
-      <div class="space-y-8 text-center">
-        <div class="space-y-2">
-          <div class="mb-6 flex justify-center">
-            <div class="flex h-16 w-16 items-center justify-center rounded-full bg-(--ui-primary)">
-              <span class="text-2xl font-bold text-white">F</span>
+      <div class="w-full max-w-md">
+        <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-6 shadow-lg">
+          <!-- Terminal header -->
+          <div class="mb-6 flex items-center gap-2 border-b border-(--ui-border) pb-3">
+            <span class="text-xs font-[var(--font-mono)] text-(--ui-text-muted)">ifolio@vault:~$</span>
+            <span class="h-4 w-2 animate-pulse bg-[var(--color-accent)]" />
+          </div>
+
+          <!-- Error -->
+          <div v-if="vault.lastError"
+            class="mb-4 rounded-sm border border-[var(--color-signal-red)]/30 bg-[var(--color-signal-red)]/10 px-3 py-2 text-xs font-[var(--font-mono)] text-[var(--color-signal-red)]">
+            > {{ vault.lastError }}
+          </div>
+
+          <!-- Quick open hint -->
+          <div v-if="vault.isRemembered && vault.status === VaultStatus.LOCKED" class="mb-4 rounded-sm border border-(--ui-border) bg-(--ui-bg) p-3">
+            <p class="text-xs font-[var(--font-mono)] text-(--ui-text-muted)">$ ls ~/.vault</p>
+            <p class="mt-1 text-sm font-[var(--font-mono)] text-(--ui-text)">{{ vault.rememberedFileName }}</p>
+            <div class="mt-2 flex gap-2">
+              <UButton label="Quick Open" size="xs" color="primary" variant="solid" @click="handleQuickOpen" />
+              <UButton label="Forget" size="xs" color="neutral" variant="ghost" @click="vault.forgetHandle()" />
             </div>
           </div>
-          <h1 class="text-3xl font-bold">iFolio</h1>
-          <p class="text-(--ui-text-muted)">Your private portfolio tracker. All data encrypted at rest.</p>
-        </div>
 
-        <div v-if="vault.lastError" class="rounded-lg bg-(--ui-error) p-3 text-sm text-white">
-          {{ vault.lastError }}
-        </div>
-
-        <div v-if="vault.isRemembered && vault.status === VaultStatus.LOCKED" class="mb-4 rounded-lg border border-(--ui-border) p-4">
-          <p class="text-sm text-(--ui-text-muted)">Previously opened:</p>
-          <p class="font-semibold">{{ vault.rememberedFileName }}</p>
-          <div class="mt-3 flex gap-2">
-            <UButton label="Quick Open" @click="handleQuickOpen" />
-            <UButton label="Forget" color="neutral" variant="ghost" @click="vault.forgetHandle()" />
+          <!-- Passphrase input as terminal command -->
+          <div class="mb-4">
+            <div class="flex items-center gap-2 text-sm font-[var(--font-mono)]">
+              <span class="text-[var(--color-accent)]">$</span>
+              <span class="text-(--ui-text-muted)">open</span>
+              <UInput
+                v-model="passphrase"
+                type="password"
+                placeholder="passphrase"
+                size="sm"
+                variant="none"
+                class="flex-1"
+                :ui="{
+                  base: 'w-full bg-transparent font-[var(--font-mono)] text-sm text-(--ui-text) placeholder:text-(--ui-text-disabled) focus:outline-none',
+                }"
+                @keydown.enter="handleQuickOpen"
+              />
+            </div>
           </div>
-        </div>
 
-        <div class="mx-auto flex max-w-xs flex-col gap-3">
-          <UButton label="Open existing vault" color="primary" size="xl" @click="showOpenDialog = true" />
-          <UButton label="Create new vault" color="neutral" variant="outline" size="xl" @click="showCreateDialog = true" />
-        </div>
+          <!-- Action buttons as terminal commands -->
+          <div class="flex flex-col gap-2">
+            <UButton label="$ open --file" color="primary" variant="outline" size="sm" block @click="showOpenDialog = true" />
+            <UButton label="$ init" color="neutral" variant="ghost" size="sm" block @click="showCreateDialog = true" />
+          </div>
 
-        <p class="mt-8 text-xs text-(--ui-text-muted)">Supports Chrome, Edge, Firefox, and Safari</p>
+          <!-- Bottom hint -->
+          <p class="mt-4 text-center text-xs font-[var(--font-mono)] text-(--ui-text-disabled)">[Chrome, Edge, Firefox, Safari]</p>
+        </div>
       </div>
     </template>
 
     <!-- UNLOCKING STATE -->
     <template v-else-if="vault.status === VaultStatus.UNLOCKING">
-      <div class="space-y-6 py-16 text-center">
-        <UIcon name="i-lucide-loader-circle" class="mx-auto h-10 w-10 animate-spin" />
-        <p class="text-lg font-medium">Unlocking vault...</p>
-        <p class="text-sm text-(--ui-text-muted)">Deriving encryption key</p>
+      <div class="text-center">
+        <div class="mb-4 text-sm font-[var(--font-mono)] text-(--ui-text-muted)">
+          <span>Decrypting key</span>
+          <span class="animate-pulse">...</span>
+        </div>
+        <UIcon name="i-lucide-loader-circle" class="mx-auto h-5 w-5 animate-spin text-(--ui-text-muted)" />
       </div>
     </template>
 
-    <!-- SAVING STATE + UNLOCKED STATE -->
+    <!-- UNLOCKED STATE -->
     <template v-else-if="vault.status === VaultStatus.UNLOCKED || vault.status === VaultStatus.SAVING">
-      <div class="space-y-8">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div class="h-3 w-3 rounded-full bg-green-500" />
-            <h2 class="text-xl font-bold">Vault unlocked</h2>
+      <div class="w-full max-w-md">
+        <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-6 shadow-lg">
+          <!-- Terminal success -->
+          <div class="mb-4 flex items-center gap-2 border-b border-(--ui-border) pb-3">
+            <span class="text-xs font-[var(--font-mono)] text-(--ui-text-muted)">ifolio@vault:~$</span>
+            <span class="text-xs font-[var(--font-mono)] text-[var(--color-accent)]">unlocked</span>
           </div>
-          <div class="flex items-center gap-2">
-            <UButton label="Dashboard" size="sm" color="primary" variant="soft" to="/dashboard" />
-            <span v-if="vault.status === VaultStatus.SAVING" class="flex items-center gap-1 text-sm text-(--ui-text-muted)">
-              <UIcon name="i-lucide-loader-circle" class="h-3 w-3 animate-spin" />
-              Saving...
-            </span>
-            <span v-else-if="vault.hasUnsavedChanges" class="text-sm text-amber-500"> Unsaved changes </span>
-            <span v-else class="text-sm text-(--ui-text-muted)"> Saved </span>
-            <UButton v-if="vault.hasUnsavedChanges" label="Save" size="sm" color="primary" @click="handleSave" />
-            <UButton label="Lock" size="sm" color="neutral" variant="outline" @click="handleLock" />
+
+          <!-- Compact summary -->
+          <div class="mb-4 grid grid-cols-2 gap-3">
+            <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg) p-3">
+              <p class="text-xs text-(--ui-text-muted)">Accounts</p>
+              <p class="text-lg font-[var(--font-mono)] font-bold text-(--ui-text)">{{ vault.accounts.length }}</p>
+            </div>
+            <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg) p-3">
+              <p class="text-xs text-(--ui-text-muted)">Last saved</p>
+              <p class="text-sm font-[var(--font-mono)] text-(--ui-text)">
+                {{ vault.payload?.metadata.lastSavedAt ? new Date(vault.payload.metadata.lastSavedAt).toLocaleString() : '—' }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Import status -->
+          <div class="mb-4 rounded-sm border border-(--ui-border) bg-(--ui-bg) p-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-(--ui-text-muted)">Last import:</span>
+              <span class="text-xs font-[var(--font-mono)] text-(--ui-text)">{{ refreshExpiryLabel }}</span>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex flex-col gap-2">
+            <UButton label="$ cd dashboard" color="primary" size="sm" block to="/dashboard" />
+            <div class="flex gap-2">
+              <UButton label="Settings" color="neutral" variant="outline" size="xs" block to="/settings" />
+              <UButton label="Lock" color="neutral" variant="ghost" size="xs" block @click="handleLock" />
+            </div>
           </div>
         </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <UCard>
-            <template #header>
-              <p class="text-sm text-(--ui-text-muted)">Accounts</p>
-            </template>
-            <p class="text-2xl font-bold">
-              {{ vault.accounts.length }}
-            </p>
-          </UCard>
-          <UCard>
-            <template #header>
-              <p class="text-sm text-(--ui-text-muted)">Last saved</p>
-            </template>
-            <p class="text-2xl font-bold">
-              {{ vault.payload?.metadata.lastSavedAt ? new Date(vault.payload.metadata.lastSavedAt).toLocaleString() : '—' }}
-            </p>
-          </UCard>
-        </div>
-
-        <UCard>
-          <template #header>
-            <div class="flex items-center justify-between gap-3">
-              <div>
-                <p class="text-sm text-(--ui-text-muted)">Transaction imports</p>
-                <p class="text-xs text-(--ui-text-muted)">Manage manual transaction imports in settings</p>
-              </div>
-              <span class="rounded-full px-2 py-1 text-xs font-medium" :class="authStatusClasses">
-                {{ authStatusLabel }}
-              </span>
-            </div>
-          </template>
-
-          <div class="space-y-3">
-            <p class="text-sm text-(--ui-text-muted)">
-              Last import:
-              <strong class="font-semibold text-(--ui-text-highlighted)">{{ refreshExpiryLabel }}</strong>
-            </p>
-
-            <div v-if="oauth.expirationWarning" class="rounded-md bg-amber-500/15 p-2 text-sm text-amber-700 dark:text-amber-200">
-              Import currently in progress.
-            </div>
-
-            <div v-if="sync.lastError" class="rounded-md bg-red-500/15 p-2 text-sm text-red-700 dark:text-red-200">
-              {{ sync.lastError }}
-            </div>
-
-            <div class="flex flex-wrap gap-2">
-              <UButton label="Import settings" color="primary" @click="openImportSettings" />
-              <UButton label="Open settings" color="neutral" variant="outline" @click="refreshAuthStatus" />
-              <UButton label="Settings" color="neutral" variant="ghost" @click="openAuthSettings" />
-              <UButton :label="actionLabel" color="neutral" variant="soft" :loading="sync.isSyncing" @click="handleSyncIntent" />
-            </div>
-          </div>
-        </UCard>
       </div>
     </template>
 
-    <!-- CREATE DIALOG -->
+    <!-- CREATE DIALOG (unchanged modal) -->
     <UModal v-model:open="showCreateDialog" title="Create new vault" :ui="{ footer: 'justify-end' }">
       <template #body>
         <div class="space-y-4">
@@ -379,33 +370,27 @@ onMounted(async () => {
             <label class="mb-1 block text-sm font-medium">Confirm passphrase</label>
             <UInput v-model="passphraseConfirm" type="password" placeholder="Re-enter passphrase" size="lg" />
           </div>
-          <p v-if="passphraseError" class="text-sm text-(--ui-error)">
-            {{ passphraseError }}
-          </p>
+          <p v-if="passphraseError" class="text-sm font-[var(--font-mono)] text-[var(--color-signal-red)]">{{ passphraseError }}</p>
         </div>
       </template>
-
       <template #footer>
         <UButton label="Cancel" color="neutral" variant="outline" @click="closeCreateDialog" />
         <UButton label="Create vault" color="primary" @click="handleCreate" />
       </template>
     </UModal>
 
-    <!-- OPEN DIALOG -->
+    <!-- OPEN DIALOG (unchanged modal) -->
     <UModal v-model:open="showOpenDialog" title="Open existing vault" :ui="{ footer: 'justify-end' }">
       <template #body>
         <div class="space-y-4">
-          <p class="text-sm text-(--ui-text-muted)">After clicking &quot;Open vault&quot;, select your <code>.foli</code> file.</p>
+          <p class="text-sm text-(--ui-text-muted)">After clicking &quot;Open vault&quot;, select your <code>.iFolio</code> file.</p>
           <div>
             <label class="mb-1 block text-sm font-medium">Passphrase</label>
             <UInput v-model="passphrase" type="password" placeholder="Enter your vault passphrase" size="lg" @keydown.enter="handleOpen" />
           </div>
-          <p v-if="passphraseError" class="text-sm text-(--ui-error)">
-            {{ passphraseError }}
-          </p>
+          <p v-if="passphraseError" class="text-sm font-[var(--font-mono)] text-[var(--color-signal-red)]">{{ passphraseError }}</p>
         </div>
       </template>
-
       <template #footer>
         <UButton label="Cancel" color="neutral" variant="outline" @click="closeOpenDialog" />
         <UButton label="Open vault" color="primary" @click="handleOpen" />

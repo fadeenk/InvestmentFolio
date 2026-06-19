@@ -45,12 +45,6 @@ function formatDate(value: string): string {
   return new Date(value).toLocaleDateString('en-US')
 }
 
-function signClass(value: number): string {
-  if (value > 0) return 'text-emerald-600 dark:text-emerald-300'
-  if (value < 0) return 'text-red-600 dark:text-red-300'
-  return 'text-(--ui-text-muted)'
-}
-
 function toggleExpanded(positionId: string): void {
   const next = new Set(expandedPositionIds.value)
   if (next.has(positionId)) {
@@ -78,144 +72,126 @@ function holdingPeriodLabel(accountId: string, symbol: string): string {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-7xl space-y-6 px-4 py-8">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-bold">Positions & Tax Lots</h1>
-        <p class="text-sm text-(--ui-text-muted)">Open positions, tax lot drilldown, and realized gains history.</p>
+  <div class="mx-auto w-full max-w-7xl space-y-6 px-4 py-4">
+    <div class="flex items-center justify-between">
+      <h1 class="text-sm font-[var(--font-mono)] text-(--ui-text-muted)">
+        <NuxtLink to="/" class="hover:text-(--ui-text)">~</NuxtLink>
+        <span class="mx-1">/</span>
+        <span class="text-(--ui-text)">positions</span>
+      </h1>
+      <UButton label="Dashboard" to="/dashboard" color="neutral" variant="ghost" size="xs" />
+    </div>
+
+    <div class="flex overflow-x-auto rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated)">
+      <div class="flex divide-x divide-(--ui-border) text-xs">
+        <div class="flex min-w-24 flex-col justify-center px-4 py-3">
+          <span class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Total Value</span>
+          <span class="text-sm font-[var(--font-mono)] font-bold text-(--ui-text)">
+            {{ formatCurrency(totals.totalMarketValue + totals.totalCashBalance) }}
+          </span>
+        </div>
+        <div class="flex min-w-24 flex-col justify-center px-4 py-3">
+          <span class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Market Value</span>
+          <span class="text-sm font-[var(--font-mono)] font-bold text-(--ui-text)">
+            {{ formatCurrency(totals.totalMarketValue) }}
+          </span>
+        </div>
+        <div class="flex min-w-24 flex-col justify-center px-4 py-3">
+          <span class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Cash</span>
+          <span class="text-sm font-[var(--font-mono)] font-bold text-(--ui-text)">
+            {{ formatCurrency(totals.totalCashBalance) }}
+          </span>
+        </div>
+        <div class="flex min-w-24 flex-col justify-center px-4 py-3">
+          <span class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Cost Basis</span>
+          <span class="text-sm font-[var(--font-mono)] font-bold text-(--ui-text)">
+            {{ formatCurrency(totals.totalCostBasis) }}
+          </span>
+        </div>
+        <div class="flex min-w-24 flex-col justify-center px-4 py-3">
+          <span class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Day Change</span>
+          <span class="text-sm font-[var(--font-mono)] font-bold" :class="signClass(totals.totalDayGainLoss)">
+            {{ formatCurrency(totals.totalDayGainLoss) }}
+            <span class="text-2xs">({{ formatPercent(totals.totalDayGainLossPct) }})</span>
+          </span>
+        </div>
+        <div class="flex min-w-24 flex-col justify-center px-4 py-3">
+          <span class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Total G/L</span>
+          <span class="text-sm font-[var(--font-mono)] font-bold" :class="signClass(totals.totalUnrealizedGainLoss)">
+            {{ formatCurrency(totals.totalUnrealizedGainLoss) }}
+            <span class="text-2xs">({{ formatPercent(totals.totalUnrealizedGainLossPct) }})</span>
+          </span>
+        </div>
       </div>
-      <UButton label="Dashboard" to="/dashboard" color="neutral" variant="outline" />
     </div>
 
-    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      <UCard>
-        <template #header>
-          <p class="text-sm text-(--ui-text-muted)">Total value</p>
-        </template>
-        <p class="text-2xl font-bold">{{ formatCurrency(totals.totalMarketValue + totals.totalCashBalance) }}</p>
-      </UCard>
-
-      <UCard>
-        <template #header>
-          <p class="text-sm text-(--ui-text-muted)">Market value</p>
-        </template>
-        <p class="text-2xl font-bold">{{ formatCurrency(totals.totalMarketValue) }}</p>
-      </UCard>
-
-      <UCard>
-        <template #header>
-          <p class="text-sm text-(--ui-text-muted)">Cash</p>
-        </template>
-        <p class="text-2xl font-bold">{{ formatCurrency(totals.totalCashBalance) }}</p>
-      </UCard>
-
-      <UCard>
-        <template #header>
-          <p class="text-sm text-(--ui-text-muted)">Cost basis</p>
-        </template>
-        <p class="text-2xl font-bold">{{ formatCurrency(totals.totalCostBasis) }}</p>
-      </UCard>
-
-      <UCard>
-        <template #header>
-          <p class="text-sm text-(--ui-text-muted)">Day change</p>
-        </template>
-        <p class="text-2xl font-bold" :class="signClass(totals.totalDayGainLoss)">
-          {{ formatCurrency(totals.totalDayGainLoss) }}
-        </p>
-        <p class="text-xs text-(--ui-text-muted)">{{ formatPercent(totals.totalDayGainLossPct) }}</p>
-      </UCard>
-
-      <UCard>
-        <template #header>
-          <p class="text-sm text-(--ui-text-muted)">Total gain / loss</p>
-        </template>
-        <p class="text-2xl font-bold" :class="signClass(totals.totalUnrealizedGainLoss)">
-          {{ formatCurrency(totals.totalUnrealizedGainLoss) }}
-        </p>
-        <p class="text-xs text-(--ui-text-muted)">{{ formatPercent(totals.totalUnrealizedGainLossPct) }}</p>
-      </UCard>
-    </div>
-
-    <UCard>
-      <template #header>
-        <h2 class="text-lg font-semibold">Account filter</h2>
-      </template>
-      <div class="flex flex-wrap gap-2">
+    <div class="flex flex-wrap items-center gap-3 rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) px-3 py-2">
+      <div class="flex items-center gap-1.5">
+        <span class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Account</span>
         <UButton
           v-for="option in accountOptions"
           :key="option.label"
           :label="option.label"
           size="xs"
           :color="dataStore.selectedAccountId === option.id ? 'primary' : 'neutral'"
-          :variant="dataStore.selectedAccountId === option.id ? 'solid' : 'outline'"
+          :variant="dataStore.selectedAccountId === option.id ? 'solid' : 'ghost'"
           @click="dataStore.selectAccount(option.id)"
         />
       </div>
-
-      <div class="mt-3 border-t border-(--ui-border)/60 pt-3">
-        <div class="flex flex-wrap items-center gap-3">
-          <UButton
-            label="Refresh Prices"
-            color="primary"
-            variant="outline"
-            size="sm"
-            :loading="marketStore.isSyncing"
-            :disabled="marketStore.isSyncing"
-            @click="marketStore.refreshMarketData()"
-          />
-          <span v-if="marketStore.lastError" class="text-xs text-red-600 dark:text-red-300">
-            {{ marketStore.lastError }}
-          </span>
-          <span v-if="marketStore.syncStatus === 'SUCCESS' && !marketStore.isSyncing" class="text-xs text-emerald-600 dark:text-emerald-300">
-            Prices updated
-          </span>
-        </div>
+      <div class="ml-auto flex items-center gap-2">
+        <UButton
+          label="Refresh"
+          icon="i-lucide-refresh-cw"
+          size="xs"
+          color="neutral"
+          variant="ghost"
+          :loading="marketStore.isSyncing"
+          :disabled="marketStore.isSyncing"
+          @click="marketStore.refreshMarketData()"
+        />
+        <span v-if="marketStore.lastError" class="text-2xs text-[var(--color-signal-red)]">{{ marketStore.lastError }}</span>
+        <span v-if="marketStore.syncStatus === 'SUCCESS' && !marketStore.isSyncing" class="text-2xs text-[var(--color-accent)]">Updated</span>
       </div>
-    </UCard>
+    </div>
 
     <div class="flex gap-2">
       <UButton
         label="Open positions"
-        size="sm"
+        size="xs"
         :color="activeTab === 'OPEN' ? 'primary' : 'neutral'"
-        :variant="activeTab === 'OPEN' ? 'solid' : 'outline'"
+        :variant="activeTab === 'OPEN' ? 'solid' : 'ghost'"
         @click="activeTab = 'OPEN'"
       />
       <UButton
         label="Closed positions"
-        size="sm"
+        size="xs"
         :color="activeTab === 'CLOSED' ? 'primary' : 'neutral'"
-        :variant="activeTab === 'CLOSED' ? 'solid' : 'outline'"
+        :variant="activeTab === 'CLOSED' ? 'solid' : 'ghost'"
         @click="activeTab = 'CLOSED'"
       />
     </div>
 
-    <UCard v-if="activeTab === 'OPEN'">
-      <template #header>
-        <div class="flex items-center justify-between gap-3">
-          <h2 class="text-lg font-semibold">Open positions</h2>
-          <span class="text-sm text-(--ui-text-muted)">{{ positions.length }} total</span>
-        </div>
-      </template>
-
+    <div v-if="activeTab === 'OPEN'" class="overflow-hidden rounded-sm border border-(--ui-border)">
+      <div class="flex items-center justify-between border-b border-(--ui-border) bg-(--ui-bg-elevated) px-3 py-1.5">
+        <span class="text-xs font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Open positions</span>
+        <span class="text-2xs text-(--ui-text-muted)">{{ positions.length }} total</span>
+      </div>
       <div class="overflow-x-auto">
-        <table class="min-w-full text-sm">
+        <table class="min-w-full text-xs">
           <thead>
             <tr class="border-b border-(--ui-border)">
-              <th class="px-3 py-2 text-left font-medium text-(--ui-text-muted)">Symbol</th>
-              <th class="px-3 py-2 text-left font-medium text-(--ui-text-muted)">Account</th>
-              <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Quantity</th>
-              <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Avg cost</th>
-              <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Price</th>
-              <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Market value</th>
-              <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Unrealized G/L</th>
-              <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Day G/L</th>
-              <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Holding period</th>
-              <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Lots</th>
+              <th class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Symbol</th>
+              <th class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Account</th>
+              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Quantity</th>
+              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Avg cost</th>
+              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Price</th>
+              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Market value</th>
+              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Unrealized G/L</th>
+              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Day G/L</th>
+              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Holding period</th>
+              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Lots</th>
             </tr>
           </thead>
-
           <tbody>
             <template v-for="position in positions" :key="position.id">
               <tr class="border-b border-(--ui-border)/60">
@@ -236,21 +212,20 @@ function holdingPeriodLabel(accountId: string, symbol: string): string {
                   <UButton :label="isExpanded(position.id) ? 'Hide' : 'Show'" size="xs" color="neutral" variant="ghost" @click="toggleExpanded(position.id)" />
                 </td>
               </tr>
-
               <tr v-if="isExpanded(position.id)" class="border-b border-(--ui-border)/60 bg-(--ui-bg-elevated)">
                 <td colspan="10" class="px-3 py-3">
                   <div class="overflow-x-auto">
                     <table class="min-w-full text-xs">
                       <thead>
                         <tr class="border-b border-(--ui-border)">
-                          <th class="px-2 py-1 text-left">Lot ID</th>
-                          <th class="px-2 py-1 text-left">Acquired</th>
-                          <th class="px-2 py-1 text-right">Acquired price</th>
-                          <th class="px-2 py-1 text-right">Qty</th>
-                          <th class="px-2 py-1 text-right">Cost basis</th>
-                          <th class="px-2 py-1 text-right">Current value</th>
-                          <th class="px-2 py-1 text-right">Unrealized G/L</th>
-                          <th class="px-2 py-1 text-right">Wash sale</th>
+                          <th class="text-2xs px-2 py-1 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Lot ID</th>
+                          <th class="text-2xs px-2 py-1 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Acquired</th>
+                          <th class="text-2xs px-2 py-1 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Acquired price</th>
+                          <th class="text-2xs px-2 py-1 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Qty</th>
+                          <th class="text-2xs px-2 py-1 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Cost basis</th>
+                          <th class="text-2xs px-2 py-1 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Current value</th>
+                          <th class="text-2xs px-2 py-1 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Unrealized G/L</th>
+                          <th class="text-2xs px-2 py-1 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Wash sale</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -275,43 +250,38 @@ function holdingPeriodLabel(accountId: string, symbol: string): string {
                 </td>
               </tr>
             </template>
-
             <tr v-if="positions.length === 0">
               <td colspan="10" class="px-3 py-6 text-center text-(--ui-text-muted)">No positions found.</td>
             </tr>
           </tbody>
         </table>
       </div>
-    </UCard>
+    </div>
 
-    <UCard v-else>
-      <template #header>
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <h2 class="text-lg font-semibold">Closed positions</h2>
-          <div class="flex items-center gap-2">
-            <label class="text-xs text-(--ui-text-muted)" for="tax-year">Tax year</label>
-            <select
-              id="tax-year"
-              class="rounded-md border border-(--ui-border) bg-(--ui-bg) px-2 py-1 text-sm"
-              :value="dataStore.selectedTaxYear"
-              @change="dataStore.setSelectedTaxYear(Number(($event.target as HTMLSelectElement).value))"
-            >
-              <option v-for="year in availableTaxYears" :key="year" :value="year">{{ year }}</option>
-            </select>
-          </div>
+    <div v-else class="overflow-hidden rounded-sm border border-(--ui-border)">
+      <div class="flex items-center justify-between border-b border-(--ui-border) bg-(--ui-bg-elevated) px-3 py-1.5">
+        <span class="text-xs font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Closed positions</span>
+        <div class="flex items-center gap-2">
+          <USelect
+            :value="dataStore.selectedTaxYear"
+            :items="availableTaxYears.map((y) => ({ label: String(y), value: y }))"
+            size="xs"
+            variant="outline"
+            color="neutral"
+            @update:model-value="dataStore.setSelectedTaxYear(Number($event))"
+          />
         </div>
-      </template>
-
+      </div>
       <div class="overflow-x-auto">
-        <table class="min-w-full text-sm">
+        <table class="min-w-full text-xs">
           <thead>
             <tr class="border-b border-(--ui-border)">
-              <th class="px-3 py-2 text-left font-medium text-(--ui-text-muted)">Sold date</th>
-              <th class="px-3 py-2 text-left font-medium text-(--ui-text-muted)">Symbol</th>
-              <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Cost</th>
-              <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Proceeds</th>
-              <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Realized G/L</th>
-              <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Term</th>
+              <th class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Sold date</th>
+              <th class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Symbol</th>
+              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Cost</th>
+              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Proceeds</th>
+              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Realized G/L</th>
+              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Term</th>
             </tr>
           </thead>
           <tbody>
@@ -331,6 +301,6 @@ function holdingPeriodLabel(accountId: string, symbol: string): string {
           </tbody>
         </table>
       </div>
-    </UCard>
+    </div>
   </div>
 </template>

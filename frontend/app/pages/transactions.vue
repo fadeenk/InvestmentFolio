@@ -189,12 +189,6 @@ function signedAmount(tx: (typeof filteredTransactions.value)[number]): number {
   return transactionCashDelta(tx)
 }
 
-function signClass(value: number): string {
-  if (value > 0) return 'text-emerald-600 dark:text-emerald-300'
-  if (value < 0) return 'text-red-600 dark:text-red-300'
-  return 'text-(--ui-text-muted)'
-}
-
 function isFiniteInputNumber(value: string): boolean {
   return Number.isFinite(Number(value))
 }
@@ -301,100 +295,87 @@ function deleteTransaction(id: string): void {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-7xl space-y-6 px-4 py-8">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-bold">Transactions</h1>
-        <p class="text-sm text-(--ui-text-muted)">Filter by type, account, symbol, and date range.</p>
-      </div>
+  <div class="mx-auto w-full max-w-7xl space-y-6 px-4 py-4">
+    <div class="flex items-center justify-between">
+      <h1 class="text-sm font-[var(--font-mono)] text-(--ui-text-muted)">
+        <NuxtLink to="/" class="hover:text-(--ui-text)">~</NuxtLink>
+        <span class="mx-1">/</span>
+        <span class="text-(--ui-text)">transactions</span>
+      </h1>
       <div class="flex items-center gap-2">
-        <UButton label="New transaction" color="primary" @click="openAdd" />
-        <UButton label="Dashboard" to="/dashboard" color="neutral" variant="outline" />
+        <UButton label="New transaction" color="primary" size="xs" @click="openAdd" />
+        <UButton label="Dashboard" to="/dashboard" color="neutral" variant="ghost" size="xs" />
       </div>
     </div>
 
-    <UCard>
-      <template #header>
-        <div class="flex flex-wrap gap-2">
-          <UButton
-            label="All"
-            size="xs"
-            :color="activeTab === 'ALL' ? 'primary' : 'neutral'"
-            :variant="activeTab === 'ALL' ? 'solid' : 'outline'"
-            @click="activeTab = 'ALL'"
-          />
-          <UButton
-            label="Trades"
-            size="xs"
-            :color="activeTab === 'TRADES' ? 'primary' : 'neutral'"
-            :variant="activeTab === 'TRADES' ? 'solid' : 'outline'"
-            @click="activeTab = 'TRADES'"
-          />
-          <UButton
-            label="Dividends"
-            size="xs"
-            :color="activeTab === 'DIVIDENDS' ? 'primary' : 'neutral'"
-            :variant="activeTab === 'DIVIDENDS' ? 'solid' : 'outline'"
-            @click="activeTab = 'DIVIDENDS'"
-          />
-          <UButton
-            label="Interest"
-            size="xs"
-            :color="activeTab === 'INTEREST' ? 'primary' : 'neutral'"
-            :variant="activeTab === 'INTEREST' ? 'solid' : 'outline'"
-            @click="activeTab = 'INTEREST'"
-          />
-          <UButton
-            label="Transfers"
-            size="xs"
-            :color="activeTab === 'TRANSFERS' ? 'primary' : 'neutral'"
-            :variant="activeTab === 'TRANSFERS' ? 'solid' : 'outline'"
-            @click="activeTab = 'TRANSFERS'"
-          />
-          <UButton
-            label="Manual"
-            size="xs"
-            :color="activeTab === 'MANUAL' ? 'primary' : 'neutral'"
-            :variant="activeTab === 'MANUAL' ? 'solid' : 'outline'"
-            @click="activeTab = 'MANUAL'"
-          />
-        </div>
-      </template>
+    <div class="flex flex-wrap gap-2">
+      <UButton
+        label="All"
+        size="xs"
+        :color="activeTab === 'ALL' ? 'primary' : 'neutral'"
+        :variant="activeTab === 'ALL' ? 'solid' : 'ghost'"
+        @click="activeTab = 'ALL'"
+      />
+      <UButton
+        label="Trades"
+        size="xs"
+        :color="activeTab === 'TRADES' ? 'primary' : 'neutral'"
+        :variant="activeTab === 'TRADES' ? 'solid' : 'ghost'"
+        @click="activeTab = 'TRADES'"
+      />
+      <UButton
+        label="Dividends"
+        size="xs"
+        :color="activeTab === 'DIVIDENDS' ? 'primary' : 'neutral'"
+        :variant="activeTab === 'DIVIDENDS' ? 'solid' : 'ghost'"
+        @click="activeTab = 'DIVIDENDS'"
+      />
+      <UButton
+        label="Interest"
+        size="xs"
+        :color="activeTab === 'INTEREST' ? 'primary' : 'neutral'"
+        :variant="activeTab === 'INTEREST' ? 'solid' : 'ghost'"
+        @click="activeTab = 'INTEREST'"
+      />
+      <UButton
+        label="Transfers"
+        size="xs"
+        :color="activeTab === 'TRANSFERS' ? 'primary' : 'neutral'"
+        :variant="activeTab === 'TRANSFERS' ? 'solid' : 'ghost'"
+        @click="activeTab = 'TRANSFERS'"
+      />
+      <UButton
+        label="Manual"
+        size="xs"
+        :color="activeTab === 'MANUAL' ? 'primary' : 'neutral'"
+        :variant="activeTab === 'MANUAL' ? 'solid' : 'ghost'"
+        @click="activeTab = 'MANUAL'"
+      />
+    </div>
 
+    <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
       <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-        <label class="space-y-1 text-sm">
-          <span class="text-(--ui-text-muted)">Account</span>
-          <select v-model="selectedAccountId" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
-            <option value="ALL">All</option>
-            <option v-for="account in dataStore.allAccounts" :key="account.id" :value="account.id">{{ account.displayName }}</option>
-          </select>
-        </label>
-
-        <label class="space-y-1 text-sm">
-          <span class="text-(--ui-text-muted)">Type</span>
-          <select v-model="selectedType" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
-            <option value="ALL">All</option>
-            <option v-for="type in typeOptions" :key="type" :value="type">{{ type }}</option>
-          </select>
-        </label>
-
-        <label class="space-y-1 text-sm">
-          <span class="text-(--ui-text-muted)">Symbol</span>
-          <input v-model="symbolFilter" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" placeholder="AAPL" type="text" />
-        </label>
-
-        <label class="space-y-1 text-sm">
-          <span class="text-(--ui-text-muted)">From</span>
-          <input v-model="dateFrom" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="date" />
-        </label>
-
-        <label class="space-y-1 text-sm">
-          <span class="text-(--ui-text-muted)">To</span>
-          <input v-model="dateTo" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="date" />
-        </label>
+        <USelect
+          v-model="selectedAccountId"
+          :items="[{ label: 'All', value: 'ALL' }, ...dataStore.allAccounts.map((a) => ({ label: a.displayName, value: a.id }))]"
+          placeholder="Account"
+          size="xs"
+          variant="outline"
+          color="neutral"
+        />
+        <USelect
+          v-model="selectedType"
+          :items="[{ label: 'All', value: 'ALL' }, ...typeOptions.map((t) => ({ label: t, value: t }))]"
+          placeholder="Type"
+          size="xs"
+          variant="outline"
+          color="neutral"
+        />
+        <UInput v-model="symbolFilter" placeholder="Symbol" size="xs" variant="outline" color="neutral" />
+        <UInput v-model="dateFrom" type="date" size="xs" variant="outline" color="neutral" />
+        <UInput v-model="dateTo" type="date" size="xs" variant="outline" color="neutral" />
       </div>
-
-      <div class="mt-3 flex flex-wrap gap-2 text-xs text-(--ui-text-muted)">
+      <div class="text-2xs mt-2 flex flex-wrap gap-2 text-(--ui-text-muted)">
         <span>All: {{ tabCounts.ALL }}</span>
         <span>Trades: {{ tabCounts.TRADES }}</span>
         <span>Dividends: {{ tabCounts.DIVIDENDS }}</span>
@@ -402,24 +383,25 @@ function deleteTransaction(id: string): void {
         <span>Transfers: {{ tabCounts.TRANSFERS }}</span>
         <span>Manual: {{ tabCounts.MANUAL }}</span>
       </div>
-    </UCard>
+    </div>
 
-    <UCard>
-      <template #header>
-        <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold">Transactions table</h2>
-          <span class="text-sm text-(--ui-text-muted)">{{ table.getRowModel().rows.length }} visible rows</span>
-        </div>
-      </template>
-
+    <div class="overflow-hidden rounded-sm border border-(--ui-border)">
+      <div class="flex items-center justify-between border-b border-(--ui-border) bg-(--ui-bg-elevated) px-3 py-1.5">
+        <span class="text-xs font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Transactions</span>
+        <span class="text-2xs text-(--ui-text-muted)">{{ table.getRowModel().rows.length }} visible rows</span>
+      </div>
       <div class="overflow-x-auto">
-        <table class="min-w-full text-sm">
+        <table class="min-w-full text-xs">
           <thead>
             <tr class="border-b border-(--ui-border)">
-              <th v-for="header in table.getFlatHeaders()" :key="header.id" class="px-3 py-2 text-left font-medium text-(--ui-text-muted)">
+              <th
+                v-for="header in table.getFlatHeaders()"
+                :key="header.id"
+                class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase"
+              >
                 {{ header.column.columnDef.header }}
               </th>
-              <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Actions</th>
+              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Actions</th>
             </tr>
           </thead>
 
@@ -448,84 +430,37 @@ function deleteTransaction(id: string): void {
           </tbody>
         </table>
       </div>
-    </UCard>
+    </div>
 
     <UModal v-model:open="formOpen" :title="formTitle" :ui="{ footer: 'justify-end' }">
       <template #body>
         <div class="grid gap-3 md:grid-cols-2">
-          <label class="space-y-1 text-sm">
-            <span class="text-(--ui-text-muted)">Account</span>
-            <select
-              v-model="transactionForm.accountId"
-              :disabled="isEditMode"
-              class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
-            >
-              <option v-for="account in dataStore.allAccounts" :key="account.id" :value="account.id">{{ account.displayName }}</option>
-            </select>
-          </label>
-
-          <label class="space-y-1 text-sm">
-            <span class="text-(--ui-text-muted)">Date</span>
-            <input v-model="transactionForm.date" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="date" />
-          </label>
-
-          <label class="space-y-1 text-sm">
-            <span class="text-(--ui-text-muted)">Type</span>
-            <select v-model="transactionForm.type" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
-              <option v-for="type in typeOptions" :key="type" :value="type">{{ type }}</option>
-            </select>
-          </label>
-
-          <label class="space-y-1 text-sm">
-            <span class="text-(--ui-text-muted)">Asset type</span>
-            <select v-model="transactionForm.assetType" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
-              <option v-for="assetType in assetTypeOptions" :key="assetType" :value="assetType">{{ assetType }}</option>
-            </select>
-          </label>
-
-          <label class="space-y-1 text-sm">
-            <span class="text-(--ui-text-muted)">Symbol</span>
-            <input v-model="transactionForm.symbol" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="text" />
-          </label>
-
-          <label class="space-y-1 text-sm">
-            <span class="text-(--ui-text-muted)">Description</span>
-            <input v-model="transactionForm.description" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" type="text" />
-          </label>
-
-          <label class="space-y-1 text-sm">
-            <span class="text-(--ui-text-muted)">Quantity</span>
-            <input
-              v-model="transactionForm.quantity"
-              class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
-              type="number"
-              step="0.0001"
-            />
-          </label>
-
-          <label class="space-y-1 text-sm">
-            <span class="text-(--ui-text-muted)">Price / Amount</span>
-            <input
-              v-model="transactionForm.price"
-              class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
-              type="number"
-              step="0.0001"
-            />
-          </label>
-
-          <label class="space-y-1 text-sm">
-            <span class="text-(--ui-text-muted)">Fees</span>
-            <input
-              v-model="transactionForm.fees"
-              class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm"
-              type="number"
-              step="0.01"
-            />
-          </label>
-          <label class="space-y-1 text-sm md:col-span-2">
-            <span class="text-(--ui-text-muted)">Notes</span>
-            <textarea v-model="transactionForm.notes" class="min-h-24 w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm" />
-          </label>
+          <USelect
+            v-model="transactionForm.accountId"
+            :items="dataStore.allAccounts.map((a) => ({ label: a.displayName, value: a.id }))"
+            size="xs"
+            variant="outline"
+            color="neutral"
+            :disabled="isEditMode"
+          />
+          <UInput v-model="transactionForm.date" type="date" size="xs" variant="outline" color="neutral" />
+          <USelect v-model="transactionForm.type" :items="typeOptions.map((t) => ({ label: t, value: t }))" size="xs" variant="outline" color="neutral" />
+          <USelect
+            v-model="transactionForm.assetType"
+            :items="assetTypeOptions.map((a) => ({ label: a, value: a }))"
+            size="xs"
+            variant="outline"
+            color="neutral"
+          />
+          <UInput v-model="transactionForm.symbol" size="xs" variant="outline" color="neutral" />
+          <UInput v-model="transactionForm.description" size="xs" variant="outline" color="neutral" />
+          <UInput v-model="transactionForm.quantity" type="number" step="0.0001" size="xs" variant="outline" color="neutral" />
+          <UInput v-model="transactionForm.price" type="number" step="0.0001" size="xs" variant="outline" color="neutral" />
+          <UInput v-model="transactionForm.fees" type="number" step="0.01" size="xs" variant="outline" color="neutral" />
+          <textarea
+            v-model="transactionForm.notes"
+            class="min-h-24 w-full rounded-sm border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-xs md:col-span-2"
+          />
         </div>
       </template>
 

@@ -131,74 +131,56 @@ function monthLabel(month: number): string {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-7xl space-y-6 px-4 py-8">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-bold">Income</h1>
-        <p class="text-sm text-(--ui-text-muted)">Year-over-year totals, by-security breakdown, and monthly calendar grid.</p>
-      </div>
-      <UButton label="Dashboard" to="/dashboard" color="neutral" variant="outline" />
+  <div class="mx-auto w-full max-w-7xl space-y-6 px-4 py-4">
+    <div class="flex items-center justify-between">
+      <h1 class="text-sm font-[var(--font-mono)] text-(--ui-text-muted)">
+        <NuxtLink to="/" class="hover:text-(--ui-text)">~</NuxtLink>
+        <span class="mx-1">/</span>
+        <span class="text-(--ui-text)">income</span>
+      </h1>
+      <UButton label="Dashboard" to="/dashboard" color="neutral" variant="ghost" size="xs" />
     </div>
 
-    <UCard>
-      <template #header>
-        <h2 class="text-lg font-semibold">Filters</h2>
-      </template>
-
+    <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
       <div class="grid gap-3 sm:grid-cols-2">
-        <label class="space-y-1 text-sm">
-          <span class="text-(--ui-text-muted)">Year</span>
-          <select v-model.number="selectedYear" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
-            <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
-          </select>
-        </label>
-
-        <label class="space-y-1 text-sm">
-          <span class="text-(--ui-text-muted)">Account</span>
-          <select v-model="selectedAccountId" class="w-full rounded-md border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-sm">
-            <option value="ALL">All accounts</option>
-            <option v-for="account in dataStore.allAccounts" :key="account.id" :value="account.id">{{ account.displayName }}</option>
-          </select>
-        </label>
+        <USelect v-model="selectedYear" :items="availableYears.map((y) => ({ label: String(y), value: y }))" size="xs" variant="outline" color="neutral" />
+        <USelect
+          v-model="selectedAccountId"
+          :items="[{ label: 'All accounts', value: 'ALL' }, ...dataStore.allAccounts.map((a) => ({ label: a.displayName, value: a.id }))]"
+          size="xs"
+          variant="outline"
+          color="neutral"
+        />
       </div>
-    </UCard>
-
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <UCard>
-        <template #header>
-          <p class="text-sm text-(--ui-text-muted)">Income total ({{ selectedYear }})</p>
-        </template>
-        <p class="text-2xl font-bold">{{ formatCurrency(totals.total) }}</p>
-      </UCard>
-
-      <UCard>
-        <template #header>
-          <p class="text-sm text-(--ui-text-muted)">Dividends</p>
-        </template>
-        <p class="text-2xl font-bold">{{ formatCurrency(totals.dividend) }}</p>
-      </UCard>
-
-      <UCard>
-        <template #header>
-          <p class="text-sm text-(--ui-text-muted)">Interest</p>
-        </template>
-        <p class="text-2xl font-bold">{{ formatCurrency(totals.interest) }}</p>
-      </UCard>
     </div>
 
-    <UCard>
-      <template #header>
-        <h2 class="text-lg font-semibold">Year-over-year</h2>
-      </template>
+    <div class="grid gap-3 sm:grid-cols-3">
+      <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
+        <p class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Income total ({{ selectedYear }})</p>
+        <p class="text-lg font-[var(--font-mono)] font-bold text-(--ui-text)">{{ formatCurrency(totals.total) }}</p>
+      </div>
+      <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
+        <p class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Dividends</p>
+        <p class="text-lg font-[var(--font-mono)] font-bold text-(--ui-text)">{{ formatCurrency(totals.dividend) }}</p>
+      </div>
+      <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
+        <p class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Interest</p>
+        <p class="text-lg font-[var(--font-mono)] font-bold text-(--ui-text)">{{ formatCurrency(totals.interest) }}</p>
+      </div>
+    </div>
 
+    <div class="overflow-hidden rounded-sm border border-(--ui-border)">
+      <div class="border-b border-(--ui-border) bg-(--ui-bg-elevated) px-3 py-1.5">
+        <span class="text-xs font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Year-over-year</span>
+      </div>
       <div class="overflow-x-auto">
-        <table class="min-w-full text-sm">
+        <table class="min-w-full text-xs">
           <thead>
             <tr class="border-b border-(--ui-border)">
-              <th class="px-3 py-2 text-left font-medium text-(--ui-text-muted)">Year</th>
-              <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Total dividends</th>
-              <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Total interest</th>
-              <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Total income</th>
+              <th class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Year</th>
+              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Total dividends</th>
+              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Total interest</th>
+              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Total income</th>
             </tr>
           </thead>
           <tbody>
@@ -217,22 +199,21 @@ function monthLabel(month: number): string {
           </tbody>
         </table>
       </div>
-    </UCard>
+    </div>
 
-    <UCard>
-      <template #header>
-        <h2 class="text-lg font-semibold">Income by security</h2>
-      </template>
-
+    <div class="overflow-hidden rounded-sm border border-(--ui-border)">
+      <div class="border-b border-(--ui-border) bg-(--ui-bg-elevated) px-3 py-1.5">
+        <span class="text-xs font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Income by security</span>
+      </div>
       <div class="overflow-x-auto">
-        <table class="min-w-full text-sm">
+        <table class="min-w-full text-xs">
           <thead>
             <tr class="border-b border-(--ui-border)">
-              <th class="px-3 py-2 text-left font-medium text-(--ui-text-muted)">Symbol</th>
-              <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">YTD total</th>
-              <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Prior year</th>
-              <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Dividend</th>
-              <th class="px-3 py-2 text-right font-medium text-(--ui-text-muted)">Interest</th>
+              <th class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Symbol</th>
+              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">YTD total</th>
+              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Prior year</th>
+              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Dividend</th>
+              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Interest</th>
             </tr>
           </thead>
           <tbody>
@@ -249,15 +230,14 @@ function monthLabel(month: number): string {
           </tbody>
         </table>
       </div>
-    </UCard>
+    </div>
 
-    <UCard>
-      <template #header>
-        <h2 class="text-lg font-semibold">Monthly calendar grid</h2>
-      </template>
-
-      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
-        <div v-for="month in monthlyGrid" :key="month.month" class="rounded-md border border-(--ui-border) p-3">
+    <div class="rounded-sm border border-(--ui-border)">
+      <div class="border-b border-(--ui-border) bg-(--ui-bg-elevated) px-3 py-1.5">
+        <span class="text-xs font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Monthly Calendar</span>
+      </div>
+      <div class="grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+        <div v-for="month in monthlyGrid" :key="month.month" class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
           <p class="text-sm font-semibold">{{ monthLabel(month.month) }}</p>
           <p class="mt-1 text-xs text-(--ui-text-muted)">Dividends</p>
           <p class="text-sm">{{ formatCurrency(month.totalDividends) }}</p>
@@ -267,6 +247,6 @@ function monthLabel(month: number): string {
           <p class="text-base font-semibold">{{ formatCurrency(month.total) }}</p>
         </div>
       </div>
-    </UCard>
+    </div>
   </div>
 </template>

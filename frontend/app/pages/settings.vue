@@ -617,6 +617,7 @@ async function changePassphrase(): Promise<void> {
             size="sm"
             variant="outline"
             color="neutral"
+            class="w-full"
             @update:model-value="updateDisplayPreference('theme', $event as Theme)"
           />
         </div>
@@ -628,6 +629,7 @@ async function changePassphrase(): Promise<void> {
             size="sm"
             variant="outline"
             color="neutral"
+            class="w-full"
             @update:model-value="updateDisplayPreference('currencyFormat', $event)"
           />
         </div>
@@ -639,6 +641,7 @@ async function changePassphrase(): Promise<void> {
             size="sm"
             variant="outline"
             color="neutral"
+            class="w-full"
             @update:model-value="updateDisplayPreference('dateFormat', $event as DateFormat)"
           />
         </div>
@@ -650,6 +653,7 @@ async function changePassphrase(): Promise<void> {
             size="sm"
             variant="outline"
             color="neutral"
+            class="w-full"
             @update:model-value="updateDisplayPreference('defaultAccountFilter', $event === 'ALL' ? null : $event)"
           />
         </div>
@@ -661,6 +665,7 @@ async function changePassphrase(): Promise<void> {
             size="sm"
             variant="outline"
             color="neutral"
+            class="w-full"
             @update:model-value="updateDisplayPreference('defaultCostBasisMethod', $event as CostBasisMethod)"
           />
         </div>
@@ -672,6 +677,7 @@ async function changePassphrase(): Promise<void> {
             size="sm"
             variant="outline"
             color="neutral"
+            class="w-full"
             @update:model-value="updateDisplayPreference('defaultTimeRange', $event as TimeRange)"
           />
         </div>

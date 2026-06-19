@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, onUnmounted, watch } from 'vue'
 import { useOAuthStore } from '~/stores/oauth.store'
 import { useSyncStore } from '~/stores/sync.store'
 import { useUiStore } from '~/stores/ui'
 import { useVaultStore } from '~/stores/vault.store'
 import { VaultStatus } from '~/types/vault'
+import { useRoute } from '#imports'
 
 const vault = useVaultStore()
 const oauth = useOAuthStore()
 const sync = useSyncStore()
 const ui = useUiStore()
-
-const mobileMenuOpen = ref(false)
+const route = useRoute()
 
 const title = 'iFolio'
 const description = 'Private portfolio tracker — all data encrypted at rest'
@@ -46,14 +46,14 @@ const bannerClasses = computed(() => {
   if (!ui.banner) return ''
 
   if (ui.banner.type === 'success') {
-    return ['border-emerald-200 bg-emerald-50 text-emerald-800', 'dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200'].join(' ')
+    return ['border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)]'].join(' ')
   }
 
   if (ui.banner.type === 'warning') {
-    return ['border-amber-200 bg-amber-50 text-amber-800', 'dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200'].join(' ')
+    return ['border-[var(--color-signal-amber)]/30 bg-[var(--color-signal-amber)]/10 text-[var(--color-signal-amber)]'].join(' ')
   }
 
-  return ['border-red-200 bg-red-50 text-red-800', 'dark:border-red-800 dark:bg-red-950/30 dark:text-red-200'].join(' ')
+  return ['border-[var(--color-signal-red)]/30 bg-[var(--color-signal-red)]/10 text-[var(--color-signal-red)]'].join(' ')
 })
 
 function onBeforeUnload(event: BeforeUnloadEvent) {
@@ -80,10 +80,6 @@ watch(
   },
 )
 
-function openAuthSettings() {
-  ui.openModal('auth-settings')
-}
-
 function openImportSettings() {
   navigateTo('/settings')
 }
@@ -95,118 +91,98 @@ function dismissBanner() {
 
 <template>
   <UApp>
-    <template v-if="isUnlocked">
-      <UHeader>
-        <template #left>
-          <div class="flex items-center gap-3">
-            <NuxtLink to="/">
-              <AppLogo class="h-6 w-auto shrink-0" />
-            </NuxtLink>
-            <div class="hidden sm:flex sm:items-center sm:gap-1">
-              <UButton label="Home" to="/" size="xs" color="neutral" variant="ghost" />
-              <UButton label="Dashboard" to="/dashboard" size="xs" color="neutral" variant="ghost" />
-              <UButton label="Positions" to="/positions" size="xs" color="neutral" variant="ghost" />
-              <UButton label="Transactions" to="/transactions" size="xs" color="neutral" variant="ghost" />
-              <UButton label="Income" to="/income" size="xs" color="neutral" variant="ghost" />
-              <UButton label="Settings" to="/settings" size="xs" color="neutral" variant="ghost" />
-            </div>
-            <UButton icon="i-lucide-menu" size="sm" color="neutral" variant="ghost" class="sm:hidden" @click="mobileMenuOpen = !mobileMenuOpen" />
-          </div>
-        </template>
-
-        <template #right>
-          <UColorModeButton />
-          <UButton icon="i-lucide-settings" size="xs" color="neutral" variant="ghost" aria-label="Open auth settings" @click="openAuthSettings" />
-
-          <div class="flex items-center gap-2">
-            <span v-if="vault.isSaving" class="flex items-center gap-1 text-xs text-(--ui-text-muted)">
-              <UIcon name="i-lucide-loader-circle" class="h-3 w-3 animate-spin" />
-              Saving...
-            </span>
-            <span v-else-if="vault.hasUnsavedChanges" class="text-xs text-amber-500"> Unsaved </span>
-            <span v-else class="text-xs text-(--ui-text-muted)"> Saved </span>
-            <UButton v-if="vault.hasUnsavedChanges" label="Save" size="xs" color="primary" @click="vault.saveVault()" />
-            <UButton label="Lock" size="xs" color="neutral" variant="ghost" @click="vault.lockVault()" />
-          </div>
-        </template>
-      </UHeader>
+    <!-- Locked state: minimal page content only -->
+    <template v-if="!isUnlocked">
+      <NuxtPage />
     </template>
 
-    <div v-if="isUnlocked && ui.banner" class="mx-auto mt-4 mb-4 w-full max-w-6xl px-4">
-      <div class="flex items-center justify-between rounded-lg border p-3 text-sm" :class="bannerClasses">
-        <span>{{ ui.banner.message }}</span>
-        <UButton label="Dismiss" size="xs" color="neutral" variant="ghost" @click="dismissBanner" />
+    <!-- Unlocked state: sidebar + top strip + content -->
+    <template v-else>
+      <div class="flex min-h-screen">
+        <!-- Desktop sidebar (hidden on mobile) -->
+        <AppSidebar class="hidden md:block" />
+
+        <!-- Mobile bottom tab bar (hidden on desktop) -->
+        <div
+          class="safe-area-bottom fixed right-0 bottom-0 left-0 z-50 flex h-14 items-center justify-around border-t border-(--ui-border) bg-(--ui-bg) md:hidden"
+        >
+          <NuxtLink
+            v-for="item in [
+              { label: 'Dashboard', icon: 'i-lucide-layout-dashboard', to: '/dashboard' },
+              { label: 'Positions', icon: 'i-lucide-bar-chart-3', to: '/positions' },
+              { label: 'Transactions', icon: 'i-lucide-arrow-left-right', to: '/transactions' },
+              { label: 'Income', icon: 'i-lucide-trending-up', to: '/income' },
+              { label: 'Settings', icon: 'i-lucide-settings', to: '/settings' },
+            ]"
+            :key="item.to"
+            :to="item.to"
+            class="flex flex-col items-center gap-0.5 px-3 py-1 text-xs transition-colors"
+            :class="route.path === item.to || route.path.startsWith(item.to + '/') ? 'text-[var(--color-accent)]' : 'text-(--ui-text-muted)'"
+          >
+            <UIcon :name="item.icon" class="h-4 w-4" />
+            {{ item.label }}
+          </NuxtLink>
+        </div>
+
+        <!-- Main content area -->
+        <div class="flex flex-1 flex-col pb-14 md:pb-0 md:pl-14">
+          <AppTopStrip />
+
+          <!-- Banner -->
+          <div v-if="ui.banner" class="mx-4 mt-2">
+            <div class="flex items-center justify-between rounded-sm border px-3 py-2 text-xs" :class="bannerClasses">
+              <span>{{ ui.banner.message }}</span>
+              <UButton label="Dismiss" size="xs" color="neutral" variant="ghost" @click="dismissBanner" />
+            </div>
+          </div>
+
+          <!-- Page content with page transitions -->
+          <UMain>
+            <NuxtPage />
+          </UMain>
+
+          <!-- Minimal footer -->
+          <footer class="border-t border-(--ui-border) px-4 py-2 text-xs text-(--ui-text-muted)">
+            Encrypted at rest &bull; {{ new Date().getFullYear() }}
+          </footer>
+        </div>
       </div>
-    </div>
+    </template>
 
-    <UMain>
-      <NuxtPage />
-    </UMain>
-
+    <!-- Auth settings modal -->
     <UModal v-model:open="settingsOpen" title="Settings" description="Import status" :ui="{ footer: 'justify-end' }">
       <template #body>
         <div class="space-y-4">
           <div class="grid gap-3 sm:grid-cols-2">
-            <div class="rounded-lg border border-(--ui-border) p-3">
+            <div class="rounded-sm border border-(--ui-border) p-3">
               <p class="text-sm text-(--ui-text-muted)">Import status</p>
-              <p class="text-base font-semibold">
-                {{ authStatusLabel }}
-              </p>
+              <p class="text-base font-semibold">{{ authStatusLabel }}</p>
             </div>
-
-            <div class="rounded-lg border border-(--ui-border) p-3">
+            <div class="rounded-sm border border-(--ui-border) p-3">
               <p class="text-sm text-(--ui-text-muted)">Imported records</p>
-              <p class="text-base font-semibold">
-                {{ vault.payload?.lastSyncSummary?.transactionsAdded ?? 0 }}
-              </p>
+              <p class="text-base font-semibold">{{ vault.payload?.lastSyncSummary?.transactionsAdded ?? 0 }}</p>
             </div>
-
-            <div class="rounded-lg border border-(--ui-border) p-3">
+            <div class="rounded-sm border border-(--ui-border) p-3">
               <p class="text-sm text-(--ui-text-muted)">Last import</p>
               <p class="text-base font-semibold">
                 {{ vault.payload?.lastSyncSummary?.completedAt ? new Date(vault.payload.lastSyncSummary.completedAt).toLocaleString() : 'Never' }}
               </p>
             </div>
-
-            <div class="rounded-lg border border-(--ui-border) p-3">
+            <div class="rounded-sm border border-(--ui-border) p-3">
               <p class="text-sm text-(--ui-text-muted)">Deduplicated</p>
-              <p class="text-base font-semibold">
-                {{ vault.payload?.lastSyncSummary?.deduplicatedCount ?? 0 }}
-              </p>
+              <p class="text-base font-semibold">{{ vault.payload?.lastSyncSummary?.deduplicatedCount ?? 0 }}</p>
             </div>
           </div>
-
           <p class="text-sm text-(--ui-text-muted)">Use settings to import transaction files and manage accounts.</p>
-
-          <p v-if="sync.lastError" class="rounded-md bg-red-500/15 p-2 text-sm text-red-700 dark:text-red-200">
+          <p v-if="sync.lastError" class="rounded-sm bg-[var(--color-signal-red)]/15 p-2 text-sm font-[var(--font-mono)] text-[var(--color-signal-red)]">
             {{ sync.lastError }}
           </p>
         </div>
       </template>
-
       <template #footer>
         <UButton label="Open settings" color="neutral" variant="outline" @click="openImportSettings" />
         <UButton label="Import transactions" color="primary" @click="openImportSettings" />
       </template>
     </UModal>
-
-    <template v-if="isUnlocked">
-      <USeparator icon="i-lucide-lock" />
-      <UFooter>
-        <template #left>
-          <p class="text-sm text-(--ui-text-muted)">Encrypted at rest &bull; {{ new Date().getFullYear() }}</p>
-        </template>
-      </UFooter>
-    </template>
-    <USheet v-model:open="mobileMenuOpen" title="Navigation" side="left" :ui="{ width: 'max-w-64' }">
-      <div class="flex flex-col gap-1 p-4">
-        <UButton label="Home" to="/" color="neutral" variant="ghost" block @click="mobileMenuOpen = false" />
-        <UButton label="Dashboard" to="/dashboard" color="neutral" variant="ghost" block @click="mobileMenuOpen = false" />
-        <UButton label="Positions" to="/positions" color="neutral" variant="ghost" block @click="mobileMenuOpen = false" />
-        <UButton label="Transactions" to="/transactions" color="neutral" variant="ghost" block @click="mobileMenuOpen = false" />
-        <UButton label="Income" to="/income" color="neutral" variant="ghost" block @click="mobileMenuOpen = false" />
-        <UButton label="Settings" to="/settings" color="neutral" variant="ghost" block @click="mobileMenuOpen = false" />
-      </div>
-    </USheet>
   </UApp>
 </template>

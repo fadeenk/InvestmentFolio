@@ -55,7 +55,7 @@ export const useVaultStore = defineStore('vault', () => {
   const isDirty = ref(false)
 
   const rememberedFileName = ref<string | null>(getLastFileName())
-  const isRemembered = computed(() => isHandleStoreAvailable() && rememberedFileName.value !== null)
+  const isRemembered = computed(() => rememberedFileName.value !== null)
 
   const isUnlocked = computed(() => status.value === VaultStatus.UNLOCKED)
   const isSaving = computed(() => status.value === VaultStatus.SAVING)

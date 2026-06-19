@@ -110,14 +110,7 @@ function dismissBanner() {
               <UButton label="Income" to="/income" size="xs" color="neutral" variant="ghost" />
               <UButton label="Settings" to="/settings" size="xs" color="neutral" variant="ghost" />
             </div>
-            <UButton
-              icon="i-lucide-menu"
-              size="sm"
-              color="neutral"
-              variant="ghost"
-              class="sm:hidden"
-              @click="mobileMenuOpen = !mobileMenuOpen"
-            />
+            <UButton icon="i-lucide-menu" size="sm" color="neutral" variant="ghost" class="sm:hidden" @click="mobileMenuOpen = !mobileMenuOpen" />
           </div>
         </template>
 

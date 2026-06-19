@@ -183,7 +183,6 @@ function selectAccount(accountId: string | null): void {
 function selectRange(range: TimeRange): void {
   dataStore.selectTimeRange(range)
 }
-
 </script>
 
 <template>

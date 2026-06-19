@@ -2,13 +2,11 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from '#imports'
 import { useOAuthStore } from '~/stores/oauth.store'
-import { useSyncStore } from '~/stores/sync.store'
 import { useVaultStore } from '~/stores/vault.store'
 import { VaultStatus } from '~/types/vault'
 
 const vault = useVaultStore()
 const oauth = useOAuthStore()
-const sync = useSyncStore()
 const route = useRoute()
 const router = useRouter()
 
@@ -18,30 +16,10 @@ const passphrase = ref('')
 const passphraseConfirm = ref('')
 const passphraseError = ref('')
 
-const authStatusLabel = computed(() => {
-  if (sync.isSyncing) return 'Importing'
-  if (vault.payload?.lastSyncSummary) return 'Ready'
-  return 'Idle'
-})
-
-const authStatusTone = computed<'success' | 'warning' | 'error'>(() => {
-  if (sync.lastError) return 'error'
-  if (sync.isSyncing) return 'warning'
-  return 'success'
-})
-
-const authStatusClasses = computed(() => {
-  if (authStatusTone.value === 'success') return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
-  if (authStatusTone.value === 'warning') return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
-  return 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200'
-})
-
 const refreshExpiryLabel = computed(() => {
   if (!vault.payload?.lastSyncSummary?.completedAt) return 'No imports yet'
   return new Date(vault.payload!.lastSyncSummary!.completedAt).toLocaleString()
 })
-
-const actionLabel = computed(() => 'Open import settings')
 
 function resetForm() {
   passphrase.value = ''
@@ -147,31 +125,6 @@ async function handleLock() {
   vault.lockVault()
 }
 
-async function handleSave() {
-  passphraseError.value = ''
-  try {
-    await vault.saveVault()
-  } catch {
-    passphraseError.value = vault.lastError ?? 'Save failed'
-  }
-}
-
-async function refreshAuthStatus() {
-  await router.push('/settings')
-}
-
-function openAuthSettings() {
-  router.push('/settings')
-}
-
-function openImportSettings() {
-  router.push('/settings')
-}
-
-async function handleSyncIntent() {
-  await router.push('/settings')
-}
-
 function queryToSearchParams(): URLSearchParams {
   const params = new URLSearchParams()
   for (const [key, value] of Object.entries(route.query)) {
@@ -256,8 +209,14 @@ onMounted(async () => {
           </div>
 
           <!-- Error -->
-          <div v-if="vault.lastError"
-            class="mb-4 rounded-sm border border-[var(--color-signal-red)]/30 bg-[var(--color-signal-red)]/10 px-3 py-2 text-xs font-[var(--font-mono)] text-[var(--color-signal-red)]">
+          <div
+            v-if="vault.lastError"
+            :class="[
+              'mb-4 rounded-sm border px-3 py-2 text-xs',
+              'border-[var(--color-signal-red)]/30 bg-[var(--color-signal-red)]/10',
+              'font-[var(--font-mono)] text-[var(--color-signal-red)]',
+            ]"
+          >
             > {{ vault.lastError }}
           </div>
 

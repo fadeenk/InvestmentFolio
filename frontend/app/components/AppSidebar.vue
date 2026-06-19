@@ -23,9 +23,7 @@ function isActive(to: string): boolean {
 </script>
 
 <template>
-  <aside
-    class="group fixed top-0 left-0 z-50 flex h-full w-14 flex-col border-r border-(--ui-border) bg-(--ui-bg) transition-all duration-200 ease-in-out hover:w-50"
-  >
+  <aside class="group fixed top-0 left-0 z-50 flex h-full w-14 flex-col border-r border-(--ui-border) bg-(--ui-bg) transition-all duration-200 hover:w-50">
     <!-- Logo area -->
     <div class="flex h-14 items-center justify-center border-b border-(--ui-border)">
       <NuxtLink to="/" class="flex items-center gap-2 overflow-hidden">

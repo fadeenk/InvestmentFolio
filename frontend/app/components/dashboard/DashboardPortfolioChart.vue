@@ -6,13 +6,11 @@ defineProps<{
 </script>
 
 <template>
-  <UCard>
-    <template #header>
-      <div class="flex items-center justify-between gap-3">
-        <h2 class="text-lg font-semibold">Portfolio Value</h2>
-        <span class="text-xs text-(--ui-text-muted)">{{ timeRange }}</span>
-      </div>
-    </template>
+  <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated)">
+    <div class="flex items-center justify-between border-b border-(--ui-border) px-3 py-2">
+      <span class="text-xs font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Portfolio Value</span>
+      <span class="text-2xs text-(--ui-text-muted)">{{ timeRange }}</span>
+    </div>
     <ApexLineChart :data="data" />
-  </UCard>
+  </div>
 </template>

@@ -8,21 +8,19 @@ const props = defineProps<{
 }>()
 
 const chartSeries = computed(() => [
-  { name: String(props.priorYear), data: props.data.map((d) => d.priorYear), color: '#94a3b8' },
-  { name: String(props.currentYear), data: props.data.map((d) => d.currentYear), color: '#3b82f6' },
+  { name: String(props.priorYear), data: props.data.map((d) => d.priorYear), color: 'var(--color-text-disabled, #5f6368)' },
+  { name: String(props.currentYear), data: props.data.map((d) => d.currentYear), color: 'var(--color-signal-blue, #40c4ff)' },
 ])
 
 const categories = computed(() => props.data.map((d) => d.accountName))
 </script>
 
 <template>
-  <UCard>
-    <template #header>
-      <div class="flex items-center justify-between gap-3">
-        <h2 class="text-lg font-semibold">Income by Account</h2>
-        <span class="text-xs text-(--ui-text-muted)">{{ priorYear }} vs {{ currentYear }}</span>
-      </div>
-    </template>
+  <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated)">
+    <div class="flex items-center justify-between border-b border-(--ui-border) px-3 py-2">
+      <span class="text-xs font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Income by Account</span>
+      <span class="text-2xs text-(--ui-text-muted)">{{ priorYear }} vs {{ currentYear }}</span>
+    </div>
     <ApexStackedBar :categories="categories" :series="chartSeries" />
-  </UCard>
+  </div>
 </template>

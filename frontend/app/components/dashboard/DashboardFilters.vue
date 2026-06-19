@@ -19,54 +19,41 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <UCard>
-    <template #header>
-      <div class="space-y-3">
-        <div>
-          <h2 class="text-lg font-semibold">Filters</h2>
-          <p class="text-sm text-(--ui-text-muted)">Select account and time range for chart data.</p>
-        </div>
+  <div class="flex flex-wrap items-center gap-3 rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) px-3 py-2">
+    <!-- Account pills -->
+    <div class="flex items-center gap-1.5">
+      <span class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Account</span>
+      <UButton
+        v-for="option in accountOptions"
+        :key="option.label"
+        :label="option.label"
+        size="xs"
+        :color="selectedAccountId === option.id ? 'primary' : 'neutral'"
+        :variant="selectedAccountId === option.id ? 'solid' : 'ghost'"
+        @click="emit('selectAccount', option.id)"
+      />
+    </div>
 
-        <div class="space-y-2">
-          <p class="text-xs font-medium tracking-wide text-(--ui-text-muted) uppercase">Account</p>
-          <div class="flex flex-wrap gap-2">
-            <UButton
-              v-for="option in accountOptions"
-              :key="option.label"
-              :label="option.label"
-              size="xs"
-              :color="selectedAccountId === option.id ? 'primary' : 'neutral'"
-              :variant="selectedAccountId === option.id ? 'solid' : 'outline'"
-              @click="emit('selectAccount', option.id)"
-            />
-          </div>
-        </div>
+    <span class="h-4 w-px bg-(--ui-border)" />
 
-        <div class="space-y-2">
-          <p class="text-xs font-medium tracking-wide text-(--ui-text-muted) uppercase">Range</p>
-          <div class="flex flex-wrap gap-2">
-            <UButton
-              v-for="option in timeRangeOptions"
-              :key="option"
-              :label="option"
-              size="xs"
-              :color="selectedTimeRange === option ? 'primary' : 'neutral'"
-              :variant="selectedTimeRange === option ? 'solid' : 'outline'"
-              @click="emit('selectRange', option)"
-            />
-          </div>
-        </div>
+    <!-- Range segmented control -->
+    <div class="flex items-center gap-1.5">
+      <span class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Range</span>
+      <UButton
+        v-for="option in timeRangeOptions"
+        :key="option"
+        :label="option"
+        size="xs"
+        :color="selectedTimeRange === option ? 'primary' : 'neutral'"
+        :variant="selectedTimeRange === option ? 'solid' : 'ghost'"
+        @click="emit('selectRange', option)"
+      />
+    </div>
 
-        <div class="border-t border-(--ui-border)/60 pt-3">
-          <div class="flex flex-wrap items-center gap-3">
-            <UButton label="Refresh Prices" color="primary" variant="outline" size="sm" :loading="isSyncing" :disabled="isSyncing" @click="emit('refresh')" />
-            <span v-if="lastError" class="text-xs text-red-600 dark:text-red-300">
-              {{ lastError }}
-            </span>
-            <span v-if="syncStatus === 'SUCCESS' && !isSyncing" class="text-xs text-emerald-600 dark:text-emerald-300"> Prices updated </span>
-          </div>
-        </div>
-      </div>
-    </template>
-  </UCard>
+    <div class="ml-auto flex items-center gap-2">
+      <UButton icon="i-lucide-refresh-cw" size="xs" color="neutral" variant="ghost" :loading="isSyncing" :disabled="isSyncing" @click="emit('refresh')" />
+      <span v-if="lastError" class="text-2xs text-[var(--color-signal-red)]">{{ lastError }}</span>
+      <span v-if="syncStatus === 'SUCCESS' && !isSyncing" class="text-2xs text-[var(--color-accent)]">Updated</span>
+    </div>
+  </div>
 </template>

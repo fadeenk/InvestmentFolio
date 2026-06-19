@@ -1,72 +1,53 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { PortfolioSummary } from '~/types/vault'
 
-defineProps<{
+const props = defineProps<{
   summary: PortfolioSummary
 }>()
+
+const totalValue = computed(() => props.summary.totalMarketValue + props.summary.totalCashBalance)
 </script>
 
 <template>
-  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-    <UCard>
-      <template #header>
-        <p class="text-sm text-(--ui-text-muted)">Total Value</p>
-      </template>
-      <p class="text-2xl font-bold">{{ formatCurrency(summary.totalMarketValue + summary.totalCashBalance) }}</p>
-    </UCard>
-
-    <UCard>
-      <template #header>
-        <p class="text-sm text-(--ui-text-muted)">Today's G/L</p>
-      </template>
-      <p class="text-2xl font-bold" :class="signClass(summary.totalDayGainLoss)">
-        {{ formatCurrency(summary.totalDayGainLoss) }}
-      </p>
-      <p class="text-xs text-(--ui-text-muted)">{{ formatPercent(summary.totalDayGainLossPct) }}</p>
-    </UCard>
-
-    <UCard>
-      <template #header>
-        <p class="text-sm text-(--ui-text-muted)">Unrealized G/L</p>
-      </template>
-      <p class="text-2xl font-bold" :class="signClass(summary.totalUnrealizedGainLoss)">
-        {{ formatCurrency(summary.totalUnrealizedGainLoss) }}
-      </p>
-      <p class="text-xs text-(--ui-text-muted)">{{ formatPercent(summary.totalUnrealizedGainLossPct) }}</p>
-    </UCard>
-
-    <UCard>
-      <template #header>
-        <p class="text-sm text-(--ui-text-muted)">Cost Basis</p>
-      </template>
-      <p class="text-2xl font-bold">{{ formatCurrency(summary.totalCostBasis) }}</p>
-    </UCard>
-
-    <UCard>
-      <template #header>
-        <p class="text-sm text-(--ui-text-muted)">Realized G/L YTD</p>
-      </template>
-      <p class="text-2xl font-bold" :class="signClass(summary.ytdRealizedGainLossTotal)">
-        {{ formatCurrency(summary.ytdRealizedGainLossTotal) }}
-      </p>
-      <p class="text-xs text-(--ui-text-muted)">
-        Short {{ formatCurrency(summary.ytdRealizedGainLossShortTerm) }} / Long {{ formatCurrency(summary.ytdRealizedGainLossLongTerm) }}
-      </p>
-    </UCard>
-
-    <UCard>
-      <template #header>
-        <p class="text-sm text-(--ui-text-muted)">Income YTD</p>
-      </template>
-      <p class="text-2xl font-bold">{{ formatCurrency(summary.ytdIncomeTotal) }}</p>
-      <p class="text-xs text-(--ui-text-muted)">Div {{ formatCurrency(summary.ytdDividends) }} / Int {{ formatCurrency(summary.ytdInterest) }}</p>
-    </UCard>
-
-    <UCard>
-      <template #header>
-        <p class="text-sm text-(--ui-text-muted)">Available Cash</p>
-      </template>
-      <p class="text-2xl font-bold">{{ formatCurrency(summary.totalCashBalance) }}</p>
-    </UCard>
+  <div class="flex overflow-x-auto rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated)">
+    <div class="flex shrink-0 items-stretch divide-x divide-(--ui-border) text-xs">
+      <div class="flex min-w-28 flex-col justify-center px-4 py-3">
+        <span class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Total Value</span>
+        <span class="text-sm font-[var(--font-mono)] font-bold text-(--ui-text)">{{ formatCurrency(totalValue) }}</span>
+      </div>
+      <div class="flex min-w-28 flex-col justify-center px-4 py-3">
+        <span class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Day G/L</span>
+        <span class="text-sm font-[var(--font-mono)] font-bold" :class="signClass(summary.totalDayGainLoss)">
+          {{ formatCurrency(summary.totalDayGainLoss) }}
+          <span class="text-2xs">({{ formatPercent(summary.totalDayGainLossPct) }})</span>
+        </span>
+      </div>
+      <div class="flex min-w-28 flex-col justify-center px-4 py-3">
+        <span class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Unrealized G/L</span>
+        <span class="text-sm font-[var(--font-mono)] font-bold" :class="signClass(summary.totalUnrealizedGainLoss)">
+          {{ formatCurrency(summary.totalUnrealizedGainLoss) }}
+          <span class="text-2xs">({{ formatPercent(summary.totalUnrealizedGainLossPct) }})</span>
+        </span>
+      </div>
+      <div class="flex min-w-28 flex-col justify-center px-4 py-3">
+        <span class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Cost Basis</span>
+        <span class="text-sm font-[var(--font-mono)] font-bold text-(--ui-text)">{{ formatCurrency(summary.totalCostBasis) }}</span>
+      </div>
+      <div class="flex min-w-28 flex-col justify-center px-4 py-3">
+        <span class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Realized YTD</span>
+        <span class="text-sm font-[var(--font-mono)] font-bold" :class="signClass(summary.ytdRealizedGainLossTotal)">
+          {{ formatCurrency(summary.ytdRealizedGainLossTotal) }}
+        </span>
+      </div>
+      <div class="flex min-w-28 flex-col justify-center px-4 py-3">
+        <span class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Income YTD</span>
+        <span class="text-sm font-[var(--font-mono)] font-bold text-(--ui-text)">{{ formatCurrency(summary.ytdIncomeTotal) }}</span>
+      </div>
+      <div class="flex min-w-28 flex-col justify-center px-4 py-3">
+        <span class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Cash</span>
+        <span class="text-sm font-[var(--font-mono)] font-bold text-(--ui-text)">{{ formatCurrency(summary.totalCashBalance) }}</span>
+      </div>
+    </div>
   </div>
 </template>

@@ -100,6 +100,7 @@ function processSchwabAction(action: string | undefined, description: string | u
   if (!action) return ''
   else if (action === 'Full Redemption') return TransactionType.Sell
   else if (action === 'Security Transfer') return TransactionType.Buy
+  else if (action === 'Qualified Dividend') return TransactionType.Dividend
   else if (action === 'Journal' && description?.startsWith('TRANSFER FUNDS')) return TransactionType.DEPOSIT
   return action
 }

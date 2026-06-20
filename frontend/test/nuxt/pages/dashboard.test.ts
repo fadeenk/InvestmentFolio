@@ -50,6 +50,7 @@ function mountDashboard() {
         DashboardAllocationChart: { template: '<div />' },
         DashboardBalancesChart: { template: '<div />' },
         DashboardIncomeChart: { template: '<div />' },
+        DashboardPerformanceChart: { template: '<div data-testid="perf-chart" />' },
       },
     },
   })
@@ -85,6 +86,7 @@ describe('dashboard page', () => {
 
     expect(wrapper.text()).not.toContain('Unlock your vault')
     expect(wrapper.text()).toContain('No accounts found.')
+    expect(wrapper.find('[data-testid="perf-chart"]').exists()).toBe(true)
   })
 
   it('renders account and position rows with computed summary values', () => {

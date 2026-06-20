@@ -241,6 +241,10 @@ function selectRange(range: TimeRange): void {
         <DashboardBalancesChart :accounts="filteredAccounts" />
         <DashboardIncomeChart :data="incomeByYear" />
       </div>
+
+      <div class="grid gap-4">
+        <DashboardPerformanceChart :data="portfolioValueChartData" :time-range="selectedTimeRange" />
+      </div>
     </template>
   </div>
 </template>

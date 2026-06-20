@@ -17,6 +17,11 @@ const pageName = computed(() => {
 function toggleColorMode() {
   colorMode.value = isDark.value ? 'light' : 'dark'
 }
+
+function lockVault() {
+  vault.lockVault()
+  navigateTo('/')
+}
 </script>
 
 <template>
@@ -28,7 +33,7 @@ function toggleColorMode() {
     </div>
     <div class="flex items-center gap-3">
       <UButton :icon="isDark ? 'i-lucide-moon' : 'i-lucide-sun'" size="xs" color="neutral" variant="ghost" @click="toggleColorMode" />
-      <UButton icon="i-lucide-lock" size="xs" color="neutral" variant="ghost" @click="vault.lockVault()" />
+      <UButton icon="i-lucide-lock" size="xs" color="neutral" variant="ghost" @click="lockVault" />
     </div>
   </div>
 </template>

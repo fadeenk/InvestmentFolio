@@ -40,7 +40,6 @@ function makeTestPayload(): VaultPayload {
       },
       schwabAccountHashes: {},
       schwabAccountHashesByFullNumber: {},
-      schwabTokenMeta: null,
       costBasisMethodByAccount: {},
       lastSavedAt: null,
     },

@@ -7,7 +7,28 @@ import { SyncStatus } from '@/types/vault'
 import { transactionCashDelta } from '@/utils/ledger'
 import type { BalancePoint, Position, PricePoint, VaultPayload } from '@/types/vault'
 
-const BACKFILL_CUTOFF = '2026-06-01'
+function computeYahooRange(payload: VaultPayload): string {
+  const earliestTx = payload.transactions
+    .map((t) => t.date)
+    .filter(Boolean)
+    .sort()[0]
+  if (!earliestTx) return '1mo'
+
+  const earliest = new Date(earliestTx)
+  const now = new Date()
+  const diffMs = now.getTime() - earliest.getTime()
+  const diffDays = diffMs / (1000 * 60 * 60 * 24)
+
+  if (diffDays <= 7) return '5d'
+  if (diffDays <= 31) return '1mo'
+  if (diffDays <= 93) return '3mo'
+  if (diffDays <= 183) return '6mo'
+  if (diffDays <= 365) return '1y'
+  if (diffDays <= 730) return '2y'
+  if (diffDays <= 1825) return '5y'
+  if (diffDays <= 3650) return '10y'
+  return 'max'
+}
 
 export const useMarketStore = defineStore('market', () => {
   const vaultStore = useVaultStore()
@@ -64,7 +85,8 @@ export const useMarketStore = defineStore('market', () => {
 
         if (!isCacheFresh(latestDate) || needsHistoricalBackfill(cached)) {
           try {
-            const res = await fetch(`${base}/api/market/history?symbol=${encodeURIComponent(symbol)}`)
+            const range = computeYahooRange(payload)
+            const res = await fetch(`${base}/api/market/history?symbol=${encodeURIComponent(symbol)}&range=${range}`)
             if (!res.ok) throw new Error(`History fetch failed: ${res.status}`)
             const data: { symbol: string; candles: PricePoint[] } = await res.json()
 
@@ -298,7 +320,7 @@ function isCacheFresh(latestDate: string | null): boolean {
 function needsHistoricalBackfill(cached: PricePoint[]): boolean {
   if (cached.length === 0) return true
   const earliest = cached.reduce((min, p) => (p.date < min ? p.date : min), cached[0]!.date)
-  return earliest > BACKFILL_CUTOFF
+  return earliest > '2026-06-01'
 }
 
 function roundCurrency(value: number): number {

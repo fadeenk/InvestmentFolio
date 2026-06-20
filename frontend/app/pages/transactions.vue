@@ -297,11 +297,6 @@ function deleteTransaction(id: string): void {
 <template>
   <div class="mx-auto w-full max-w-7xl space-y-6 px-4 py-4">
     <div class="flex items-center justify-between">
-      <h1 class="text-sm font-[var(--font-mono)] text-(--ui-text-muted)">
-        <NuxtLink to="/" class="hover:text-(--ui-text)">~</NuxtLink>
-        <span class="mx-1">/</span>
-        <span class="text-(--ui-text)">transactions</span>
-      </h1>
       <div class="flex items-center gap-2">
         <UButton label="New transaction" color="primary" size="xs" @click="openAdd" />
         <UButton label="Dashboard" to="/dashboard" color="neutral" variant="ghost" size="xs" />

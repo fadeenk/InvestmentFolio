@@ -98,7 +98,7 @@ function dismissBanner() {
 
     <!-- Unlocked state: sidebar + top strip + content -->
     <template v-else>
-      <div class="flex min-h-screen">
+      <div class="flex h-screen">
         <!-- Desktop sidebar (hidden on mobile) -->
         <AppSidebar class="hidden md:block" />
 
@@ -136,15 +136,14 @@ function dismissBanner() {
             </div>
           </div>
 
-          <!-- Page content with page transitions -->
-          <UMain>
-            <NuxtPage />
-          </UMain>
+          <!-- Scrollable page content -->
+          <div class="min-h-0 flex-1 overflow-y-auto">
+            <UMain>
+              <NuxtPage />
+            </UMain>
+          </div>
 
-          <!-- Minimal footer -->
-          <footer class="border-t border-(--ui-border) px-4 py-2 text-xs text-(--ui-text-muted)">
-            Encrypted at rest &bull; {{ new Date().getFullYear() }}
-          </footer>
+          <AppFooter />
         </div>
       </div>
     </template>

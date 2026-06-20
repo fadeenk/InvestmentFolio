@@ -311,13 +311,7 @@ async function changePassphrase(): Promise<void> {
 
 <template>
   <div class="mx-auto w-full max-w-7xl space-y-6 px-4 py-4">
-    <!-- Breadcrumb header -->
     <div class="flex items-center justify-between">
-      <h1 class="text-sm font-[var(--font-mono)] text-(--ui-text-muted)">
-        <NuxtLink to="/" class="hover:text-(--ui-text)">~</NuxtLink>
-        <span class="mx-1">/</span>
-        <span class="text-(--ui-text)">settings</span>
-      </h1>
       <UButton label="Dashboard" to="/dashboard" color="neutral" variant="ghost" size="xs" />
     </div>
 

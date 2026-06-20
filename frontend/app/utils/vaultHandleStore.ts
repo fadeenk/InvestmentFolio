@@ -4,6 +4,11 @@ const HANDLE_KEY = 'currentHandle'
 const LS_FILE_NAME = 'ifolio-last-vault-filename'
 const LS_OPENED_AT = 'ifolio-last-vault-opened-at'
 
+export interface VaultMeta {
+  fileName: string
+  lastOpenedAt: string | null
+}
+
 function getDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, 1)
@@ -65,6 +70,49 @@ export function getLastFileName(): string | null {
 export function getLastOpenedAt(): string | null {
   if (typeof localStorage === 'undefined') return null
   return localStorage.getItem(LS_OPENED_AT)
+}
+
+export function getMeta(): VaultMeta | null {
+  if (typeof localStorage === 'undefined') return null
+  const fileName = localStorage.getItem(LS_FILE_NAME)
+  if (!fileName) return null
+  return {
+    fileName,
+    lastOpenedAt: localStorage.getItem(LS_OPENED_AT),
+  }
+}
+
+export async function getHandleStatus(): Promise<'valid' | 'expired' | 'unavailable'> {
+  if (!isAvailable()) return 'unavailable'
+  const handle = await loadHandle()
+  if (!handle) return 'unavailable'
+  try {
+    const permission = await handle.queryPermission({ mode: 'read' })
+    if (permission === 'granted') return 'valid'
+    return 'expired'
+  } catch {
+    return 'expired'
+  }
+}
+
+export async function pickAndReRemember(): Promise<FileSystemFileHandle | null> {
+  try {
+    const [handle] = await window.showOpenFilePicker({
+      types: [
+        {
+          description: 'iFolio Vault',
+          accept: { 'application/octet-stream': ['.iFolio'] },
+        },
+      ],
+    })
+    if (handle) {
+      await saveHandle(handle)
+    }
+    return handle ?? null
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') return null
+    throw err
+  }
 }
 
 export function isAvailable(): boolean {

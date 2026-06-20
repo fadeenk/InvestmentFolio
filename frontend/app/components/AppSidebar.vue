@@ -1,13 +1,7 @@
 <script setup lang="ts">
-import { useVaultStore } from '~/stores/vault.store'
-import { VaultStatus } from '~/types/vault'
-import { computed } from 'vue'
 import { useRoute } from '#imports'
 
-const vault = useVaultStore()
 const route = useRoute()
-
-const isUnlocked = computed(() => vault.status === VaultStatus.UNLOCKED)
 
 const navItems = [
   { label: 'Dashboard', icon: 'i-lucide-layout-dashboard', to: '/dashboard' },
@@ -25,19 +19,21 @@ function isActive(to: string): boolean {
 <template>
   <aside class="group fixed top-0 left-0 z-50 flex h-full w-14 flex-col border-r border-(--ui-border) bg-(--ui-bg) transition-all duration-200 hover:w-50">
     <!-- Logo area -->
-    <div class="flex h-14 items-center justify-center border-b border-(--ui-border)">
-      <NuxtLink to="/" class="flex items-center gap-2 overflow-hidden">
-        <AppLogo class="h-5 w-5 shrink-0" />
-        <span class="text-sm font-bold whitespace-nowrap opacity-0 transition-opacity duration-200 group-hover:opacity-100">iFolio</span>
+    <div class="flex h-14 flex-col gap-1 border-b border-(--ui-border) p-2">
+      <NuxtLink
+        to="/"
+        :class="[
+          'relative flex items-center gap-3 rounded-sm',
+          'px-3 py-2 text-sm',
+          'text-[var(--color-accent)]',
+          'transition-colors duration-150',
+          'hover:bg-(--ui-bg-elevated)',
+        ]"
+      >
+        <div v-if="isActive('/')" class="absolute top-1/2 left-0 h-4 w-0.5 -translate-y-1/2 rounded-r bg-[var(--color-accent)]" />
+        <UIcon name="i-lucide-vault" class="h-4 w-4 shrink-0" />
+        <span class="text-sm font-bold whitespace-nowrap text-[var(--ui-text)] opacity-0 transition-opacity duration-200 group-hover:opacity-100">iFolio</span>
       </NuxtLink>
-    </div>
-
-    <!-- Vault indicator dot -->
-    <div class="flex items-center justify-center border-b border-(--ui-border) py-2">
-      <div class="h-2 w-2 shrink-0 rounded-full" :class="isUnlocked ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-signal-amber)]'" />
-      <span class="ml-2 text-xs whitespace-nowrap text-(--ui-text-muted) opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-        {{ isUnlocked ? 'Unlocked' : 'Locked' }}
-      </span>
     </div>
 
     <!-- Navigation -->

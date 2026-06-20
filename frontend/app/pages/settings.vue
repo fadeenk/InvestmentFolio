@@ -327,7 +327,7 @@ async function changePassphrase(): Promise<void> {
             'file:mr-3 file:rounded-sm file:border-0 file:bg-(--ui-bg-elevated) file:px-2 file:py-1 file:text-xs file:text-(--ui-text)'
           "
           @change="onImportFileChange"
-        />
+        >
       </div>
       <div
         v-if="importErrors.length > 0"
@@ -537,7 +537,7 @@ async function changePassphrase(): Promise<void> {
         <div>
           <p class="mb-1 text-xs text-(--ui-text-muted)">Theme</p>
           <USelect
-            :value="displayPreferences.theme"
+            :model-value="displayPreferences.theme"
             :items="themeOptions.map((t) => ({ label: t, value: t }))"
             size="sm"
             variant="outline"
@@ -549,7 +549,7 @@ async function changePassphrase(): Promise<void> {
         <div>
           <p class="mb-1 text-xs text-(--ui-text-muted)">Currency format</p>
           <USelect
-            :value="displayPreferences.currencyFormat"
+            :model-value="displayPreferences.currencyFormat"
             :items="currencyOptions.map((c) => ({ label: c, value: c }))"
             size="sm"
             variant="outline"
@@ -561,7 +561,7 @@ async function changePassphrase(): Promise<void> {
         <div>
           <p class="mb-1 text-xs text-(--ui-text-muted)">Date format</p>
           <USelect
-            :value="displayPreferences.dateFormat"
+            :model-value="displayPreferences.dateFormat"
             :items="dateFormatOptions.map((d) => ({ label: d, value: d }))"
             size="sm"
             variant="outline"
@@ -573,7 +573,7 @@ async function changePassphrase(): Promise<void> {
         <div>
           <p class="mb-1 text-xs text-(--ui-text-muted)">Default account filter</p>
           <USelect
-            :value="displayPreferences.defaultAccountFilter ?? 'ALL'"
+            :model-value="displayPreferences.defaultAccountFilter ?? 'ALL'"
             :items="accountOptions.map((a) => ({ label: a.label, value: a.id }))"
             size="sm"
             variant="outline"
@@ -585,7 +585,7 @@ async function changePassphrase(): Promise<void> {
         <div>
           <p class="mb-1 text-xs text-(--ui-text-muted)">Default cost basis</p>
           <USelect
-            :value="displayPreferences.defaultCostBasisMethod"
+            :model-value="displayPreferences.defaultCostBasisMethod"
             :items="costBasisOptions.map((c) => ({ label: c, value: c }))"
             size="sm"
             variant="outline"
@@ -597,7 +597,7 @@ async function changePassphrase(): Promise<void> {
         <div>
           <p class="mb-1 text-xs text-(--ui-text-muted)">Default time range</p>
           <USelect
-            :value="displayPreferences.defaultTimeRange"
+            :model-value="displayPreferences.defaultTimeRange"
             :items="timeRangeOptions.map((r) => ({ label: r, value: r }))"
             size="sm"
             variant="outline"

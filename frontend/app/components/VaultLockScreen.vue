@@ -200,7 +200,7 @@ function handleForget() {
       <template v-else>
         <div class="flex flex-col gap-3">
           <UButton label="$ create" color="primary" variant="outline" size="sm" block @click="startFlow('create')" />
-          <UButton label="$ open \u2014vault" color="neutral" variant="ghost" size="sm" block @click="startFlow('open')" />
+          <UButton label="$ open vault" color="neutral" variant="ghost" size="sm" block @click="startFlow('open')" />
         </div>
       </template>
     </div>

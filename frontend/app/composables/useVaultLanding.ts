@@ -87,7 +87,7 @@ export function useVaultLanding() {
         })
         await vault.setFileHandle(handle)
         await vault.createVault(passphrase.value)
-        await router.push('/dashboard')
+        navigateAfterUnlock()
       } else if (flow.value === 'open') {
         const supportsPicker = isAvailable()
         if (supportsPicker) {
@@ -112,7 +112,7 @@ export function useVaultLanding() {
           if (!file) return
           await vault.openVault(file, passphrase.value)
         }
-        await router.push('/dashboard')
+        navigateAfterUnlock()
       } else if (flow.value === 'unlock') {
         if (rememberedState.value === 'expired') {
           const handle = await pickAndReRemember()
@@ -127,7 +127,7 @@ export function useVaultLanding() {
           }
           await vault.openVault(handle, passphrase.value)
         }
-        await router.push('/dashboard')
+        navigateAfterUnlock()
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return
@@ -135,6 +135,11 @@ export function useVaultLanding() {
     } finally {
       isBusy.value = false
     }
+  }
+
+  function navigateAfterUnlock() {
+    const path = vault.accounts.length > 0 ? '/dashboard' : '/settings'
+    router.push(path)
   }
 
   function forgetVault() {

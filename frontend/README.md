@@ -11,7 +11,7 @@ The frontend is responsible for:
 - Manual transaction imports (CSV) into the local vault
 - Shared local calculations for balances, positions, tax lots, and income
 
-Portfolio data remains local to the browser vault. No backend service is required.
+Portfolio data remains local to the browser vault. Live market data (quotes + price history) is fetched through a Cloudflare Worker proxy to Yahoo Finance — no authentication required.
 
 ## Runtime Configuration
 

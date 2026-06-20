@@ -7,7 +7,7 @@
 | Phase | Title              |
 | ----- | ------------------ |
 | 1     | Foundation         |
-| 2     | Schwab Integration |
+| 2     | Market Data & Sync |
 | 3     | Dashboard & Views  |
 | 4     | Manual Entry & CSV |
 | 5     | Polish & Launch    |
@@ -55,64 +55,26 @@ Set up the project scaffold, encrypted vault, and Cloudflare Worker. Nothing wor
 
 - [x] Deploy worker
 
-## Phase 2 — Schwab Integration · Weeks 5–8
+## Phase 2 — Market Data & Sync · Weeks 5–8 (superseded)
 
-Wire up OAuth 2.0, token lifecycle, and all Schwab API endpoints. This is the highest-complexity block.
+This phase originally wired up Schwab OAuth + API integration. **Schwab has been replaced with Yahoo Finance** (free, no-key) — see [Yahoo Finance Market Data Spec](../superpowers/specs/2026-06-19-Yahoo-Finance-market-data.md) for details. The historical record is preserved below.
 
-### OAuth 2.0 flow `Auth`
+### Market data via Yahoo Finance (replaces Schwab)
 
-- [x] Register Schwab developer app, select Accounts & Trading + Market Data production _(approval takes 1–3 business days — submit at the start of this phase)_
-- [x] Implement `/auth/login` redirect to Schwab consent page
-- [x] Implement `/auth/callback`: exchange code → tokens, AES-GCM encrypt tokens, store in KV
-- [x] Implement `/auth/refresh`: swap refresh token for new access token, update KV
+- [x] Real-time quotes via Yahoo Finance `v8/finance/chart?range=1d`
+- [x] 5-year price history via Yahoo Finance `v8/finance/chart?range={computed}`
+- [x] Worker acts as CORS proxy + data transformer for Yahoo Finance
+- [x] Remove all OAuth/auth infrastructure (Worker + frontend)
+- [x] Frontend: remove Schwab connection UI, OAuth store
+- [x] No authentication required for market data
+- [x] Range auto-computed from earliest transaction date
 
-> **Depends on:** Cloudflare Worker skeleton
+### Account & CSV import (Schwab format) `Data`
 
-### Account & position sync `API`
-
-- [x] `GET /trader/v1/accounts/accountNumbers` → store account hashes in vault metadata
-- [x] `GET /trader/v1/accounts?fields=positions` → balances, positions, cash
-- [x] Map Schwab account shapes to internal `Account` and `Position` interfaces
-- [x] Merge new positions into vault state; track `lastUpdatedAt` per account
-- [x] Display accounts and positions in dashboard
-
-> **Depends on:** OAuth 2.0 flow
-
-### Transaction sync & mapping `API`
-
-- [x] `GET /trader/v1/accounts/{hash}/transactions` for every account since lastupdated till now
-- [x] Map all Schwab transaction types to iFolio categories
-- [x] Deduplication by transaction ID before merging into vault
-- [x] Tag imported transactions with `importSource: API`
-- [x] Ensure on unlock and successful authentication it triggers syncing of accounts possitions and transactions
-- [ ] Handle `CORPORATE_ACTION`: surface user notification, flag lots for manual review
-
-> **Depends on:** Account & position sync
-
-### Market data & quotes `API`
-
-- [ ] `GET /marketdata/v1/quotes?symbols=...` for all held symbols
-- [ ] Store latest prices in vault `priceHistory`; update `currentBalance` per position
-- [ ] `GET /marketdata/v1/pricehistory/{symbol}` on demand for chart data
-- [ ] Worker: track Schwab API call rate; return `429` with `Retry-After` if limit approaching
-- [ ] Frontend: queue sync retry on `429`; show "Sync paused" indicator
-
-> **Depends on:** Account & position sync
-
-### Token expiry & re-auth `Auth`
-
-- [x] Worker tracks refresh token expiry; return warning in `/auth/status` response
-- [x] Show banner 24 hours before refresh token expiry
-- [x] `GET /auth/status`: token expiry timestamps + connected account count
-- [x] Settings view: Schwab connection status, re-authorize button, token expiry timer
-- [x] On `401` mid-session: silently refresh; on refresh failure show non-blocking banner
-- [x] Frontend: detect token expiry, call `/auth/refresh` silently before API calls
-
-> **Depends on:** OAuth 2.0 flow
-
-### ⚠️ Open question
-
-**Q2:** Schwab re-auth every 7 days is the biggest UX friction point. Decide whether to add browser notification reminders before building the settings UI.
+- [x] Schwab CSV schema parser (`Date`, `Action`, `Symbol`, `Description`, `Quantity`, `Price`, `Fees & Comm`, `Amount`)
+- [x] Map Schwab transaction types (Buy, Sell, Dividend, Transfer, Journal) to iFolio
+- [x] Deduplication by external ID
+- [x] Tag imported records with `importSource: CSV_IMPORT`
 
 ---
 
@@ -155,8 +117,8 @@ Build all user-facing views on top of vault data: dashboard, positions, transact
 
 ### Settings view `UI`
 
-- [x] Schwab connection: status badge, re-authorize button, token expiry countdown
 - [x] Account management: add, edit, reorder, deactivate accounts
+- [x] Market data sync: refresh prices, cached symbols count, fetch progress
 - [x] Vault management: change passphrase, export vault as JSON, delete vault data
 - [x] Display preferences: currency/date format, default account filter, cost basis method, theme (light/dark/system)
 - [x] Mobile bottom navigation: collapses sidebar on small screens
@@ -171,7 +133,7 @@ Build all user-facing views on top of vault data: dashboard, positions, transact
 
 ## Phase 4 — Manual Entry & CSV · Weeks 14–16
 
-Add manual account entry (Other/CASH accounts) and Optum CSV import. Unblocks non-Schwab users.
+Add manual account entry (Other/CASH accounts) and Optum CSV import.
 
 ### Manual entry (Other accounts) `Data`
 
@@ -241,11 +203,11 @@ Error handling, edge cases, mobile QA, performance, and final deployment.
 
 ### Deployment & docs `Deploy`
 
-- [ ] Final `wrangler deploy` for Cloudflare Worker; verify KV namespace binding
+- [ ] Final `wrangler deploy` for Cloudflare Worker; verify `FRONTEND_ORIGIN` var
 - [ ] Nuxt static build: `npm run generate` → push `.output/public` to `gh-pages`
 - [ ] Enable GitHub Pages in repo settings, confirm HTTPS
-- [ ] Write first-time setup guide covering vault creation, Schwab OAuth, and first sync
-- [ ] Document 7-day re-auth flow and manual vault backup steps
+- [ ] Write first-time setup guide covering vault creation and CSV import
+- [ ] Document manual vault backup steps
 
 > **Depends on:** All phases complete
 

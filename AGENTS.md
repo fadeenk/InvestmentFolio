@@ -20,7 +20,7 @@ CI order (also the preferred local order): `lint -> format -> typecheck -> test`
 
 ## Architecture
 
-- **Privacy-first**: vault encrypts/decrypts locally (Web Crypto API: AES-256-GCM, PBKDF2-HMAC-SHA256, 600K iterations). No portfolio data touches any server. The Worker is only a CORS proxy + OAuth relay for the Schwab API.
+- **Privacy-first**: vault encrypts/decrypts locally (Web Crypto API: AES-256-GCM, PBKDF2-HMAC-SHA256, 600K iterations). No portfolio data touches any server. The Worker is a CORS proxy for Yahoo Finance market data (no auth required).
 - **Data flow**: Pages -> Pinia stores -> presentational chart components (charts never import stores).
 - **Types**: All in `app/types/` (enums.ts, vault.ts) -- never inlined into components.
 - **Entrypoints**: `app/app.vue` (frontend), `worker/src/index.ts` (worker).

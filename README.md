@@ -8,8 +8,8 @@ iFolio is designed with a strict privacy-first approach to ensure your financial
 
 - **Local Encrypted Vault**: No portfolio data is stored in the cloud. All user data resides in an **AES-256-GCM encrypted vault file** on your own device.
 - **Zero-Knowledge Sessions**: Each session begins by unlocking the vault with a passphrase, loading decrypted data into memory, and re-encrypting it upon save.
-- **No Required Backend**: Portfolio management runs locally in the browser with no API dependency.
-- **Zero Recurring Cost**: The stack is designed to run for free, hosted on GitHub Pages.
+- **Zero-Knowledge Backend**: The optional Cloudflare Worker is a lightweight CORS proxy for Yahoo Finance market data — no user data touches it, no authentication required.
+- **Zero Recurring Cost**: The stack is designed to run for free, hosted on GitHub Pages + Cloudflare Workers free tier.
 
 ## 🚀 Features
 

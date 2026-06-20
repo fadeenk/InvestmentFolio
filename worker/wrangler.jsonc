@@ -8,20 +8,7 @@
 	},
 	"upload_source_maps": true,
 	"compatibility_flags": ["nodejs_compat"],
-	"secrets": {
-		"required": ["CLIENT_ID", "CLIENT_SECRET", "TOKEN_ENCRYPTION_KEY"],
-	},
 	"vars": {
-		"SCHWAB_REDIRECT_URI": "https://worker.mrkannah.workers.dev/auth/callback",
-		"SCHWAB_AUTH_URL": "https://api.schwabapi.com/v1/oauth/authorize",
-		"SCHWAB_TOKEN_URL": "https://api.schwabapi.com/v1/oauth/token",
-		"SCHWAB_SCOPE": "readonly",
 		"FRONTEND_ORIGIN": "https://ifolio.mrkannah.com,https://dev.local.mrkannah.com",
 	},
-	"kv_namespaces": [
-		{
-			"binding": "TOKENS",
-			"id": "21948621da054a3aa3f2b29b88813c96",
-		},
-	],
 }

@@ -230,6 +230,10 @@ export function generateBalanceHistories(payload: VaultPayload, symbolToAssetTyp
     }
 
     account.balanceHistory = history
+    account.cashBalance = roundCurrency(runningCash)
+    if (history.length > 0) {
+      account.currentBalance = history[history.length - 1]!.balance
+    }
   }
 }
 

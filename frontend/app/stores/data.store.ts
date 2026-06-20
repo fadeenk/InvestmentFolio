@@ -317,10 +317,14 @@ export const useDataStore = defineStore('data', () => {
 
   const allocation = computed<AllocationSlice[]>(() => {
     const positions = visiblePositions.value
-    const totalValue = positions.reduce((s, p) => s + p.marketValue, 0)
+    const totalPosValue = positions.reduce((s, p) => s + p.marketValue, 0)
+    const accounts = selectedAccountId.value ? allAccounts.value.filter((a) => a.id === selectedAccountId.value) : allAccounts.value
+    const uninvestedCash = accounts.reduce((s, a) => s + a.cashBalance, 0)
+    const totalValue = totalPosValue + uninvestedCash
     if (totalValue === 0) return []
     const byType = new Map<AssetType, number>()
     for (const p of positions) byType.set(p.assetType, (byType.get(p.assetType) ?? 0) + p.marketValue)
+    if (uninvestedCash > 0) byType.set(AssetType.Cash, (byType.get(AssetType.Cash) ?? 0) + uninvestedCash)
     const LABELS: Record<AssetType, string> = {
       [AssetType.Stock]: 'Equity',
       [AssetType.Bond]: 'Fixed Income (Bond)',

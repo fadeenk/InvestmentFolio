@@ -3,15 +3,12 @@ import { computed, ref, watch } from 'vue'
 import { maskAccountNumber } from '~/utils/accounts'
 import { useDataStore } from '~/stores/data.store'
 import { useMarketStore } from '~/stores/market.store'
-import { useOAuthStore } from '~/stores/oauth.store'
 import { useSyncStore } from '~/stores/sync.store'
 import { useVaultStore } from '~/stores/vault.store'
 import { AccountType, Bank, CostBasisMethod, DateFormat, Theme, TimeRange } from '~/types/enums'
-import { TokenStatus } from '~/types/vault'
 import type { Account } from '~/types/vault'
 
 const vaultStore = useVaultStore()
-const oauthStore = useOAuthStore()
 const syncStore = useSyncStore()
 const dataStore = useDataStore()
 const marketStore = useMarketStore()
@@ -92,19 +89,6 @@ const importStatusLabel = computed(() => {
   return 'Idle'
 })
 
-const tokenLabel = computed(() => {
-  switch (oauthStore.tokenStatus) {
-    case TokenStatus.VALID:
-      return 'Connected'
-    case TokenStatus.EXPIRING_SOON:
-      return 'Expiring soon'
-    case TokenStatus.EXPIRED:
-      return 'Expired'
-    default:
-      return 'Not connected'
-  }
-})
-
 const orderedAccounts = computed(() => dataStore.allAccounts)
 
 const accountOptions = computed(() => {
@@ -119,18 +103,6 @@ const accountOptions = computed(() => {
     })),
   ]
 })
-
-function formatRemaining(secondsRemaining: number | null): string {
-  if (secondsRemaining === null) return 'Unknown'
-  if (secondsRemaining <= 0) return 'Expired'
-
-  const hours = Math.floor(secondsRemaining / 3600)
-  if (hours < 1) return 'Less than 1 hour'
-  if (hours < 24) return `${hours}h remaining`
-
-  const days = Math.floor(hours / 24)
-  return `${days}d remaining`
-}
 
 function updateDisplayPreference<K extends keyof typeof displayPreferences.value>(key: K, value: (typeof displayPreferences.value)[K]): void {
   vaultStore.mutatePayload((payload) => {
@@ -314,47 +286,6 @@ async function changePassphrase(): Promise<void> {
     <div class="flex items-center justify-between">
       <UButton label="Dashboard" to="/dashboard" color="neutral" variant="ghost" size="xs" />
     </div>
-
-    <!-- Schwab connection section -->
-    <section>
-      <h2 class="text-2xs mb-3 font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Schwab connection</h2>
-      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
-          <p class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Status</p>
-          <p class="text-sm font-[var(--font-mono)] font-semibold text-(--ui-text)">{{ tokenLabel }}</p>
-        </div>
-        <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
-          <p class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Connected accounts</p>
-          <p class="text-sm font-[var(--font-mono)] font-semibold text-(--ui-text)">{{ oauthStore.connectedAccountCount }}</p>
-        </div>
-        <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
-          <p class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Access token</p>
-          <p class="text-sm font-[var(--font-mono)] font-semibold text-(--ui-text)">{{ formatRemaining(oauthStore.accessTokenSecondsRemaining) }}</p>
-        </div>
-        <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
-          <p class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Refresh token</p>
-          <p class="text-sm font-[var(--font-mono)] font-semibold text-(--ui-text)">{{ formatRemaining(oauthStore.refreshTokenSecondsRemaining) }}</p>
-        </div>
-      </div>
-      <div
-        v-if="oauthStore.expirationWarning"
-        :class="
-          'mt-3 rounded-sm border ' +
-          'border-[var(--color-signal-amber)]/30 bg-[var(--color-signal-amber)]/10 px-3 py-2 text-xs font-[var(--font-mono)] text-[var(--color-signal-amber)]'
-        "
-      >
-        Re-authorization is recommended within 24 hours to avoid sync interruptions.
-      </div>
-      <div class="mt-3 flex flex-wrap gap-2">
-        <UButton label="Refresh status" size="xs" color="neutral" variant="outline" @click="oauthStore.pollTokenStatus" />
-        <UButton
-          :label="oauthStore.requiresReauth ? 'Connect Schwab' : 'Re-authorize Schwab'"
-          size="xs"
-          color="primary"
-          @click="oauthStore.initiateOAuthFlow"
-        />
-      </div>
-    </section>
 
     <!-- Transaction import section -->
     <section>

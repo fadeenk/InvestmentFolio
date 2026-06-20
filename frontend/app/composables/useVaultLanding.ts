@@ -1,8 +1,6 @@
 import { readonly, ref, onMounted } from 'vue'
-import { useRoute, useRouter } from '#imports'
-import { useOAuthStore } from '~/stores/oauth.store'
+import { useRouter } from '#imports'
 import { useVaultStore } from '~/stores/vault.store'
-import { VaultStatus } from '~/types/vault'
 import { getMeta, getHandleStatus, pickAndReRemember, isAvailable } from '~/utils/vaultHandleStore'
 
 export type LandingFlow = 'idle' | 'unlock' | 'open' | 'create'
@@ -11,7 +9,6 @@ export type RememberedState = 'none' | 'valid' | 'expired'
 export function useVaultLanding() {
   const vault = useVaultStore()
   const router = useRouter()
-  const route = useRoute()
 
   const flow = ref<LandingFlow>('idle')
   const rememberedState = ref<RememberedState>('none')
@@ -153,49 +150,8 @@ export function useVaultLanding() {
     passphraseError.value = ''
   }
 
-  function queryToSearchParams(): URLSearchParams {
-    const params = new URLSearchParams()
-    for (const [key, value] of Object.entries(route.query)) {
-      if (Array.isArray(value)) {
-        if (value[0]) params.set(key, value[0])
-        continue
-      }
-      if (value) params.set(key, value)
-    }
-    return params
-  }
-
-  async function applyAuthCallbackStateFromQuery() {
-    const auth = route.query.auth
-    if (!auth) return
-
-    const oauth = useOAuthStore()
-    const authConnected = auth === 'connected'
-
-    oauth.consumeAuthCallbackFromQuery(queryToSearchParams())
-    oauth.clearCallbackMessage()
-
-    const nextQuery: Record<string, string | string[]> = {}
-    for (const [key, value] of Object.entries(route.query)) {
-      if (key === 'auth' || key === 'reason') continue
-      if (Array.isArray(value)) {
-        const filteredValues = value.filter((item): item is string => item !== null)
-        if (filteredValues.length > 0) nextQuery[key] = filteredValues
-        continue
-      }
-      if (value !== null) nextQuery[key] = value
-    }
-
-    await router.replace({ query: nextQuery })
-
-    if (authConnected && vault.status === VaultStatus.UNLOCKED) {
-      await oauth.ensureSyncedAfterUnlockOrAuth()
-    }
-  }
-
   onMounted(async () => {
     await determineRememberedState()
-    await applyAuthCallbackStateFromQuery()
   })
 
   return {

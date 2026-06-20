@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { computed, onUnmounted, watch } from 'vue'
-import { useOAuthStore } from '~/stores/oauth.store'
+import { computed, onUnmounted } from 'vue'
 import { useSyncStore } from '~/stores/sync.store'
 import { useUiStore } from '~/stores/ui'
 import { useVaultStore } from '~/stores/vault.store'
@@ -8,7 +7,6 @@ import { VaultStatus } from '~/types/vault'
 import { useRoute } from '#imports'
 
 const vault = useVaultStore()
-const oauth = useOAuthStore()
 const sync = useSyncStore()
 const ui = useUiStore()
 const route = useRoute()
@@ -70,15 +68,6 @@ if (import.meta.client) {
 onUnmounted(() => {
   window.removeEventListener('beforeunload', onBeforeUnload)
 })
-
-watch(
-  () => vault.status,
-  async () => {
-    if (vault.status === VaultStatus.UNLOCKED) {
-      await oauth.ensureSyncedAfterUnlockOrAuth()
-    }
-  },
-)
 
 function openImportSettings() {
   navigateTo('/settings')

@@ -124,30 +124,31 @@ const accountsSummary = computed(() => {
   })
 })
 
-const incomeByAccount = computed(() => {
+const incomeByYear = computed(() => {
   const records = accountFilter.value ? dataStore.allIncome.filter((r) => r.accountId === accountFilter.value) : dataStore.allIncome
-  const currentYear = dataStore.selectedYear
-  const priorYear = currentYear - 1
 
-  const byAccount = new Map<string, { currentYear: number; priorYear: number }>()
+  const byYear = new Map<number, Map<string, { dividends: number; interest: number }>>()
   for (const r of records) {
-    if (!byAccount.has(r.accountId)) {
-      byAccount.set(r.accountId, { currentYear: 0, priorYear: 0 })
-    }
-    const entry = byAccount.get(r.accountId)!
-    if (r.taxYear === currentYear) entry.currentYear += r.amount
-    if (r.taxYear === priorYear) entry.priorYear += r.amount
+    if (!byYear.has(r.taxYear)) byYear.set(r.taxYear, new Map())
+    const yearMap = byYear.get(r.taxYear)!
+    if (!yearMap.has(r.accountId)) yearMap.set(r.accountId, { dividends: 0, interest: 0 })
+    const entry = yearMap.get(r.accountId)!
+    if (r.incomeType === TransactionType.Dividend) entry.dividends += r.amount
+    if (r.incomeType === TransactionType.Interest) entry.interest += r.amount
   }
 
-  return Array.from(byAccount.entries())
-    .map(([accountId, totals]) => ({
-      accountId,
-      accountName: accountNameById.value.get(accountId) ?? 'Unknown',
-      currentYear: totals.currentYear,
-      priorYear: totals.priorYear,
+  return Array.from(byYear.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([year, accounts]) => ({
+      year,
+      accounts: Array.from(accounts.entries())
+        .map(([accountId, totals]) => ({
+          accountName: accountNameById.value.get(accountId) ?? 'Unknown',
+          dividends: totals.dividends,
+          interest: totals.interest,
+        }))
+        .filter((a) => a.dividends > 0 || a.interest > 0),
     }))
-    .filter((entry) => entry.currentYear > 0 || entry.priorYear > 0)
-    .sort((a, b) => b.currentYear - a.currentYear)
 })
 
 const filteredAccounts = computed(() => {
@@ -238,7 +239,7 @@ function selectRange(range: TimeRange): void {
 
       <div class="grid gap-4 xl:grid-cols-2">
         <DashboardBalancesChart :accounts="filteredAccounts" />
-        <DashboardIncomeChart :data="incomeByAccount" :current-year="dataStore.selectedYear" :prior-year="dataStore.selectedYear - 1" />
+        <DashboardIncomeChart :data="incomeByYear" />
       </div>
     </template>
   </div>

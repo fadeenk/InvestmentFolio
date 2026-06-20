@@ -1,10 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+interface StackedBarSeries {
+  name: string
+  data: number[]
+  color: string
+  group?: string
+}
+
 const props = withDefaults(
   defineProps<{
     categories: string[]
-    series: { name: string; data: number[]; color: string }[]
+    series: StackedBarSeries[]
     height?: number
   }>(),
   { height: 260 },

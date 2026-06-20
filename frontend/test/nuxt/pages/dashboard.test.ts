@@ -46,9 +46,6 @@ function mountDashboard() {
           props: ['label'],
           template: '<button>{{ label }}</button>',
         },
-        DashboardOverview: { template: '<div />' },
-        DashboardFilters: { template: '<div />' },
-        DashboardAccountsTable: { template: '<div />' },
         DashboardPortfolioChart: { template: '<div />' },
         DashboardAllocationChart: { template: '<div />' },
         DashboardBalancesChart: { template: '<div />' },
@@ -86,7 +83,8 @@ describe('dashboard page', () => {
 
     wrapper = mountDashboard()
 
-    expect(wrapper.text()).toContain('dashboard')
+    expect(wrapper.text()).not.toContain('Unlock your vault')
+    expect(wrapper.text()).toContain('No accounts found.')
   })
 
   it('renders account and position rows with computed summary values', () => {
@@ -157,6 +155,8 @@ describe('dashboard page', () => {
     wrapper = mountDashboard()
     const text = wrapper.text()
 
-    expect(text).toContain('dashboard')
+    expect(text).not.toContain('Unlock your vault')
+    expect(text).toContain('Main Brokerage')
+    expect(text).toContain('Legacy IRA')
   })
 })

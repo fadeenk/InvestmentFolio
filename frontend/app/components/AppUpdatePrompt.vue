@@ -13,11 +13,11 @@ const message = computed(() => {
 })
 
 function onRefresh() {
-  updateServiceWorker(true)
+  updateServiceWorker(true).catch(() => {})
 }
 
 function onDismiss() {
-  updateServiceWorker(false)
+  updateServiceWorker(false).catch(() => {})
 }
 </script>
 

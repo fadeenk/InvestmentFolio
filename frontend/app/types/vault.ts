@@ -1,4 +1,4 @@
-import type { Bank, AccountType, TransactionType, AssetType, CostBasisMethod, ImportSource } from './enums'
+import type { Bank, AccountType, TransactionType, AssetType, CostBasisMethod, DateFormat, ImportSource, Theme, TimeRange } from './enums'
 /**
  * Top-level decrypted JSON payload stored inside the .foli vault file.
  * Every field written here will be AES-256-GCM encrypted at rest.
@@ -47,12 +47,12 @@ export interface VaultMetadata {
 }
 
 export interface DisplayPreferences {
-  theme: 'light' | 'dark' | 'system'
-  currencyFormat: string // e.g. 'USD'
-  dateFormat: string // e.g. 'MM/DD/YYYY'
-  defaultAccountFilter: string | null // accountId or null → "All accounts"
+  theme: Theme
+  currencyFormat: string
+  dateFormat: DateFormat
+  defaultAccountFilter: string | null
   defaultCostBasisMethod: CostBasisMethod
-  defaultTimeRange: string // TimeRange enum value
+  defaultTimeRange: TimeRange
 }
 
 export interface Account {

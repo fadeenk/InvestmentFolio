@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { VaultPayload, Account, DisplayPreferences } from '@/types/vault'
 import { VaultStatus } from '@/types/vault'
-import { CostBasisMethod, Theme, DateFormat } from '@/types/enums'
+import { CostBasisMethod, Theme, DateFormat, TimeRange } from '@/types/enums'
 import { deriveKey, randomSalt, encryptPayload, decryptPayload, buildVaultBuffer, parseVaultBuffer } from '@/utils/vault'
 import { backfillClosedLots } from '@/utils/ledger'
 import { saveHandle, loadHandle, forgetHandle as clearPersistedHandle, getLastFileName, isAvailable as isHandleStoreAvailable } from '@/utils/vaultHandleStore'
@@ -29,7 +29,7 @@ function createDefaultPayload(): VaultPayload {
         dateFormat: DateFormat.MM_DD_YYYY,
         defaultAccountFilter: null,
         defaultCostBasisMethod: CostBasisMethod.FIFO,
-        defaultTimeRange: 'YTD',
+        defaultTimeRange: TimeRange.YTD,
       },
       costBasisMethodByAccount: {},
       lastSavedAt: null,

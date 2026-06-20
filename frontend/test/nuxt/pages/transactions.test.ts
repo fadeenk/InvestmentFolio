@@ -3,7 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
 import TransactionsPage from '~/pages/transactions.vue'
 import { useVaultStore } from '~/stores/vault.store'
-import { AccountType, AssetType, Bank, CostBasisMethod, DateFormat, ImportSource, Theme, TransactionType } from '~/types/enums'
+import { AccountType, AssetType, Bank, CostBasisMethod, DateFormat, ImportSource, Theme, TimeRange, TransactionType } from '~/types/enums'
 import { VaultStatus, type VaultPayload } from '~/types/vault'
 
 function createPayload(): VaultPayload {
@@ -29,7 +29,7 @@ function createPayload(): VaultPayload {
         dateFormat: DateFormat.MM_DD_YYYY,
         defaultAccountFilter: null,
         defaultCostBasisMethod: CostBasisMethod.FIFO,
-        defaultTimeRange: 'YTD',
+        defaultTimeRange: TimeRange.YTD,
       },
       costBasisMethodByAccount: {},
       lastSavedAt: null,

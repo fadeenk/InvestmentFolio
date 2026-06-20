@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { describe, it, expect, vi } from 'vitest'
 import worker from '../src/index'
 
@@ -74,10 +73,9 @@ const MOCK_YAHOO_HISTORY: YahooHistoryResponse = {
 	},
 }
 
-function createEnv(overrides: Partial<{ FRONTEND_ORIGIN: string }> = {}): unknown {
-	return {
-		FRONTEND_ORIGIN: overrides.FRONTEND_ORIGIN ?? 'http://localhost:3000',
-	}
+function fetchWithEnv(request: Request, overrides?: { FRONTEND_ORIGIN?: string }): Promise<Response> {
+	const frontendOrigin = overrides?.FRONTEND_ORIGIN ?? 'http://localhost:3000'
+	return worker.fetch(request, { FRONTEND_ORIGIN: frontendOrigin })
 }
 
 function urlFromFetchInput(input: RequestInfo | URL): string {
@@ -89,8 +87,7 @@ function urlFromFetchInput(input: RequestInfo | URL): string {
 describe('market data worker', () => {
 	it('returns 400 for /api/market/quotes when symbols parameter is missing', async () => {
 		const request = new IncomingRequest('http://example.com/api/market/quotes')
-		const env = createEnv() as Env
-		const response = await worker.fetch(request, env)
+		const response = await fetchWithEnv(request)
 
 		expect(response.status).toBe(400)
 		expect(await response.json()).toEqual({ error: 'Missing required parameter: symbols' })
@@ -116,8 +113,7 @@ describe('market data worker', () => {
 
 		try {
 			const request = new IncomingRequest('http://example.com/api/market/quotes?symbols=AAPL,MSFT')
-			const env = createEnv() as Env
-			const response = await worker.fetch(request, env)
+			const response = await fetchWithEnv(request)
 
 			expect(response.status).toBe(200)
 			const body = await response.json()
@@ -132,8 +128,7 @@ describe('market data worker', () => {
 
 	it('returns 400 for /api/market/history when symbol parameter is missing', async () => {
 		const request = new IncomingRequest('http://example.com/api/market/history')
-		const env = createEnv() as Env
-		const response = await worker.fetch(request, env)
+		const response = await fetchWithEnv(request)
 
 		expect(response.status).toBe(400)
 		expect(await response.json()).toEqual({ error: 'Missing required parameter: symbol' })
@@ -153,8 +148,7 @@ describe('market data worker', () => {
 
 		try {
 			const request = new IncomingRequest('http://example.com/api/market/history?symbol=AAPL&range=5y')
-			const env = createEnv() as Env
-			const response = await worker.fetch(request, env)
+			const response = await fetchWithEnv(request)
 
 			expect(response.status).toBe(200)
 			const body = await response.json()
@@ -172,8 +166,7 @@ describe('market data worker', () => {
 
 	it('returns 404 for unknown routes', async () => {
 		const request = new IncomingRequest('http://example.com/unknown')
-		const env = createEnv() as Env
-		const response = await worker.fetch(request, env)
+		const response = await fetchWithEnv(request)
 
 		expect(response.status).toBe(404)
 		expect(await response.json()).toEqual({ error: 'Not found' })
@@ -183,8 +176,7 @@ describe('market data worker', () => {
 		const request = new IncomingRequest('http://example.com/api/market/quotes?symbols=AAPL', {
 			headers: { Origin: 'http://localhost:3000' },
 		})
-		const env = createEnv() as Env
-		const response = await worker.fetch(request, env)
+		const response = await fetchWithEnv(request)
 
 		expect(response.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:3000')
 	})
@@ -194,8 +186,7 @@ describe('market data worker', () => {
 			method: 'OPTIONS',
 			headers: { Origin: 'http://localhost:3000' },
 		})
-		const env = createEnv() as Env
-		const response = await worker.fetch(request, env)
+		const response = await fetchWithEnv(request)
 
 		expect(response.status).toBe(204)
 		expect(response.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:3000')
@@ -203,28 +194,31 @@ describe('market data worker', () => {
 	})
 
 	it('accepts CORS from any origin in FRONTEND_ORIGIN list', async () => {
-		const preflight = await worker.fetch(
+		const originList = 'http://localhost:3000,https://folio.example.com'
+
+		const preflight = await fetchWithEnv(
 			new IncomingRequest('http://example.com/api/market/quotes', {
 				method: 'OPTIONS',
 				headers: { Origin: 'https://folio.example.com' },
 			}),
-			createEnv({ FRONTEND_ORIGIN: 'http://localhost:3000,https://folio.example.com' }) as Env,
+			{ FRONTEND_ORIGIN: originList },
 		)
 		expect(preflight.status).toBe(204)
 		expect(preflight.headers.get('Access-Control-Allow-Origin')).toBe('https://folio.example.com')
 
-		const response = await worker.fetch(
+		const response = await fetchWithEnv(
 			new IncomingRequest('http://example.com/api/market/quotes?symbols=AAPL', {
 				headers: { Origin: 'https://folio.example.com' },
 			}),
-			createEnv({ FRONTEND_ORIGIN: 'http://localhost:3000,https://folio.example.com' }) as Env,
+			{ FRONTEND_ORIGIN: originList },
 		)
 		expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://folio.example.com')
 	})
 
 	it('falls back to first origin when no Origin header is present', async () => {
-		const env = createEnv({ FRONTEND_ORIGIN: 'http://localhost:3000,https://folio.example.com' }) as Env
-		const response = await worker.fetch(new IncomingRequest('http://example.com/api/market/quotes?symbols=AAPL'), env)
+		const response = await fetchWithEnv(new IncomingRequest('http://example.com/api/market/quotes?symbols=AAPL'), {
+			FRONTEND_ORIGIN: 'http://localhost:3000,https://folio.example.com',
+		})
 		expect(response.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:3000')
 	})
 })

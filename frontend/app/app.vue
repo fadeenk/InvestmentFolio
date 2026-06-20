@@ -172,5 +172,8 @@ function dismissBanner() {
         <UButton label="Import transactions" color="primary" @click="openImportSettings" />
       </template>
     </UModal>
+    <ClientOnly>
+      <AppUpdatePrompt />
+    </ClientOnly>
   </UApp>
 </template>

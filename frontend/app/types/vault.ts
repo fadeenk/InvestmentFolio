@@ -39,25 +39,11 @@ export interface VaultPayload {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface VaultMetadata {
-  /** Display preferences saved by the user. */
   displayPreferences: DisplayPreferences
-  /**
-   * Cached Schwab OAuth token metadata (not the raw tokens — those live
-   * in Cloudflare Worker KV). Expiry timestamps are stored here so the
-   * frontend can warn the user without hitting the Worker.
-   */
-  schwabTokenMeta: SchwabTokenMeta | null
   /** Per-account cost basis method override (accountId → method). */
   costBasisMethodByAccount: Record<string, CostBasisMethod>
   /** ISO 8601 timestamp of the last full vault save. */
   lastSavedAt: string | null
-}
-
-export interface SchwabTokenMeta {
-  accessTokenExpiresAt: string // ISO 8601
-  refreshTokenExpiresAt: string // ISO 8601
-  connectedAccountCount: number
-  lastRefreshedAt: string // ISO 8601
 }
 
 export interface DisplayPreferences {

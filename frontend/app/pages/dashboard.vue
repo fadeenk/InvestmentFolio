@@ -238,7 +238,7 @@ function selectRange(range: TimeRange): void {
       </div>
 
       <div class="grid gap-4 xl:grid-cols-2">
-        <DashboardBalancesChart :accounts="filteredAccounts" />
+        <DashboardBalancesChart :accounts="filteredAccounts" :time-range="selectedTimeRange" />
         <DashboardIncomeChart :data="incomeByYear" />
       </div>
 

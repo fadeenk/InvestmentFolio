@@ -1,0 +1,13 @@
+{
+  "cache_read_tokens": 232128219,
+  "cache_write_tokens": 0,
+  "first_activity": "2026-05-04T23:33:08.093000",
+  "input_tokens": 15455391,
+  "last_activity": "2026-06-22T21:38:25.340000",
+  "models_used": "gemma4:31b, big-pickle, hy3-preview-free, minimax-m2.5-free, minimax-m3-free, deepseek-v4-flash-free",
+  "output_tokens": 1692321,
+  "project_name": "InvestmentFolio",
+  "total_cost": 0,
+  "total_interactions": 4043,
+  "total_sessions": 224
+}

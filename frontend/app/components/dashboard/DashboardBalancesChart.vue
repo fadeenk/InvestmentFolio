@@ -1,19 +1,23 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Account } from '~/types/vault'
+import { cutoffDate } from '~/stores/data.store'
+import { TimeRange } from '~/types/enums'
 
 const TERMINAL_COLORS = ['#00c853', '#40c4ff', '#ffd740', '#ff5252', '#b388ff', '#64ffda', '#ffab40', '#ff6e40']
 
 const props = defineProps<{
   accounts: Account[]
+  timeRange: TimeRange
 }>()
 
 const chartSeries = computed<{ name: string; data: { x: number; y: number }[]; color: string }[]>(() => {
+  const cutoff = cutoffDate(props.timeRange)
   return props.accounts.map((account, i) => {
     const history = account.balanceHistory ?? []
     return {
       name: account.displayName,
-      data: history.map((bp) => ({ x: new Date(bp.date).getTime(), y: bp.balance })),
+      data: history.filter((bp) => bp.date >= cutoff).map((bp) => ({ x: new Date(bp.date).getTime(), y: bp.balance })),
       color: TERMINAL_COLORS[i % TERMINAL_COLORS.length] ?? '#6B7280',
     }
   })

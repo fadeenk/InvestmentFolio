@@ -7,12 +7,22 @@ import { SyncStatus } from '@/types/vault'
 import { transactionCashDelta } from '@/utils/ledger'
 import type { BalancePoint, Position, PricePoint, VaultPayload } from '@/types/vault'
 
-function computeYahooRange(payload: VaultPayload): string {
-  const earliestTx = payload.transactions
+function getSymbolEarliestTxDate(symbol: string, transactions: VaultPayload['transactions']): string | null {
+  const upper = symbol.toUpperCase()
+  const dates = transactions
+    .filter((t) => t.symbol.toUpperCase() === upper)
     .map((t) => t.date)
     .filter(Boolean)
-    .sort()[0]
-  if (!earliestTx) return '1mo'
+    .sort()
+  return dates[0] ?? null
+}
+
+function getSymbolRange(symbol: string, cached: PricePoint[], transactions: VaultPayload['transactions']): string | null {
+  const latestDate = cached.length > 0 ? cached[cached.length - 1]!.date : null
+  if (isCacheFresh(latestDate)) return null
+
+  const earliestTx = getSymbolEarliestTxDate(symbol, transactions)
+  if (!earliestTx) return null
 
   const earliest = new Date(earliestTx)
   const now = new Date()
@@ -26,8 +36,7 @@ function computeYahooRange(payload: VaultPayload): string {
   if (diffDays <= 365) return '1y'
   if (diffDays <= 730) return '2y'
   if (diffDays <= 1825) return '5y'
-  if (diffDays <= 3650) return '10y'
-  return 'max'
+  return '10y'
 }
 
 export const useMarketStore = defineStore('market', () => {
@@ -70,8 +79,16 @@ export const useMarketStore = defineStore('market', () => {
       }
 
       const quotesRes = await fetch(`${base}/api/market/quotes?symbols=${uniqueSymbolsToFetch.join(',')}`)
-      if (!quotesRes.ok) throw new Error(`Quotes fetch failed: ${quotesRes.status}`)
+      if (!quotesRes.ok) {
+        const errBody = (await quotesRes.json().catch(() => ({}))) as Record<string, unknown>
+        const retryAfter = errBody.retryAfter as number | undefined
+        const msg = retryAfter ? `Yahoo API rate limited. Retry after ${retryAfter}s.` : `Quotes fetch failed: ${quotesRes.status}`
+        throw new Error(msg)
+      }
       const quotes: Record<string, { price: number; previousClose: number }> = await quotesRes.json()
+      if (Object.keys(quotes).length === 0 && uniqueSymbolsToFetch.length > 0) {
+        console.warn('Quotes API returned no data - prices may be stale')
+      }
 
       progress.value = { current: 0, total: uniqueSymbolsToFetch.length }
 
@@ -80,14 +97,17 @@ export const useMarketStore = defineStore('market', () => {
         const symbol = uniqueSymbolsToFetch[i]!
         const cached = payload.priceHistory[symbol] ?? []
 
-        const latestCached = cached.length > 0 ? cached[cached.length - 1]! : null
-        const latestDate = latestCached ? latestCached.date : null
+        const range = getSymbolRange(symbol, cached, payload.transactions)
 
-        if (!isCacheFresh(latestDate) || needsHistoricalBackfill(cached)) {
+        if (range) {
           try {
-            const range = computeYahooRange(payload)
             const res = await fetch(`${base}/api/market/history?symbol=${encodeURIComponent(symbol)}&range=${range}`)
-            if (!res.ok) throw new Error(`History fetch failed: ${res.status}`)
+            if (!res.ok) {
+              const errBody = (await res.json().catch(() => ({}))) as Record<string, unknown>
+              const retryAfter = errBody.retryAfter as number | undefined
+              const errMsg = retryAfter ? `Yahoo API rate limited. Retry after ${retryAfter}s.` : `History fetch failed: ${res.status}`
+              throw new Error(errMsg)
+            }
             const data: { symbol: string; candles: PricePoint[] } = await res.json()
 
             const freshMap = new Map<string, PricePoint>()
@@ -319,12 +339,6 @@ function isCacheFresh(latestDate: string | null): boolean {
   const diffMs = now.getTime() - latest.getTime()
   const diffDays = diffMs / (1000 * 60 * 60 * 24)
   return diffDays <= 1.5
-}
-
-function needsHistoricalBackfill(cached: PricePoint[]): boolean {
-  if (cached.length === 0) return true
-  const earliest = cached.reduce((min, p) => (p.date < min ? p.date : min), cached[0]!.date)
-  return earliest > '2026-06-01'
 }
 
 function roundCurrency(value: number): number {

@@ -59,7 +59,7 @@ export async function handleMarketQuotes(request: Request, env: Env): Promise<Re
 		return jsonResponse(result)
 	} catch (error) {
 		if (error instanceof MarketApiError) {
-			return jsonError(error.message, error.status)
+			return jsonError(error.message, error.status, error.retryAfter)
 		}
 		return jsonError('Unexpected worker error', 500)
 	}
@@ -68,7 +68,7 @@ export async function handleMarketQuotes(request: Request, env: Env): Promise<Re
 export async function handleMarketHistory(request: Request, env: Env): Promise<Response> {
 	const url = new URL(request.url)
 	const symbol = url.searchParams.get('symbol')
-	const range = url.searchParams.get('range') ?? 'max'
+	const range = url.searchParams.get('range') ?? '10y'
 
 	if (!symbol) {
 		return jsonError('Missing required parameter: symbol', 400)
@@ -90,7 +90,7 @@ export async function handleMarketHistory(request: Request, env: Env): Promise<R
 		return jsonResponse(result)
 	} catch (error) {
 		if (error instanceof MarketApiError) {
-			return jsonError(error.message, error.status)
+			return jsonError(error.message, error.status, error.retryAfter)
 		}
 		return jsonError('Unexpected worker error', 500)
 	}

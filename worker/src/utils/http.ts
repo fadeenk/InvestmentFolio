@@ -7,8 +7,10 @@ export function jsonResponse(data: unknown, status = 200): Response {
 	})
 }
 
-export function jsonError(message: string, status = 400): Response {
-	return jsonResponse({ error: message }, status)
+export function jsonError(message: string, status = 400, retryAfter?: number): Response {
+	const body: Record<string, unknown> = { error: message }
+	if (retryAfter !== undefined) body.retryAfter = retryAfter
+	return jsonResponse(body, status)
 }
 
 export function redirectResponse(location: string, status = 302): Response {

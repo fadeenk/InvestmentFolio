@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import type { Account } from '~/types/vault'
 import { cutoffDate } from '~/stores/data.store'
-import { TimeRange } from '~/types/enums'
+import type { TimeRange } from '~/types/enums'
 
 const TERMINAL_COLORS = ['#00c853', '#40c4ff', '#ffd740', '#ff5252', '#b388ff', '#64ffda', '#ffab40', '#ff6e40']
 

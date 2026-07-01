@@ -3,6 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import SettingsPage from '~/pages/settings.vue'
 import { useVaultStore } from '~/stores/vault.store'
+import { useDataStore } from '~/stores/data.store'
 import { CostBasisMethod, DateFormat, Theme, TimeRange } from '~/types/enums'
 import { VaultStatus, type VaultPayload } from '~/types/vault'
 
@@ -116,5 +117,20 @@ describe('settings page', () => {
 
     expect(changeSpy).not.toHaveBeenCalled()
     expect(wrapper.text()).toContain('New passphrase and confirmation do not match.')
+  })
+
+  it('triggers rebuildLedger on confirmation', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const dataStore = useDataStore()
+    let rebuildCalled = false
+    dataStore.rebuildLedger = async () => {
+      rebuildCalled = true
+    }
+
+    const wrapper = mountPage()
+    const button = wrapper.findAll('button').find((item) => item.text() === 'Rebuild ledger')
+    await button!.trigger('click')
+
+    expect(rebuildCalled).toBe(true)
   })
 })

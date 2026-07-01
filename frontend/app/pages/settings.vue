@@ -239,6 +239,22 @@ function clearVaultData(): void {
   })
 }
 
+const isRebuilding = ref(false)
+
+async function confirmRebuildLedger(): Promise<void> {
+  const shouldRebuild = window.confirm(
+    'Rebuild ledger from transactions? This will recalculate all positions and balance history based on your transaction history.',
+  )
+  if (!shouldRebuild) return
+
+  isRebuilding.value = true
+  try {
+    await dataStore.rebuildLedger()
+  } finally {
+    isRebuilding.value = false
+  }
+}
+
 async function changePassphrase(): Promise<void> {
   passphraseError.value = null
   passphraseSuccess.value = null
@@ -327,7 +343,7 @@ async function changePassphrase(): Promise<void> {
             'file:mr-3 file:rounded-sm file:border-0 file:bg-(--ui-bg-elevated) file:px-2 file:py-1 file:text-xs file:text-(--ui-text)'
           "
           @change="onImportFileChange"
-        >
+        />
       </div>
       <div
         v-if="importErrors.length > 0"
@@ -523,8 +539,16 @@ async function changePassphrase(): Promise<void> {
         </p>
         <UButton label="Forget this vault" size="xs" color="neutral" variant="outline" class="mt-2" @click="vaultStore.forgetHandle()" />
       </div>
-      <!-- Export / Delete -->
+      <!-- Export / Delete / Rebuild -->
       <div class="flex flex-wrap gap-2">
+        <UButton
+          :label="isRebuilding ? 'Rebuilding...' : 'Rebuild ledger'"
+          size="xs"
+          color="warning"
+          variant="outline"
+          :disabled="isRebuilding"
+          @click="confirmRebuildLedger"
+        />
         <UButton label="Export vault JSON" size="xs" color="neutral" variant="outline" @click="exportVaultJson" />
         <UButton label="Delete vault data" size="xs" color="error" variant="outline" @click="clearVaultData" />
       </div>

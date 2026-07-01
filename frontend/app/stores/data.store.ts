@@ -20,7 +20,7 @@ import { AccountType, AssetType, CostBasisMethod, ImportSource, TimeRange, Trans
 import { TermType } from '@/types/vault'
 import { randomUUID } from '@/utils/crypto'
 import { recalculateDerivedDataFromTransactions } from '@/utils/ledger'
-import { generateBalanceHistories } from '@/stores/market.store'
+import { generateBalanceHistories, useMarketStore } from '@/stores/market.store'
 
 function buildSymbolToAssetType(payload: VaultPayload): Map<string, AssetType> {
   const map = new Map<string, AssetType>()
@@ -394,6 +394,15 @@ export const useDataStore = defineStore('data', () => {
     selectedTimeRange.value = range
   }
 
+  async function rebuildLedger(): Promise<void> {
+    vaultStore.mutatePayload((p) => {
+      recalculateDerivedDataFromTransactions(p)
+      generateBalanceHistories(p, buildSymbolToAssetType(p))
+    })
+    const marketStore = useMarketStore()
+    await marketStore.refreshMarketData()
+  }
+
   // ════════════════════════════════════════════════════════════════
   // Income
   // ════════════════════════════════════════════════════════════════
@@ -713,6 +722,7 @@ export const useDataStore = defineStore('data', () => {
     pruneOldSnapshots,
     selectAccount,
     selectTimeRange,
+    rebuildLedger,
     // Income
     allIncome,
     incomeForSelectedYear,

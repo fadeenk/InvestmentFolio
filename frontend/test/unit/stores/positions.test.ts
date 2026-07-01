@@ -2,6 +2,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { useDataStore } from '~/stores/data.store'
 import { useVaultStore } from '~/stores/vault.store'
+import { useMarketStore } from '~/stores/market.store'
 import { AssetType, CostBasisMethod, DateFormat, Theme } from '~/types/enums'
 
 function initVault(): void {
@@ -122,5 +123,18 @@ describe('positions store dedupe', () => {
     ])
 
     expect(store.allPositions).toHaveLength(2)
+  })
+
+  it('rebuildLedger triggers ledger recalculation and market refresh', async () => {
+    initVault()
+    const store = useDataStore()
+    const marketStore = useMarketStore()
+    let refreshCalled = false
+    marketStore.refreshMarketData = async () => {
+      refreshCalled = true
+    }
+
+    await store.rebuildLedger()
+    expect(refreshCalled).toBe(true)
   })
 })

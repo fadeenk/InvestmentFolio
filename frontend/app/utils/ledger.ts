@@ -114,7 +114,7 @@ export function recalculateDerivedDataFromTransactions(payload: VaultPayload): v
     }
 
     if (tx.type === TransactionType.Buy) {
-      const quantity = Math.max(0, tx.quantity ?? 0)
+      const quantity = Math.abs(tx.quantity ?? 0)
       if (quantity <= 0 || !symbol) {
         continue
       }
@@ -149,7 +149,7 @@ export function recalculateDerivedDataFromTransactions(payload: VaultPayload): v
     }
 
     if (tx.type === TransactionType.Sell && symbol) {
-      const quantityToSell = Math.max(0, tx.quantity ?? 0)
+      const quantityToSell = Math.abs(tx.quantity ?? 0)
       if (quantityToSell <= 0) {
         continue
       }
@@ -334,7 +334,7 @@ export function backfillClosedLots(payload: VaultPayload): void {
     if (!symbol) continue
 
     if (tx.type === TransactionType.Buy) {
-      const quantity = Math.max(0, tx.quantity ?? 0)
+      const quantity = Math.abs(tx.quantity ?? 0)
       if (quantity <= 0) continue
 
       const totalCost = quantity * tx.price + (tx.fees || 0)
@@ -366,7 +366,7 @@ export function backfillClosedLots(payload: VaultPayload): void {
     }
 
     if (tx.type === TransactionType.Sell) {
-      const quantityToSell = Math.max(0, tx.quantity ?? 0)
+      const quantityToSell = Math.abs(tx.quantity ?? 0)
       if (quantityToSell <= 0) continue
 
       const queue = lotsByHolding.get(holdingKey) ?? []

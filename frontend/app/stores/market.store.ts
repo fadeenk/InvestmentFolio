@@ -221,7 +221,7 @@ export function generateBalanceHistories(payload: VaultPayload, symbolToAssetTyp
           runningCash += transactionCashDelta(tx)
 
           const symbol = tx.symbol?.toUpperCase() ?? ''
-          const qty = tx.quantity ?? 0
+          const qty = Math.abs(tx.quantity ?? 0)
           if (symbol && qty) {
             if (tx.type === TransactionType.Buy) {
               heldQty.set(symbol, (heldQty.get(symbol) ?? 0) + qty)

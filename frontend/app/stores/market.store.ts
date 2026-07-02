@@ -61,15 +61,21 @@ export const useMarketStore = defineStore('market', () => {
       const openPositions = latestPositions.filter((p) => p.quantity > 0)
 
       const symbolToAssetType = new Map<string, AssetType>()
+      for (const t of payload.transactions) {
+        if (t.symbol && !symbolToAssetType.has(t.symbol)) {
+          symbolToAssetType.set(t.symbol, t.assetType)
+        }
+      }
       for (const p of openPositions) {
         if (!symbolToAssetType.has(p.symbol)) {
           symbolToAssetType.set(p.symbol, p.assetType)
         }
       }
 
-      const cashEqSymbols = new Set(openPositions.filter((p) => p.assetType === AssetType.CashEquivalent).map((p) => p.symbol))
+      const allSymbols = Array.from(symbolToAssetType.keys())
+      const cashEqSymbols = new Set(allSymbols.filter((s) => symbolToAssetType.get(s) === AssetType.CashEquivalent))
 
-      const symbolsToFetch = openPositions.filter((p) => p.assetType !== AssetType.CashEquivalent).map((p) => p.symbol)
+      const symbolsToFetch = allSymbols.filter((s) => symbolToAssetType.get(s) !== AssetType.CashEquivalent)
 
       const uniqueSymbolsToFetch = [...new Set(symbolsToFetch)]
 

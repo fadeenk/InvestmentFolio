@@ -173,16 +173,33 @@ export const useDataStore = defineStore('data', () => {
     return _externalIdSet.value.has(externalId)
   }
 
-  function isCsvDuplicate(date: string, quantity: number | null, type: TransactionType): boolean {
-    return allTransactions.value.some((t) => t.date === date && t.quantity === quantity && t.type === type && t.importSource !== ImportSource.MANUAL)
+  function _csvFingerprint(t: { accountId: string; date: string; type: TransactionType; symbol: string; quantity: number | null; price: number }): string {
+    const symbol = (t.symbol ?? '').trim().toUpperCase()
+    const quantity = t.quantity === null ? 'null' : String(t.quantity)
+    return [t.accountId, t.date, t.type, symbol, quantity, String(t.price)].join('|')
+  }
+
+  function isCsvDuplicate(accountId: string, date: string, type: TransactionType, symbol: string, quantity: number | null, price: number): boolean {
+    const key = _csvFingerprint({ accountId, date, type, symbol, quantity, price })
+    return allTransactions.value.some(
+      (t) => t.importSource !== ImportSource.MANUAL && _csvFingerprint({ accountId: t.accountId, date: t.date, type: t.type, symbol: t.symbol, quantity: t.quantity, price: t.price }) === key,
+    )
   }
 
   function insertMany(incoming: Omit<Transaction, 'id' | 'importedAt'>[]): number {
     const now = new Date().toISOString()
+    const seen = new Set<string>()
+    for (const t of allTransactions.value) {
+      if (t.importSource === ImportSource.MANUAL) continue
+      seen.add(_csvFingerprint({ accountId: t.accountId, date: t.date, type: t.type, symbol: t.symbol, quantity: t.quantity, price: t.price }))
+    }
+    const seenExternal = _externalIdSet.value
     const toInsert: Transaction[] = []
     for (const t of incoming) {
-      if (t.externalId && isDuplicate(t.externalId)) continue
-      if (!t.externalId && isCsvDuplicate(t.date, t.quantity, t.type)) continue
+      if (t.externalId && seenExternal.has(t.externalId)) continue
+      const key = _csvFingerprint({ accountId: t.accountId, date: t.date, type: t.type, symbol: t.symbol, quantity: t.quantity, price: t.price })
+      if (!t.externalId && seen.has(key)) continue
+      seen.add(key)
       toInsert.push({ ...t, id: randomUUID(), importedAt: now })
     }
     if (toInsert.length === 0) return 0

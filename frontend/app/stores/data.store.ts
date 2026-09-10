@@ -182,7 +182,9 @@ export const useDataStore = defineStore('data', () => {
   function isCsvDuplicate(accountId: string, date: string, type: TransactionType, symbol: string, quantity: number | null, price: number): boolean {
     const key = _csvFingerprint({ accountId, date, type, symbol, quantity, price })
     return allTransactions.value.some(
-      (t) => t.importSource !== ImportSource.MANUAL && _csvFingerprint({ accountId: t.accountId, date: t.date, type: t.type, symbol: t.symbol, quantity: t.quantity, price: t.price }) === key,
+      (t) =>
+        t.importSource !== ImportSource.MANUAL &&
+        _csvFingerprint({ accountId: t.accountId, date: t.date, type: t.type, symbol: t.symbol, quantity: t.quantity, price: t.price }) === key,
     )
   }
 

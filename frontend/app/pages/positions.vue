@@ -37,9 +37,7 @@ const availableTaxYears = computed(() => {
   return [new Date().getFullYear()]
 })
 
-const closedLotsForYear = computed(() => {
-  return dataStore.closedLots.filter((lot) => lot.taxYear === dataStore.selectedTaxYear)
-})
+const closedLotsForYear = computed(() => dataStore.visibleClosedLots)
 
 function formatDate(value: string): string {
   return new Date(value).toLocaleDateString('en-US')
@@ -273,6 +271,7 @@ function holdingPeriodLabel(accountId: string, symbol: string): string {
             <tr class="border-b border-(--ui-border)">
               <th class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Sold date</th>
               <th class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Symbol</th>
+              <th class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Account</th>
               <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Cost</th>
               <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Proceeds</th>
               <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Realized G/L</th>
@@ -283,6 +282,7 @@ function holdingPeriodLabel(accountId: string, symbol: string): string {
             <tr v-for="lot in closedLotsForYear" :key="lot.id" class="border-b border-(--ui-border)/60">
               <td class="px-3 py-2">{{ formatDate(lot.soldDate) }}</td>
               <td class="px-3 py-2 font-medium">{{ lot.symbol }}</td>
+              <td class="px-3 py-2">{{ accountNameById.get(lot.accountId) ?? 'Unknown account' }}</td>
               <td class="px-3 py-2 text-right">{{ formatCurrency(lot.costBasis) }}</td>
               <td class="px-3 py-2 text-right">{{ formatCurrency(lot.proceeds) }}</td>
               <td class="px-3 py-2 text-right" :class="signClass(lot.realizedGainLoss)">
@@ -291,7 +291,7 @@ function holdingPeriodLabel(accountId: string, symbol: string): string {
               <td class="px-3 py-2 text-right">{{ lot.termType }}</td>
             </tr>
             <tr v-if="closedLotsForYear.length === 0">
-              <td colspan="6" class="px-3 py-6 text-center text-(--ui-text-muted)">No closed lots found for this tax year.</td>
+              <td colspan="7" class="px-3 py-6 text-center text-(--ui-text-muted)">No closed lots found for this tax year and account.</td>
             </tr>
           </tbody>
         </table>

@@ -308,14 +308,14 @@ export const useDataStore = defineStore('data', () => {
     const totalCashBalance = relevantAccounts.reduce((s, a) => s + a.cashBalance, 0)
     const currentYear = new Date().getFullYear()
     const closedLots = payload?.closedLots ?? []
-    const ytdRealizedClosed = closedLots.filter((l) => l.taxYear === currentYear)
+    const ytdRealizedClosed = closedLots.filter((l) => l.taxYear === currentYear && (!accountFilter || l.accountId === accountFilter))
     const ytdRealizedShort = ytdRealizedClosed.filter((l) => l.termType === TermType.SHORT_TERM).reduce((s, l) => s + l.realizedGainLoss, 0)
     const ytdRealizedLong = ytdRealizedClosed.filter((l) => l.termType === TermType.LONG_TERM).reduce((s, l) => s + l.realizedGainLoss, 0)
     const ytdDividends = (payload?.dividends ?? [])
-      .filter((d) => d.taxYear === currentYear && d.incomeType === TransactionType.Dividend)
+      .filter((d) => d.taxYear === currentYear && d.incomeType === TransactionType.Dividend && (!accountFilter || d.accountId === accountFilter))
       .reduce((s, d) => s + d.amount, 0)
     const ytdInterest = (payload?.dividends ?? [])
-      .filter((d) => d.taxYear === currentYear && d.incomeType === TransactionType.Interest)
+      .filter((d) => d.taxYear === currentYear && d.incomeType === TransactionType.Interest && (!accountFilter || d.accountId === accountFilter))
       .reduce((s, d) => s + d.amount, 0)
     return {
       totalMarketValue,
@@ -511,6 +511,14 @@ export const useDataStore = defineStore('data', () => {
   const openLots = computed(() => allLots.value.filter((l) => l.isOpen))
   const closedLots = computed<ClosedLot[]>(() => vaultStore.payload?.closedLots ?? [])
 
+  const visibleClosedLots = computed<ClosedLot[]>(() => {
+    return closedLots.value.filter((lot) => {
+      if (lot.taxYear !== selectedTaxYear.value) return false
+      if (selectedAccountId.value && lot.accountId !== selectedAccountId.value) return false
+      return true
+    })
+  })
+
   function openLotsForSymbol(symbol: string): TaxLot[] {
     return openLots.value.filter((l) => l.symbol.toUpperCase() === symbol.toUpperCase())
   }
@@ -520,11 +528,14 @@ export const useDataStore = defineStore('data', () => {
   }
 
   function getTaxYearSummary(taxYear: number): TaxYearSummary {
+    const accountFilter = selectedAccountId.value
     const dividends = vaultStore.payload?.dividends ?? []
-    const income = dividends.filter((d) => d.taxYear === taxYear)
+    const income = dividends.filter((d) => d.taxYear === taxYear && (!accountFilter || d.accountId === accountFilter))
     const shortTermGainLoss = 0
     const longTermGainLoss = 0
-    const washSaleDisallowedLosses = allLots.value.filter((l) => !l.isOpen && l.isWashSale).reduce((s, l) => s + l.washSaleDisallowedLoss, 0)
+    const washSaleDisallowedLosses = allLots.value
+      .filter((l) => !l.isOpen && l.isWashSale && (!accountFilter || l.accountId === accountFilter))
+      .reduce((s, l) => s + l.washSaleDisallowedLoss, 0)
     const filteredDividends = income.filter((d) => d.incomeType === TransactionType.Dividend).reduce((s, d) => s + d.amount, 0)
     const interest = income.filter((d) => d.incomeType === TransactionType.Interest).reduce((s, d) => s + d.amount, 0)
     return {
@@ -544,6 +555,7 @@ export const useDataStore = defineStore('data', () => {
   const availableTaxYears = computed<number[]>(() => {
     const years = new Set<number>()
     vaultStore.payload?.dividends.forEach((d) => years.add(d.taxYear))
+    vaultStore.payload?.closedLots.forEach((l) => years.add(l.taxYear))
     allLots.value.forEach((l) => {
       if (l.acquiredDate) years.add(new Date(l.acquiredDate).getFullYear())
     })
@@ -758,6 +770,7 @@ export const useDataStore = defineStore('data', () => {
     allLots,
     openLots,
     closedLots,
+    visibleClosedLots,
     washSaleLots,
     totalWashSaleDisallowed,
     selectedTaxYear,

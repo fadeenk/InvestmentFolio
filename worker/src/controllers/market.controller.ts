@@ -30,7 +30,19 @@ function extractQuoteItem(raw: unknown): QuoteItem | null {
 	if (!meta) return null
 
 	const price = typeof meta.regularMarketPrice === 'number' ? meta.regularMarketPrice : 0
-	const previousClose = typeof meta.previousClose === 'number' ? meta.previousClose : 0
+	let previousClose = typeof meta.previousClose === 'number' ? meta.previousClose : NaN
+	if (!(previousClose > 0)) {
+		const chartPreviousClose = typeof meta.chartPreviousClose === 'number' ? meta.chartPreviousClose : NaN
+		if (chartPreviousClose > 0) {
+			previousClose = chartPreviousClose
+		} else if (price > 0) {
+			// No valid prior close (e.g. new listing, crypto, missing meta):
+			// fall back to price so day G/L is 0 instead of market value.
+			previousClose = price
+		} else {
+			previousClose = 0
+		}
+	}
 
 	return { price, previousClose }
 }

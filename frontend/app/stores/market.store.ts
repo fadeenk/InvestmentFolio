@@ -285,9 +285,21 @@ function updatePositionPrices(payload: VaultPayload, cashEqSymbols: Set<string>,
     } else {
       const quote = quotes?.[position.symbol]
 
-      if (quote) {
+      if (quote && quote.price > 0) {
         currentPrice = quote.price
-        previousClose = quote.previousClose
+        if (quote.previousClose > 0) {
+          previousClose = quote.previousClose
+        } else {
+          // Invalid/missing previousClose from Yahoo (0, NaN, negative):
+          // fall back to price history so day G/L is 0 instead of market value.
+          const prices = payload.priceHistory[position.symbol] ?? []
+          if (prices.length > 1) {
+            const prev = prices[prices.length - 2]
+            previousClose = prev && typeof prev.close === 'number' && prev.close > 0 ? prev.close : currentPrice
+          } else {
+            previousClose = currentPrice
+          }
+        }
       } else {
         const prices = payload.priceHistory[position.symbol] ?? []
 
@@ -301,7 +313,7 @@ function updatePositionPrices(payload: VaultPayload, cashEqSymbols: Set<string>,
           const price = typeof latest.close === 'number' ? latest.close : 0
           if (price > 0) {
             currentPrice = price
-            previousClose = prev && typeof prev.close === 'number' ? prev.close : currentPrice
+            previousClose = prev && typeof prev.close === 'number' && prev.close > 0 ? prev.close : currentPrice
           } else {
             currentPrice = position.currentPrice || position.avgCost || 0
             previousClose = currentPrice

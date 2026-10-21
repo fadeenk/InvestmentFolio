@@ -301,7 +301,8 @@ export const useDataStore = defineStore('data', () => {
     const totalUnrealizedGainLoss = positions.reduce((s, p) => s + p.unrealizedGainLoss, 0)
     const totalDayGainLoss = positions.reduce((s, p) => s + p.dayGainLoss, 0)
     const unrealizedPct = totalCostBasis > 0 ? (totalUnrealizedGainLoss / totalCostBasis) * 100 : 0
-    const dayPct = totalCostBasis > 0 ? (totalDayGainLoss / (totalMarketValue - totalDayGainLoss)) * 100 : 0
+    const prevDayValue = totalMarketValue - totalDayGainLoss
+    const dayPct = prevDayValue > 0 ? (totalDayGainLoss / prevDayValue) * 100 : 0
     const accounts = payload?.accounts ?? []
     const accountFilter = selectedAccountId.value
     const relevantAccounts = accountFilter ? accounts.filter((a) => a.id === accountFilter) : accounts

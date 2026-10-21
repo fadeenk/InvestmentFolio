@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { formatCurrency } from '~/utils/format'
+import { CHART_SERIES_VARS } from '~/utils/chartPalette'
 
 const props = withDefaults(
   defineProps<{
@@ -10,16 +11,14 @@ const props = withDefaults(
   { height: 300 },
 )
 
-const TERMINAL_COLORS = ['#00c853', '#40c4ff', '#ffd740', '#ff5252', '#b388ff', '#64ffda', '#ffab40']
-
 const series = computed(() => props.data.map((d) => d.value))
 const labels = computed(() => props.data.map((d) => d.label))
 
 const options = computed(() => ({
-  chart: { type: 'donut' as const, background: 'transparent', foreColor: 'var(--color-text-muted, #9aa0a6)' },
-  colors: TERMINAL_COLORS.slice(0, props.data.length),
+  chart: { type: 'donut' as const, background: 'transparent', foreColor: 'var(--color-text-muted, #6b7280)' },
+  colors: CHART_SERIES_VARS.slice(0, Math.max(props.data.length, 1)),
   labels: labels.value,
-  legend: { show: true, position: 'bottom' as const, fontSize: '12px', labels: { colors: 'var(--color-text-muted, #9aa0a6)' } },
+  legend: { show: true, position: 'bottom' as const, fontSize: '12px', labels: { colors: 'var(--color-text-muted, #6b7280)' } },
   tooltip: { y: { formatter: (v: number) => formatCurrency(v) }, theme: 'dark' as const },
   plotOptions: {
     pie: {
@@ -28,7 +27,7 @@ const options = computed(() => ({
     },
   },
   responsive: [{ breakpoint: 640, options: { chart: { width: '100%' }, legend: { position: 'bottom' } } }],
-  dataLabels: { style: { colors: ['var(--color-text, #e8eaed)'] } },
+  dataLabels: { style: { colors: ['var(--color-text, #1a1a2e)'] } },
 }))
 
 const chartKey = computed(() => props.data.length)

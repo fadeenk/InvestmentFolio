@@ -9,7 +9,7 @@ const props = withDefaults(
     format?: 'currency' | 'percent'
   }>(),
   {
-    color: 'var(--color-accent, #00c853)',
+    color: 'var(--color-accent, #059669)',
     height: 260,
     format: 'currency',
   },
@@ -33,20 +33,20 @@ const options = computed(() => {
       zoom: { enabled: true, type: 'x' as const, autoScaleYaxis: true },
       toolbar: { show: true, tools: { download: true, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true } },
       background: 'transparent',
-      foreColor: 'var(--color-text-muted, #9aa0a6)',
+      foreColor: 'var(--color-text-muted, #6b7280)',
     },
     colors: [props.color],
     stroke: { curve: 'smooth' as const, width: 2 },
-    xaxis: { type: 'datetime' as const, labels: { format: 'MMM dd', style: { colors: 'var(--color-text-muted, #9aa0a6)' } } },
+    xaxis: { type: 'datetime' as const, labels: { format: 'MMM dd', style: { colors: 'var(--color-text-muted, #6b7280)' } } },
     yaxis: {
-      labels: { formatter: yFormatter, style: { colors: 'var(--color-text-muted, #9aa0a6)' } },
+      labels: { formatter: yFormatter, style: { colors: 'var(--color-text-muted, #6b7280)' } },
     },
     tooltip: {
       x: { format: 'MMM dd, yyyy' },
       y: { formatter: tooltipFormatter },
       theme: 'dark' as const,
     },
-    grid: { borderColor: 'var(--color-chart-grid, #2d3140)', strokeDashArray: 3 },
+    grid: { borderColor: 'var(--color-chart-grid, #e5e7eb)', strokeDashArray: 3 },
   }
 })
 

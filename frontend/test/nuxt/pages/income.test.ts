@@ -85,6 +85,6 @@ describe('income page', () => {
     expect(text).toContain('Year-over-year')
     expect(text).toContain('Income by security')
     expect(text).toContain('AAPL')
-    expect(text).toContain('Monthly Calendar')
+    expect(text).toContain('Monthly calendar')
   })
 })

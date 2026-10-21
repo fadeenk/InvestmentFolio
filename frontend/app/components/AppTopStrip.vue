@@ -32,8 +32,15 @@ function lockVault() {
       <span class="text-(--ui-text)">{{ pageName }}</span>
     </div>
     <div class="flex items-center gap-3">
-      <UButton :icon="isDark ? 'i-lucide-moon' : 'i-lucide-sun'" size="xs" color="neutral" variant="ghost" @click="toggleColorMode" />
-      <UButton icon="i-lucide-lock" size="xs" color="neutral" variant="ghost" @click="lockVault" />
+      <UButton
+        :icon="isDark ? 'i-lucide-moon' : 'i-lucide-sun'"
+        size="xs"
+        color="neutral"
+        variant="ghost"
+        :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+        @click="toggleColorMode"
+      />
+      <UButton icon="i-lucide-lock" size="xs" color="neutral" variant="ghost" aria-label="Lock vault" @click="lockVault" />
     </div>
   </div>
 </template>

@@ -44,7 +44,7 @@ const bannerClasses = computed(() => {
   if (!ui.banner) return ''
 
   if (ui.banner.type === 'success') {
-    return ['border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)]'].join(' ')
+    return ['border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent-text)]'].join(' ')
   }
 
   if (ui.banner.type === 'warning') {
@@ -106,7 +106,7 @@ function dismissBanner() {
             :key="item.to"
             :to="item.to"
             class="flex flex-col items-center gap-0.5 px-3 py-1 text-xs transition-colors"
-            :class="route.path === item.to || route.path.startsWith(item.to + '/') ? 'text-[var(--color-accent)]' : 'text-(--ui-text-muted)'"
+            :class="route.path === item.to || route.path.startsWith(item.to + '/') ? 'text-[var(--color-accent-text)]' : 'text-(--ui-text-muted)'"
           >
             <UIcon :name="item.icon" class="h-4 w-4" />
             {{ item.label }}
@@ -118,7 +118,7 @@ function dismissBanner() {
           <AppTopStrip />
 
           <!-- Banner -->
-          <div v-if="ui.banner" class="mx-4 mt-2">
+          <div v-if="ui.banner" class="mx-4 mt-2" role="status">
             <div class="flex items-center justify-between rounded-sm border px-3 py-2 text-xs" :class="bannerClasses">
               <span>{{ ui.banner.message }}</span>
               <UButton label="Dismiss" size="xs" color="neutral" variant="ghost" @click="dismissBanner" />

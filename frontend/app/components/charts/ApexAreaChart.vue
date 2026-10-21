@@ -15,17 +15,17 @@ const options = computed(() => ({
     zoom: { enabled: true, type: 'x' as const },
     toolbar: { show: true, tools: { download: true, selection: true, zoom: true, pan: true, reset: true } },
     background: 'transparent',
-    foreColor: 'var(--color-text-muted, #9aa0a6)',
+    foreColor: 'var(--color-text-muted, #6b7280)',
   },
   colors: props.series.map((s) => s.color),
   dataLabels: { enabled: false },
   stroke: { curve: 'smooth' as const, width: 2 },
   fill: { type: 'gradient', gradient: { shadeIntensity: 0.1, opacityFrom: 0.4, opacityTo: 0.1 } },
-  xaxis: { type: 'datetime' as const, labels: { format: 'MMM dd', style: { colors: 'var(--color-text-muted, #9aa0a6)' } } },
-  yaxis: { labels: { formatter: (v: number) => `$${v.toLocaleString()}`, style: { colors: 'var(--color-text-muted, #9aa0a6)' } } },
+  xaxis: { type: 'datetime' as const, labels: { format: 'MMM dd', style: { colors: 'var(--color-text-muted, #6b7280)' } } },
+  yaxis: { labels: { formatter: (v: number) => `$${v.toLocaleString()}`, style: { colors: 'var(--color-text-muted, #6b7280)' } } },
   tooltip: { x: { format: 'MMM dd, yyyy' }, y: { formatter: (v: number) => `$${v.toLocaleString()}` }, theme: 'dark' as const },
-  grid: { borderColor: 'var(--color-chart-grid, #2d3140)', strokeDashArray: 3 },
-  legend: { position: 'bottom' as const, labels: { colors: 'var(--color-text-muted, #9aa0a6)' } },
+  grid: { borderColor: 'var(--color-chart-grid, #e5e7eb)', strokeDashArray: 3 },
+  legend: { position: 'bottom' as const, labels: { colors: 'var(--color-text-muted, #6b7280)' } },
 }))
 
 const chartKey = computed(() => props.series.length)

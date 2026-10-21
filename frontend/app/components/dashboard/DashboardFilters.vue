@@ -51,9 +51,18 @@ const emit = defineEmits<{
     </div>
 
     <div class="ml-auto flex items-center gap-2">
-      <UButton icon="i-lucide-refresh-cw" size="xs" color="neutral" variant="ghost" :loading="isSyncing" :disabled="isSyncing" @click="emit('refresh')" />
-      <span v-if="lastError" class="text-2xs text-[var(--color-signal-red)]">{{ lastError }}</span>
-      <span v-if="syncStatus === 'SUCCESS' && !isSyncing" class="text-2xs text-[var(--color-accent)]">Updated</span>
+      <UButton
+        icon="i-lucide-refresh-cw"
+        size="xs"
+        color="neutral"
+        variant="ghost"
+        aria-label="Refresh market data"
+        :loading="isSyncing"
+        :disabled="isSyncing"
+        @click="emit('refresh')"
+      />
+      <span v-if="lastError" class="text-2xs text-[var(--color-signal-red)]" role="alert">{{ lastError }}</span>
+      <span v-if="syncStatus === 'SUCCESS' && !isSyncing" class="text-2xs text-[var(--color-accent-text)]">Updated</span>
     </div>
   </div>
 </template>

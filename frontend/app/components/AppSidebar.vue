@@ -25,7 +25,7 @@ function isActive(to: string): boolean {
         :class="[
           'relative flex items-center gap-3 rounded-sm',
           'px-3 py-2 text-sm',
-          'text-[var(--color-accent)]',
+          'text-[var(--color-accent-text)]',
           'transition-colors duration-150',
           'hover:bg-(--ui-bg-elevated)',
         ]"
@@ -43,7 +43,7 @@ function isActive(to: string): boolean {
         :key="item.to"
         :to="item.to"
         class="relative flex items-center gap-3 rounded-sm px-3 py-2 text-sm transition-colors duration-150 hover:bg-(--ui-bg-elevated)"
-        :class="isActive(item.to) ? 'text-[var(--color-accent)]' : 'text-(--ui-text-muted)'"
+        :class="isActive(item.to) ? 'text-[var(--color-accent-text)]' : 'text-(--ui-text-muted)'"
       >
         <!-- Active indicator bar -->
         <div v-if="isActive(item.to)" class="absolute top-1/2 left-0 h-4 w-0.5 -translate-y-1/2 rounded-r bg-[var(--color-accent)]" />

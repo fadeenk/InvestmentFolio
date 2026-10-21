@@ -3,8 +3,7 @@ import { computed } from 'vue'
 import type { Account } from '~/types/vault'
 import { cutoffDate } from '~/stores/data.store'
 import type { TimeRange } from '~/types/enums'
-
-const TERMINAL_COLORS = ['#00c853', '#40c4ff', '#ffd740', '#ff5252', '#b388ff', '#64ffda', '#ffab40', '#ff6e40']
+import { chartSeriesVar } from '~/utils/chartPalette'
 
 const props = defineProps<{
   accounts: Account[]
@@ -18,7 +17,7 @@ const chartSeries = computed<{ name: string; data: { x: number; y: number }[]; c
     return {
       name: account.displayName,
       data: history.filter((bp) => bp.date >= cutoff).map((bp) => ({ x: new Date(bp.date).getTime(), y: bp.balance })),
-      color: TERMINAL_COLORS[i % TERMINAL_COLORS.length] ?? '#6B7280',
+      color: chartSeriesVar(i),
     }
   })
 })
@@ -27,7 +26,7 @@ const chartSeries = computed<{ name: string; data: { x: number; y: number }[]; c
 <template>
   <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated)">
     <div class="border-b border-(--ui-border) px-3 py-2">
-      <span class="text-xs font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Account Balances</span>
+      <span class="text-xs font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Account balances</span>
     </div>
     <ApexAreaChart :series="chartSeries" />
   </div>

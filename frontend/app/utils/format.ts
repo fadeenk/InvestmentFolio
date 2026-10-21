@@ -19,7 +19,7 @@ export function formatPercent(value: number): string {
 }
 
 export function signClass(value: number): string {
-  if (value > 0) return 'text-[var(--color-accent)]'
+  if (value > 0) return 'text-[var(--color-accent-text)]'
   if (value < 0) return 'text-[var(--color-signal-red)]'
   return 'text-(--ui-text-muted)'
 }

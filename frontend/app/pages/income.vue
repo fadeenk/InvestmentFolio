@@ -132,16 +132,25 @@ function monthLabel(month: number): string {
 
 <template>
   <div class="mx-auto w-full max-w-7xl space-y-6 px-4 py-4">
+    <h1 class="sr-only">Income</h1>
     <div class="flex items-center justify-between">
       <UButton label="Dashboard" to="/dashboard" color="neutral" variant="ghost" size="xs" />
     </div>
 
     <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
       <div class="grid gap-3 sm:grid-cols-2">
-        <USelect v-model="selectedYear" :items="availableYears.map((y) => ({ label: String(y), value: y }))" size="xs" variant="outline" color="neutral" />
+        <USelect
+          v-model="selectedYear"
+          :items="availableYears.map((y) => ({ label: String(y), value: y }))"
+          aria-label="Select tax year"
+          size="xs"
+          variant="outline"
+          color="neutral"
+        />
         <USelect
           v-model="selectedAccountId"
           :items="[{ label: 'All accounts', value: 'ALL' }, ...dataStore.allAccounts.map((a) => ({ label: a.displayName, value: a.id }))]"
+          aria-label="Filter by account"
           size="xs"
           variant="outline"
           color="neutral"
@@ -151,7 +160,7 @@ function monthLabel(month: number): string {
 
     <div class="grid gap-3 sm:grid-cols-3">
       <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
-        <p class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Income total ({{ selectedYear }})</p>
+        <p class="text-2xs tracking-wide text-(--ui-text-muted) uppercase">Total income ({{ selectedYear }})</p>
         <p class="text-lg font-[var(--font-mono)] font-bold text-(--ui-text)">{{ formatCurrency(totals.total) }}</p>
       </div>
       <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
@@ -172,10 +181,10 @@ function monthLabel(month: number): string {
         <table class="min-w-full text-xs">
           <thead>
             <tr class="border-b border-(--ui-border)">
-              <th class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Year</th>
-              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Total dividends</th>
-              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Total interest</th>
-              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Total income</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Year</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Total dividends</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Total interest</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Total income</th>
             </tr>
           </thead>
           <tbody>
@@ -204,11 +213,11 @@ function monthLabel(month: number): string {
         <table class="min-w-full text-xs">
           <thead>
             <tr class="border-b border-(--ui-border)">
-              <th class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Symbol</th>
-              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">YTD total</th>
-              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Prior year</th>
-              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Dividend</th>
-              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Interest</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Symbol</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">YTD total</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Prior year</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Dividend</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Interest</th>
             </tr>
           </thead>
           <tbody>
@@ -229,7 +238,7 @@ function monthLabel(month: number): string {
 
     <div class="rounded-sm border border-(--ui-border)">
       <div class="border-b border-(--ui-border) bg-(--ui-bg-elevated) px-3 py-1.5">
-        <span class="text-xs font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Monthly Calendar</span>
+        <span class="text-xs font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Monthly calendar</span>
       </div>
       <div class="grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
         <div v-for="month in monthlyGrid" :key="month.month" class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">

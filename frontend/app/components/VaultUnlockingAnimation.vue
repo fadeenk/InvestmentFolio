@@ -17,7 +17,7 @@ const label = computed(() => {
     <!-- Terminal header -->
     <div class="mb-6 flex items-center justify-center gap-2">
       <span class="text-xs font-[var(--font-mono)] text-(--ui-text-muted)">vault@iFolio:~$</span>
-      <span :class="['text-xs font-[var(--font-mono)]', vault.lastError ? 'text-[var(--color-signal-red)]' : 'text-[var(--color-accent)]']">
+      <span :class="['text-xs font-[var(--font-mono)]', vault.lastError ? 'text-[var(--color-signal-red)]' : 'text-[var(--color-accent-text)]']">
         {{ label }}
       </span>
     </div>

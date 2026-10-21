@@ -18,11 +18,20 @@
   --color-accent: #059669;
   --color-accent-hover: #047857;
   --color-accent-active: #065f46;
+  --color-accent-text: #047857;
   --color-signal-red: #dc2626;
   --color-signal-amber: #d97706;
   --color-signal-blue: #2563eb;
   --color-chart-bg: #ffffff;
   --color-chart-grid: #e5e7eb;
+  --chart-0: #059669;
+  --chart-1: #2563eb;
+  --chart-2: #d97706;
+  --chart-3: #dc2626;
+  --chart-4: #7c3aed;
+  --chart-5: #0d9488;
+  --chart-6: #ea580c;
+  --chart-7: #9333ea;
 }
 
 /* ── Dark theme ── */
@@ -37,11 +46,20 @@
   --color-accent: #00c853;
   --color-accent-hover: #00e676;
   --color-accent-active: #009624;
+  --color-accent-text: #00e676;
   --color-signal-red: #ff5252;
   --color-signal-amber: #ffd740;
   --color-signal-blue: #40c4ff;
   --color-chart-bg: #1a1d27;
   --color-chart-grid: #2d3140;
+  --chart-0: #00c853;
+  --chart-1: #40c4ff;
+  --chart-2: #ffd740;
+  --chart-3: #ff5252;
+  --chart-4: #b388ff;
+  --chart-5: #64ffda;
+  --chart-6: #ffab40;
+  --chart-7: #ff6e40;
 }
 
 /* Override NuxtUI CSS variables */
@@ -92,4 +110,46 @@
 .page-leave-to {
   opacity: 0;
   transform: translateY(-4px);
+}
+
+/* ── Ledger micro-type: 10px labels (text-2xs is not a Tailwind default) ── */
+.text-2xs {
+  font-size: 0.625rem;
+  line-height: 0.875rem;
+}
+
+/* ── Browser surfaces carry the design ── */
+::selection {
+  background: var(--color-accent);
+  color: #ffffff;
+}
+input,
+textarea,
+select {
+  caret-color: var(--color-accent);
+}
+
+/* Terminal inputs remove the outline; restore a visible ledger focus */
+.vault-terminal-focus input:focus-visible {
+  outline: 2px solid var(--color-accent-text);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Intentional reduced-motion: keep opacity state change, drop displacement */
+@media (prefers-reduced-motion: reduce) {
+  .page-enter-active,
+  .page-leave-active {
+    transition: opacity 80ms ease;
+  }
+  .page-enter-from,
+  .page-leave-to {
+    transform: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

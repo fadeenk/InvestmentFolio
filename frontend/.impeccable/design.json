@@ -1,0 +1,335 @@
+{
+  "components": [
+    {
+      "css": ".ds-btn-primary { background: var(--color-accent, #059669); color: #ffffff; border: 1px solid transparent; border-radius: 2px; padding: 8px 12px; font-family: var(--font-sans, 'Public Sans', sans-serif); font-size: 14px; font-weight: 600; line-height: 1.5; cursor: pointer; transition: background 150ms ease; } .ds-btn-primary:hover { background: var(--color-accent-hover, #047857); } .ds-btn-primary:active { background: var(--color-accent-active, #065f46); } .ds-btn-primary:focus-visible { outline: 2px solid var(--color-accent, #059669); outline-offset: 2px; }",
+      "description": "Small squared emerald action for Unlock, Save, Import. The only solid voice on screen.",
+      "html": "<button class=\"ds-btn-primary\">Unlock</button>",
+      "kind": "button",
+      "name": "Primary Button",
+      "refersTo": "button-primary"
+    },
+    {
+      "css": ".ds-btn-outline { background: transparent; color: var(--color-accent, #059669); border: 1px solid var(--color-border-visible, #d1d5db); border-radius: 2px; padding: 8px 12px; font-family: var(--font-sans, 'Public Sans', sans-serif); font-size: 14px; font-weight: 600; cursor: pointer; transition: background 150ms ease, border-color 150ms ease; } .ds-btn-outline:hover { background: color-mix(in srgb, var(--color-accent, #059669) 10%, transparent); border-color: var(--color-accent, #059669); } .ds-btn-outline:focus-visible { outline: 2px solid var(--color-accent, #059669); outline-offset: 2px; }",
+      "description": "Quiet secondary for Sync to Sheets and Different file.",
+      "html": "<button class=\"ds-btn-outline\">Sync to Sheets</button>",
+      "kind": "button",
+      "name": "Outline Button",
+      "refersTo": "button-outline"
+    },
+    {
+      "css": ".ds-input-mono { display: flex; align-items: center; gap: 8px; background: transparent; border: none; font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 14px; color: var(--color-text, #1a1a2e); } .ds-input-mono .ds-prompt { color: var(--color-text-muted, #6b7280); } .ds-input-mono input { flex: 1; background: transparent; border: none; outline: none; font: inherit; color: inherit; } .ds-input-mono input::placeholder { color: var(--color-text-disabled, #9ca3af); } .ds-input-mono:focus-within .ds-prompt { color: var(--color-accent, #059669); }",
+      "description": "Borderless terminal line with > passphrase prefix for all vault inputs.",
+      "html": "<label class=\"ds-input-mono\"><span class=\"ds-prompt\">&gt; passphrase:</span><input type=\"password\" placeholder=\"passphrase\" /></label>",
+      "kind": "input",
+      "name": "Terminal Input",
+      "refersTo": "input-mono"
+    },
+    {
+      "css": ".ds-card { background: var(--color-bg-elevated, #ffffff); color: var(--color-text, #1a1a2e); border: 1px solid var(--color-border, #e5e7eb); border-radius: 2px; padding: 12px 16px; font-family: var(--font-sans, 'Public Sans', sans-serif); font-size: 14px; line-height: 1.5; } .ds-card .ds-label { font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-muted, #6b7280); } .ds-card .ds-value { font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 18px; font-weight: 700; }",
+      "description": "Squared bordered tile for totals, accounts, and month grids.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-label\">Total income</div><div class=\"ds-value\">$4,820.11</div></div>",
+      "kind": "card",
+      "name": "Ledger Card",
+      "refersTo": "card"
+    },
+    {
+      "css": ".ds-nav { display: inline-flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 2px; font-family: var(--font-sans, 'Public Sans', sans-serif); font-size: 14px; color: var(--color-text-muted, #6b7280); text-decoration: none; position: relative; transition: background 150ms ease, color 150ms ease; } .ds-nav:hover { background: var(--color-bg-elevated, #ffffff); color: var(--color-text, #1a1a2e); } .ds-nav.ds-active { color: var(--color-accent, #059669); } .ds-nav.ds-active::before { content: \"\"; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 2px; height: 16px; background: var(--color-accent, #059669); border-radius: 0 2px 2px 0; } .ds-nav:focus-visible { outline: 2px solid var(--color-accent, #059669); outline-offset: 2px; } .ds-nav svg { width: 16px; height: 16px; }",
+      "description": "Sidebar rail item with 2x16px emerald active bar.",
+      "html": "<a class=\"ds-nav ds-active\" href=\"/dashboard\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/></svg>Dashboard</a>",
+      "kind": "nav",
+      "name": "Sidebar Nav Item",
+      "refersTo": "nav-item-active"
+    },
+    {
+      "css": ".ds-table { width: 100%; border-collapse: collapse; font-family: var(--font-sans, 'Public Sans', sans-serif); font-size: 12px; background: var(--color-bg-elevated, #ffffff); border: 1px solid var(--color-border, #e5e7eb); border-radius: 2px; overflow: hidden; } .ds-table th { font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 11px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-muted, #6b7280); text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--color-border, #e5e7eb); } .ds-table th.num, .ds-table td.num { text-align: right; font-family: var(--font-mono, 'JetBrains Mono', monospace); } .ds-table td { padding: 8px 12px; border-bottom: 1px solid var(--color-border, #e5e7eb); color: var(--color-text, #1a1a2e); } .ds-table tr:last-child td { border-bottom: none; }",
+      "description": "Dense ledger table with mono uppercase headers and right-aligned numerals.",
+      "html": "<table class=\"ds-table\"><thead><tr><th>Symbol</th><th class=\"num\">Market value</th><th class=\"num\">Unrealized G/L</th></tr></thead><tbody><tr><td>VTI</td><td class=\"num\">$12,400.00</td><td class=\"num\">+$1,240.00</td></tr></tbody></table>",
+      "kind": "custom",
+      "name": "Ledger Table",
+      "refersTo": "card"
+    },
+    {
+      "css": ".ds-vault { max-width: 28rem; background: var(--color-bg-elevated, #ffffff); border: 1px solid var(--color-border, #e5e7eb); border-radius: 2px; padding: 24px; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); font-family: var(--font-mono, 'JetBrains Mono', monospace); } .ds-vault .ds-term { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--color-border, #e5e7eb); padding-bottom: 12px; margin-bottom: 16px; font-size: 12px; color: var(--color-text-muted, #6b7280); } .ds-vault .ds-cursor { width: 8px; height: 16px; background: var(--color-accent, #059669); animation: ds-blink 1s steps(2) infinite; } @keyframes ds-blink { 50% { opacity: 0; } } .ds-vault .ds-file { border: 1px solid var(--color-border, #e5e7eb); background: var(--color-bg, #f5f5f7); border-radius: 2px; padding: 12px; font-size: 12px; margin-bottom: 16px; } .ds-vault .ds-dot { display: inline-block; width: 8px; height: 8px; border-radius: 9999px; background: var(--color-accent, #059669); }",
+      "description": "Signature terminal shell for all vault credential flows.",
+      "html": "<div class=\"ds-vault\"><div class=\"ds-term\">vault@iFolio:~$ <span class=\"ds-cursor\"></span></div><div class=\"ds-file\">$ ls ~/<br/>my-vault.ifolio <span class=\"ds-dot\"></span> (valid)</div><div>&gt; passphrase: ••••••••</div></div>",
+      "kind": "custom",
+      "name": "Vault Terminal Card",
+      "refersTo": "card"
+    }
+  ],
+  "extensions": {
+    "breakpoints": [
+      { "name": "sm", "purpose": "Small padding and stacked grids collapse to single column.", "value": "640px" },
+      { "name": "md", "purpose": "Sidebar rail appears; bottom tab bar hides.", "value": "768px" },
+      { "name": "lg", "purpose": "Wider ledger spacing holds.", "value": "1024px" },
+      { "name": "xl", "purpose": "Charts split to two columns.", "value": "1280px" }
+    ],
+    "colorMeta": {
+      "accent": {
+        "canonical": "#059669",
+        "displayName": "Vault Emerald",
+        "role": "primary",
+        "tonalRamp": [
+          "oklch(28% 0.09 164)",
+          "oklch(38% 0.12 164)",
+          "oklch(48% 0.14 164)",
+          "oklch(58% 0.15 164)",
+          "oklch(68% 0.13 164)",
+          "oklch(78% 0.10 164)",
+          "oklch(88% 0.06 164)",
+          "oklch(95% 0.03 164)"
+        ]
+      },
+      "accent-active": {
+        "canonical": "#065f46",
+        "displayName": "Deep Vault",
+        "role": "primary",
+        "tonalRamp": [
+          "oklch(22% 0.07 164)",
+          "oklch(32% 0.09 164)",
+          "oklch(42% 0.11 164)",
+          "oklch(52% 0.12 164)",
+          "oklch(62% 0.11 164)",
+          "oklch(74% 0.09 164)",
+          "oklch(86% 0.05 164)",
+          "oklch(94% 0.02 164)"
+        ]
+      },
+      "accent-hover": {
+        "canonical": "#047857",
+        "displayName": "Vault Hover",
+        "role": "primary",
+        "tonalRamp": [
+          "oklch(25% 0.08 164)",
+          "oklch(35% 0.11 164)",
+          "oklch(45% 0.13 164)",
+          "oklch(55% 0.14 164)",
+          "oklch(65% 0.12 164)",
+          "oklch(76% 0.09 164)",
+          "oklch(87% 0.05 164)",
+          "oklch(95% 0.02 164)"
+        ]
+      },
+      "bg": {
+        "canonical": "#f5f5f7",
+        "displayName": "Ledger Paper",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(25% 0.01 260)",
+          "oklch(35% 0.01 260)",
+          "oklch(48% 0.01 260)",
+          "oklch(62% 0.01 260)",
+          "oklch(74% 0.01 260)",
+          "oklch(84% 0.008 260)",
+          "oklch(92% 0.005 260)",
+          "oklch(97% 0.003 260)"
+        ]
+      },
+      "bg-elevated": {
+        "canonical": "#ffffff",
+        "displayName": "Raised Paper",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(30% 0.01 260)",
+          "oklch(42% 0.01 260)",
+          "oklch(55% 0.008 260)",
+          "oklch(68% 0.006 260)",
+          "oklch(79% 0.005 260)",
+          "oklch(88% 0.003 260)",
+          "oklch(94% 0.002 260)",
+          "oklch(99% 0 260)"
+        ]
+      },
+      "border": {
+        "canonical": "#e5e7eb",
+        "displayName": "Hairline",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(30% 0.01 260)",
+          "oklch(42% 0.01 260)",
+          "oklch(55% 0.01 260)",
+          "oklch(68% 0.008 260)",
+          "oklch(78% 0.006 260)",
+          "oklch(86% 0.005 260)",
+          "oklch(92% 0.003 260)",
+          "oklch(96% 0.002 260)"
+        ]
+      },
+      "border-strong": {
+        "canonical": "#d1d5db",
+        "displayName": "Visible Hairline",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(28% 0.012 260)",
+          "oklch(40% 0.012 260)",
+          "oklch(52% 0.01 260)",
+          "oklch(64% 0.009 260)",
+          "oklch(74% 0.008 260)",
+          "oklch(83% 0.006 260)",
+          "oklch(90% 0.004 260)",
+          "oklch(95% 0.002 260)"
+        ]
+      },
+      "signal-amber": {
+        "canonical": "#d97706",
+        "displayName": "Signal Amber",
+        "role": "secondary",
+        "tonalRamp": [
+          "oklch(30% 0.10 70)",
+          "oklch(42% 0.13 70)",
+          "oklch(54% 0.15 70)",
+          "oklch(65% 0.15 75)",
+          "oklch(74% 0.13 80)",
+          "oklch(83% 0.10 85)",
+          "oklch(90% 0.06 85)",
+          "oklch(95% 0.03 85)"
+        ]
+      },
+      "signal-blue": {
+        "canonical": "#2563eb",
+        "displayName": "Signal Blue",
+        "role": "secondary",
+        "tonalRamp": [
+          "oklch(30% 0.12 260)",
+          "oklch(42% 0.16 260)",
+          "oklch(52% 0.18 265)",
+          "oklch(62% 0.16 265)",
+          "oklch(72% 0.12 265)",
+          "oklch(82% 0.08 265)",
+          "oklch(90% 0.04 265)",
+          "oklch(95% 0.02 265)"
+        ]
+      },
+      "signal-red": {
+        "canonical": "#dc2626",
+        "displayName": "Signal Red",
+        "role": "secondary",
+        "tonalRamp": [
+          "oklch(30% 0.14 25)",
+          "oklch(40% 0.18 25)",
+          "oklch(50% 0.20 25)",
+          "oklch(60% 0.19 25)",
+          "oklch(70% 0.15 25)",
+          "oklch(80% 0.10 25)",
+          "oklch(88% 0.06 25)",
+          "oklch(94% 0.03 25)"
+        ]
+      },
+      "text": {
+        "canonical": "#1a1a2e",
+        "displayName": "Ledger Ink",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(18% 0.02 270)",
+          "oklch(28% 0.02 270)",
+          "oklch(40% 0.02 270)",
+          "oklch(55% 0.015 270)",
+          "oklch(68% 0.01 270)",
+          "oklch(80% 0.008 270)",
+          "oklch(90% 0.005 270)",
+          "oklch(96% 0.003 270)"
+        ]
+      },
+      "text-disabled": {
+        "canonical": "#9ca3af",
+        "displayName": "Disabled Fog",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(30% 0.01 260)",
+          "oklch(42% 0.01 260)",
+          "oklch(54% 0.01 260)",
+          "oklch(66% 0.009 260)",
+          "oklch(76% 0.008 260)",
+          "oklch(85% 0.006 260)",
+          "oklch(91% 0.004 260)",
+          "oklch(96% 0.002 260)"
+        ]
+      },
+      "text-muted": {
+        "canonical": "#6b7280",
+        "displayName": "Muted Slate",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(28% 0.012 260)",
+          "oklch(38% 0.012 260)",
+          "oklch(50% 0.012 260)",
+          "oklch(62% 0.01 260)",
+          "oklch(72% 0.009 260)",
+          "oklch(82% 0.007 260)",
+          "oklch(90% 0.005 260)",
+          "oklch(95% 0.003 260)"
+        ]
+      }
+    },
+    "motion": [
+      { "name": "ease-standard", "purpose": "Default easing for nav, buttons, and sidebar width.", "value": "cubic-bezier(0.4, 0, 0.2, 1)" },
+      { "name": "page-enter", "purpose": "Ledger page transition on route change.", "value": "opacity 80ms ease, transform 80ms ease" },
+      { "name": "reveal-200", "purpose": "Sidebar expand and label fade on hover.", "value": "200ms ease" },
+      { "name": "pulse-cursor", "purpose": "Terminal block cursor in vault header.", "value": "animate-pulse 1s infinite" },
+      { "name": "spin-loader", "purpose": "Saving and unlocking spinners.", "value": "animate-spin 1s linear infinite" }
+    ],
+    "shadows": [
+      {
+        "name": "modal-lift",
+        "purpose": "Vault lock card and update prompt only; never on cards or tables.",
+        "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)"
+      }
+    ],
+    "typographyMeta": {
+      "body": { "displayName": "Body", "purpose": "Default 14px Public Sans for card copy, nav, and empty states." },
+      "headline": { "displayName": "Headline", "purpose": "18px bold JetBrains Mono for portfolio and income totals." },
+      "label": { "displayName": "Label", "purpose": "12px uppercase JetBrains Mono with tracking for headers and vault prompts." },
+      "microlabel": { "displayName": "Microlabel", "purpose": "10px uppercase JetBrains Mono (text-2xs) for dense stat captions and footer status." },
+      "title": { "displayName": "Title", "purpose": "16px semibold Public Sans for card values and tiles." }
+    }
+  },
+  "generatedAt": "2026-10-21T00:00:00.000Z",
+  "narrative": {
+    "dos": [
+      "Do keep every operate surface on paper versus raised-paper with a 1px hairline — flat, bordered, squared (rounded-sm).",
+      "Do set every actionable number in JetBrains Mono: currency, quantity, price, percentage, timestamp.",
+      "Do reserve emerald for active / primary / saved, and red / amber / blue strictly for gain-loss-error-warn state.",
+      "Do support both themes by swapping the same tokens (light paper #f5f5f7 ↔ dark ink #0f1117) — never hard-code a hex in a component.",
+      "Do use the vault terminal pattern ($ / > mono lines, block cursor) for any future credential or destructive flow."
+    ],
+    "donts": [
+      "Don't introduce a second accent, gradient, or decorative color — the ledger has one voice.",
+      "Don't add shadows to cards, tables, or nav — shadow-lg belongs only to floating layers.",
+      "Don't round to rounded-lg / rounded-xl or remove borders for a softer look — squareness is the identity.",
+      "Don't set numerals in Public Sans or prose in mono — the pairing direction is fixed.",
+      "Don't invent new radius, spacing, or elevation tokens — reuse rounded-sm, 8/12/16px rhythm, and hairline borders."
+    ],
+    "keyCharacteristics": [
+      "Dense operate density: text-xs / text-sm, 12–16px card padding, 16px grid rhythm.",
+      "Terminal-finance voice: Public Sans for prose, JetBrains Mono for numerals, labels, and vault flows.",
+      "One-accent discipline: emerald for active, saved, and primary; red / amber / blue reserved for signals.",
+      "Flat-by-default surfaces with tonal layering; shadow only for the vault modal."
+    ],
+    "northStar": "The Vault Ledger",
+    "overview": "iFolio is an operate-surface: a dense, task-focused private portfolio tracker where privacy is the product. The aesthetic is utilitarian and custodial — small sharp-edged cards, hairline borders, mono numerals, and a single emerald voice that only speaks when state changes. A terminal-inspired vault lock screen sets the tone; everything inside is quiet, precise, and auditable.\n\nThere is no marketing layer and no decorative imagery. Layout is a centered ledger (max-w-7xl) of bordered panels, data tables, and ApexCharts, framed by a slim icon sidebar, a 40px breadcrumb strip, and a status footer. Dark mode is a full citizen, not an afterthought, swapping the same tokens to ink-on-slate.",
+    "rules": [
+      {
+        "body": "The emerald accent appears on ≤10% of any screen — active nav, primary action, saved state, chart line. Its rarity is the point; everything else is neutral.",
+        "name": "The One Voice Rule",
+        "section": "colors"
+      },
+      {
+        "body": "Red, amber, and blue never decorate. They only report state: gain/loss, error, unsaved, expired, or sync status.",
+        "name": "The Signal Silence Rule",
+        "section": "colors"
+      },
+      {
+        "body": "Any currency, quantity, percentage, or date that the user acts on is set in JetBrains Mono, never in Public Sans.",
+        "name": "The Mono Numerals Rule",
+        "section": "typography"
+      },
+      {
+        "body": "Surfaces are flat at rest. Shadow appears only as a response to layering (vault modal, update prompt), never on cards, tables, or nav.",
+        "name": "The Flat-By-Default Rule",
+        "section": "elevation"
+      }
+    ]
+  },
+  "schemaVersion": 2,
+  "title": "Design System: iFolio"
+}

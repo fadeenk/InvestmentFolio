@@ -188,7 +188,8 @@ function selectRange(range: TimeRange): void {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-7xl space-y-4 px-4 py-4">
+  <div class="mx-auto w-full max-w-7xl space-y-6 px-4 py-4">
+    <h1 class="sr-only">Dashboard</h1>
     <div class="flex items-center justify-between">
       <UButton
         v-if="hasGoogleClientId && isUnlocked"
@@ -204,8 +205,8 @@ function selectRange(range: TimeRange): void {
 
     <!-- Sync status indicators -->
     <div v-if="sheetsError || sheetsSuccess" class="flex items-center gap-2">
-      <span v-if="sheetsError" class="text-xs font-[var(--font-mono)] text-[var(--color-signal-red)]">{{ sheetsError }}</span>
-      <span v-if="sheetsSuccess" class="text-xs font-[var(--font-mono)] text-[var(--color-accent)]">Synced!</span>
+      <span v-if="sheetsError" class="text-xs font-[var(--font-mono)] text-[var(--color-signal-red)]" role="alert">{{ sheetsError }}</span>
+      <span v-if="sheetsSuccess" class="text-xs font-[var(--font-mono)] text-[var(--color-accent-text)]" role="status">Synced!</span>
     </div>
 
     <template v-if="!isUnlocked">

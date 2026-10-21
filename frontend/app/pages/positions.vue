@@ -71,6 +71,7 @@ function holdingPeriodLabel(accountId: string, symbol: string): string {
 
 <template>
   <div class="mx-auto w-full max-w-7xl space-y-6 px-4 py-4">
+    <h1 class="sr-only">Positions</h1>
     <div class="flex items-center justify-between">
       <UButton label="Dashboard" to="/dashboard" color="neutral" variant="ghost" size="xs" />
     </div>
@@ -138,12 +139,13 @@ function holdingPeriodLabel(accountId: string, symbol: string): string {
           size="xs"
           color="neutral"
           variant="ghost"
+          aria-label="Refresh market data"
           :loading="marketStore.isSyncing"
           :disabled="marketStore.isSyncing"
           @click="marketStore.refreshMarketData()"
         />
-        <span v-if="marketStore.lastError" class="text-2xs text-[var(--color-signal-red)]">{{ marketStore.lastError }}</span>
-        <span v-if="marketStore.syncStatus === 'SUCCESS' && !marketStore.isSyncing" class="text-2xs text-[var(--color-accent)]">Updated</span>
+        <span v-if="marketStore.lastError" class="text-2xs text-[var(--color-signal-red)]" role="alert">{{ marketStore.lastError }}</span>
+        <span v-if="marketStore.syncStatus === 'SUCCESS' && !marketStore.isSyncing" class="text-2xs text-[var(--color-accent-text)]">Updated</span>
       </div>
     </div>
 
@@ -173,16 +175,16 @@ function holdingPeriodLabel(accountId: string, symbol: string): string {
         <table class="min-w-full text-xs">
           <thead>
             <tr class="border-b border-(--ui-border)">
-              <th class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Symbol</th>
-              <th class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Account</th>
-              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Quantity</th>
-              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Avg cost</th>
-              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Price</th>
-              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Market value</th>
-              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Unrealized G/L</th>
-              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Day G/L</th>
-              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Holding period</th>
-              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Lots</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Symbol</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Account</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Quantity</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Avg cost</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Price</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Market value</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Unrealized G/L</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Day G/L</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Holding period</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Lots</th>
             </tr>
           </thead>
           <tbody>
@@ -211,14 +213,28 @@ function holdingPeriodLabel(accountId: string, symbol: string): string {
                     <table class="min-w-full text-xs">
                       <thead>
                         <tr class="border-b border-(--ui-border)">
-                          <th class="text-2xs px-2 py-1 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Lot ID</th>
-                          <th class="text-2xs px-2 py-1 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Acquired</th>
-                          <th class="text-2xs px-2 py-1 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Acquired price</th>
-                          <th class="text-2xs px-2 py-1 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Qty</th>
-                          <th class="text-2xs px-2 py-1 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Cost basis</th>
-                          <th class="text-2xs px-2 py-1 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Current value</th>
-                          <th class="text-2xs px-2 py-1 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Unrealized G/L</th>
-                          <th class="text-2xs px-2 py-1 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Wash sale</th>
+                          <th scope="col" class="text-2xs px-2 py-1 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">
+                            Lot ID
+                          </th>
+                          <th scope="col" class="text-2xs px-2 py-1 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">
+                            Acquired
+                          </th>
+                          <th scope="col" class="text-2xs px-2 py-1 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">
+                            Acquired price
+                          </th>
+                          <th scope="col" class="text-2xs px-2 py-1 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Qty</th>
+                          <th scope="col" class="text-2xs px-2 py-1 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">
+                            Cost basis
+                          </th>
+                          <th scope="col" class="text-2xs px-2 py-1 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">
+                            Current value
+                          </th>
+                          <th scope="col" class="text-2xs px-2 py-1 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">
+                            Unrealized G/L
+                          </th>
+                          <th scope="col" class="text-2xs px-2 py-1 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">
+                            Wash sale
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -258,6 +274,7 @@ function holdingPeriodLabel(accountId: string, symbol: string): string {
           <USelect
             :value="dataStore.selectedTaxYear"
             :items="availableTaxYears.map((y) => ({ label: String(y), value: y }))"
+            aria-label="Select tax year"
             size="xs"
             variant="outline"
             color="neutral"
@@ -269,13 +286,13 @@ function holdingPeriodLabel(accountId: string, symbol: string): string {
         <table class="min-w-full text-xs">
           <thead>
             <tr class="border-b border-(--ui-border)">
-              <th class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Sold date</th>
-              <th class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Symbol</th>
-              <th class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Account</th>
-              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Cost</th>
-              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Proceeds</th>
-              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Realized G/L</th>
-              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Term</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Sold date</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Symbol</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Account</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Cost</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Proceeds</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Realized G/L</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Term</th>
             </tr>
           </thead>
           <tbody>

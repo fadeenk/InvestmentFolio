@@ -15,7 +15,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div>
+  <div class="vault-terminal-focus">
     <div class="mb-4">
       <div class="flex items-center gap-2 text-sm font-[var(--font-mono)] text-(--ui-text-muted)">
         <span class="text-[var(--color-accent)]">$</span>
@@ -30,6 +30,7 @@ const emit = defineEmits<{
           :model-value="passphrase"
           type="password"
           placeholder="min 8 characters"
+          aria-label="New vault passphrase"
           size="sm"
           variant="none"
           class="flex-1"
@@ -50,6 +51,7 @@ const emit = defineEmits<{
           :model-value="passphraseConfirm"
           type="password"
           placeholder="re-enter passphrase"
+          aria-label="Confirm new vault passphrase"
           size="sm"
           variant="none"
           class="flex-1"
@@ -65,6 +67,7 @@ const emit = defineEmits<{
 
     <p
       v-if="passphraseError"
+      role="alert"
       :class="[
         'mb-4 rounded-sm border',
         'border-[var(--color-signal-red)]/30',

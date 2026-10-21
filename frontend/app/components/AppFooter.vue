@@ -32,7 +32,7 @@ const lastSyncLabel = computed(() => {
           <span class="h-1 w-1 rounded-full bg-[var(--color-signal-amber)]" />
           Unsaved
         </span>
-        <span v-else class="flex items-center gap-1 text-[var(--color-accent)]">
+        <span v-else class="flex items-center gap-1 text-[var(--color-accent-text)]">
           <span class="h-1 w-1 rounded-full bg-[var(--color-accent)]" />
           Saved
         </span>
@@ -42,6 +42,7 @@ const lastSyncLabel = computed(() => {
           size="xs"
           color="primary"
           variant="solid"
+          aria-label="Save vault now"
           :loading="vault.isSaving"
           @click="vault.saveVault()"
         />

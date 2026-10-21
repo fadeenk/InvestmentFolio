@@ -296,6 +296,7 @@ function deleteTransaction(id: string): void {
 
 <template>
   <div class="mx-auto w-full max-w-7xl space-y-6 px-4 py-4">
+    <h1 class="sr-only">Transactions</h1>
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-2">
         <UButton label="New transaction" color="primary" size="xs" @click="openAdd" />
@@ -354,6 +355,7 @@ function deleteTransaction(id: string): void {
           v-model="selectedAccountId"
           :items="[{ label: 'All', value: 'ALL' }, ...dataStore.allAccounts.map((a) => ({ label: a.displayName, value: a.id }))]"
           placeholder="Account"
+          aria-label="Filter by account"
           size="xs"
           variant="outline"
           color="neutral"
@@ -362,13 +364,14 @@ function deleteTransaction(id: string): void {
           v-model="selectedType"
           :items="[{ label: 'All', value: 'ALL' }, ...typeOptions.map((t) => ({ label: t, value: t }))]"
           placeholder="Type"
+          aria-label="Filter by transaction type"
           size="xs"
           variant="outline"
           color="neutral"
         />
-        <UInput v-model="symbolFilter" placeholder="Symbol" size="xs" variant="outline" color="neutral" />
-        <UInput v-model="dateFrom" type="date" size="xs" variant="outline" color="neutral" />
-        <UInput v-model="dateTo" type="date" size="xs" variant="outline" color="neutral" />
+        <UInput v-model="symbolFilter" placeholder="Symbol" aria-label="Filter by symbol" size="xs" variant="outline" color="neutral" />
+        <UInput v-model="dateFrom" type="date" aria-label="Filter from date" size="xs" variant="outline" color="neutral" />
+        <UInput v-model="dateTo" type="date" aria-label="Filter to date" size="xs" variant="outline" color="neutral" />
       </div>
       <div class="text-2xs mt-2 flex flex-wrap gap-2 text-(--ui-text-muted)">
         <span>All: {{ tabCounts.ALL }}</span>
@@ -392,11 +395,12 @@ function deleteTransaction(id: string): void {
               <th
                 v-for="header in table.getFlatHeaders()"
                 :key="header.id"
+                scope="col"
                 class="text-2xs px-3 py-2 text-left font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase"
               >
                 {{ header.column.columnDef.header }}
               </th>
-              <th class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Actions</th>
+              <th scope="col" class="text-2xs px-3 py-2 text-right font-[var(--font-mono)] tracking-wide text-(--ui-text-muted) uppercase">Actions</th>
             </tr>
           </thead>
 
@@ -433,27 +437,56 @@ function deleteTransaction(id: string): void {
           <USelect
             v-model="transactionForm.accountId"
             :items="dataStore.allAccounts.map((a) => ({ label: a.displayName, value: a.id }))"
+            aria-label="Transaction account"
             size="xs"
             variant="outline"
             color="neutral"
             :disabled="isEditMode"
           />
-          <UInput v-model="transactionForm.date" type="date" size="xs" variant="outline" color="neutral" />
-          <USelect v-model="transactionForm.type" :items="typeOptions.map((t) => ({ label: t, value: t }))" size="xs" variant="outline" color="neutral" />
+          <UInput v-model="transactionForm.date" type="date" aria-label="Transaction date" size="xs" variant="outline" color="neutral" />
           <USelect
-            v-model="transactionForm.assetType"
-            :items="assetTypeOptions.map((a) => ({ label: a, value: a }))"
+            v-model="transactionForm.type"
+            :items="typeOptions.map((t) => ({ label: t, value: t }))"
+            aria-label="Transaction type"
             size="xs"
             variant="outline"
             color="neutral"
           />
-          <UInput v-model="transactionForm.symbol" size="xs" variant="outline" color="neutral" />
-          <UInput v-model="transactionForm.description" size="xs" variant="outline" color="neutral" />
-          <UInput v-model="transactionForm.quantity" type="number" step="0.0001" size="xs" variant="outline" color="neutral" />
-          <UInput v-model="transactionForm.price" type="number" step="0.0001" size="xs" variant="outline" color="neutral" />
-          <UInput v-model="transactionForm.fees" type="number" step="0.01" size="xs" variant="outline" color="neutral" />
+          <USelect
+            v-model="transactionForm.assetType"
+            :items="assetTypeOptions.map((a) => ({ label: a, value: a }))"
+            aria-label="Asset type"
+            size="xs"
+            variant="outline"
+            color="neutral"
+          />
+          <UInput v-model="transactionForm.symbol" placeholder="Symbol" aria-label="Symbol" size="xs" variant="outline" color="neutral" />
+          <UInput v-model="transactionForm.description" placeholder="Description" aria-label="Description" size="xs" variant="outline" color="neutral" />
+          <UInput
+            v-model="transactionForm.quantity"
+            type="number"
+            step="0.0001"
+            placeholder="Quantity"
+            aria-label="Quantity"
+            size="xs"
+            variant="outline"
+            color="neutral"
+          />
+          <UInput
+            v-model="transactionForm.price"
+            type="number"
+            step="0.0001"
+            placeholder="Price"
+            aria-label="Price"
+            size="xs"
+            variant="outline"
+            color="neutral"
+          />
+          <UInput v-model="transactionForm.fees" type="number" step="0.01" placeholder="Fees" aria-label="Fees" size="xs" variant="outline" color="neutral" />
           <textarea
             v-model="transactionForm.notes"
+            aria-label="Transaction notes"
+            placeholder="Notes"
             class="min-h-24 w-full rounded-sm border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-xs md:col-span-2"
           />
         </div>

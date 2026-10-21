@@ -68,7 +68,7 @@ describe('DashboardPerformanceChart', () => {
       global: { stubs: { ApexLineChart: { template: '<div />' } } },
     })
 
-    expect(wrapper.text()).toContain('Portfolio Performance')
+    expect(wrapper.text()).toContain('Portfolio performance')
     expect(wrapper.text()).toContain('1M')
   })
 

@@ -25,7 +25,7 @@ function handleForget() {
 </script>
 
 <template>
-  <div class="w-full max-w-md">
+  <div class="vault-terminal-focus w-full max-w-md">
     <div class="rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-6 shadow-lg">
       <!-- Terminal header -->
       <div class="mb-6 flex items-center gap-2 border-b border-(--ui-border) pb-3">
@@ -63,6 +63,7 @@ function handleForget() {
               v-model="passphrase"
               type="password"
               placeholder="enter vault passphrase"
+              aria-label="Vault passphrase"
               size="sm"
               variant="none"
               class="flex-1"
@@ -77,6 +78,7 @@ function handleForget() {
 
         <p
           v-if="passphraseError"
+          role="alert"
           :class="[
             'mb-4 rounded-sm border',
             'border-[var(--color-signal-red)]/30',
@@ -113,6 +115,7 @@ function handleForget() {
               v-model="passphrase"
               type="password"
               placeholder="passphrase"
+              aria-label="Vault passphrase"
               size="sm"
               variant="none"
               class="flex-1"
@@ -127,6 +130,7 @@ function handleForget() {
 
         <p
           v-if="passphraseError"
+          role="alert"
           :class="[
             'mb-4 rounded-sm border',
             'border-[var(--color-signal-red)]/30',
@@ -164,6 +168,7 @@ function handleForget() {
               v-model="passphrase"
               type="password"
               placeholder="passphrase"
+              aria-label="Vault passphrase"
               size="sm"
               variant="none"
               class="flex-1"
@@ -178,6 +183,7 @@ function handleForget() {
 
         <p
           v-if="passphraseError"
+          role="alert"
           :class="[
             'mb-4 rounded-sm border',
             'border-[var(--color-signal-red)]/30',

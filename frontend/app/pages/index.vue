@@ -21,6 +21,7 @@ watch(
 
 <template>
   <div class="flex min-h-screen items-center justify-center bg-(--ui-bg) px-4">
+    <h1 class="sr-only">iFolio vault lock</h1>
     <VaultLockScreen v-if="vault.status === VaultStatus.LOCKED" />
     <VaultUnlockingAnimation v-else-if="vault.status === VaultStatus.UNLOCKING" />
   </div>

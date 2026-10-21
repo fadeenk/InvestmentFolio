@@ -299,6 +299,7 @@ async function changePassphrase(): Promise<void> {
 
 <template>
   <div class="mx-auto w-full max-w-7xl space-y-6 px-4 py-4">
+    <h1 class="sr-only">Settings</h1>
     <div class="flex items-center justify-between">
       <UButton label="Dashboard" to="/dashboard" color="neutral" variant="ghost" size="xs" />
     </div>
@@ -330,6 +331,7 @@ async function changePassphrase(): Promise<void> {
         <USelect
           v-model="importAccountId"
           :items="[{ label: 'Select account', value: null }, ...dataStore.allAccounts.map((a) => ({ label: a.displayName, value: a.id }))]"
+          aria-label="Select account for import"
           size="xs"
           variant="outline"
           color="neutral"
@@ -338,6 +340,7 @@ async function changePassphrase(): Promise<void> {
         <input
           type="file"
           accept=".csv,text/csv"
+          aria-label="Select CSV file to import"
           :class="
             'rounded-sm border border-(--ui-border) bg-(--ui-bg) px-3 py-2 text-xs ' +
             'file:mr-3 file:rounded-sm file:border-0 file:bg-(--ui-bg-elevated) file:px-2 file:py-1 file:text-xs file:text-(--ui-text)'
@@ -347,6 +350,7 @@ async function changePassphrase(): Promise<void> {
       </div>
       <div
         v-if="importErrors.length > 0"
+        role="alert"
         :class="
           'mt-3 rounded-sm border ' +
           'border-[var(--color-signal-red)]/30 bg-[var(--color-signal-red)]/10 px-3 py-2 text-xs font-[var(--font-mono)] text-[var(--color-signal-red)]'
@@ -379,6 +383,7 @@ async function changePassphrase(): Promise<void> {
       </div>
       <div
         v-if="marketStore.lastError"
+        role="alert"
         :class="
           'mt-3 rounded-sm border ' +
           'border-[var(--color-signal-red)]/30 bg-[var(--color-signal-red)]/10 px-3 py-2 text-xs font-[var(--font-mono)] text-[var(--color-signal-red)]'
@@ -411,13 +416,22 @@ async function changePassphrase(): Promise<void> {
               </p>
             </div>
             <div class="flex gap-1">
-              <UButton label="Edit" size="xs" color="neutral" variant="ghost" @click="startEdit(account)" />
-              <UButton icon="i-lucide-chevron-up" size="xs" color="neutral" variant="ghost" :disabled="index === 0" @click="moveAccount(account.id, -1)" />
+              <UButton label="Edit" size="xs" color="neutral" variant="ghost" :aria-label="`Edit ${account.displayName}`" @click="startEdit(account)" />
+              <UButton
+                icon="i-lucide-chevron-up"
+                size="xs"
+                color="neutral"
+                variant="ghost"
+                aria-label="Move account up"
+                :disabled="index === 0"
+                @click="moveAccount(account.id, -1)"
+              />
               <UButton
                 icon="i-lucide-chevron-down"
                 size="xs"
                 color="neutral"
                 variant="ghost"
+                aria-label="Move account down"
                 :disabled="index === orderedAccounts.length - 1"
                 @click="moveAccount(account.id, 1)"
               />
@@ -429,12 +443,20 @@ async function changePassphrase(): Promise<void> {
       <div class="mt-3 rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
         <p class="mb-3 text-xs font-medium text-(--ui-text)">{{ editAccountId ? 'Edit account' : 'Add account' }}</p>
         <div class="grid gap-3 md:grid-cols-2">
-          <UInput v-model="editForm.displayName" placeholder="Display name" size="xs" variant="outline" color="neutral" />
-          <UInput v-model="editForm.accountNumber" placeholder="Account number" size="xs" variant="outline" color="neutral" />
-          <USelect v-model="editForm.bank" :items="bankOptions.map((b) => ({ label: b, value: b }))" size="xs" variant="outline" color="neutral" />
+          <UInput v-model="editForm.displayName" placeholder="Display name" aria-label="Account display name" size="xs" variant="outline" color="neutral" />
+          <UInput v-model="editForm.accountNumber" placeholder="Account number" aria-label="Account number" size="xs" variant="outline" color="neutral" />
+          <USelect
+            v-model="editForm.bank"
+            :items="bankOptions.map((b) => ({ label: b, value: b }))"
+            aria-label="Bank"
+            size="xs"
+            variant="outline"
+            color="neutral"
+          />
           <USelect
             v-model="editForm.type"
             :items="Object.values(AccountType).map((t) => ({ label: t, value: t }))"
+            aria-label="Account type"
             size="xs"
             variant="outline"
             color="neutral"
@@ -442,6 +464,7 @@ async function changePassphrase(): Promise<void> {
           <USelect
             v-model="editForm.costBasisMethod"
             :items="costBasisOptions.map((c) => ({ label: c, value: c }))"
+            aria-label="Cost basis method"
             size="xs"
             variant="outline"
             color="neutral"
@@ -481,6 +504,7 @@ async function changePassphrase(): Promise<void> {
           <UInput
             v-model="googleSheetsClientId"
             placeholder="Paste your Google OAuth Client ID"
+            aria-label="Google OAuth client ID"
             size="xs"
             variant="outline"
             color="neutral"
@@ -488,7 +512,7 @@ async function changePassphrase(): Promise<void> {
           />
           <UButton label="Save" size="xs" color="primary" :disabled="!googleSheetsClientId" @click="saveGoogleSheetsClientId" />
         </div>
-        <p v-if="googleSheetsClientIdSaved" class="mt-2 text-xs text-[var(--color-accent)]">Saved to vault</p>
+        <p v-if="googleSheetsClientIdSaved" class="mt-2 text-xs text-[var(--color-accent-text)]">Saved to vault</p>
       </div>
     </section>
 
@@ -499,12 +523,37 @@ async function changePassphrase(): Promise<void> {
       <div class="mb-3 rounded-sm border border-(--ui-border) bg-(--ui-bg-elevated) p-3">
         <p class="mb-3 text-xs font-medium text-(--ui-text)">Change passphrase</p>
         <div class="grid gap-3 md:grid-cols-3">
-          <UInput v-model="passphraseForm.current" placeholder="Current passphrase" type="password" size="xs" variant="outline" color="neutral" />
-          <UInput v-model="passphraseForm.next" placeholder="New passphrase" type="password" size="xs" variant="outline" color="neutral" />
-          <UInput v-model="passphraseForm.confirm" placeholder="Confirm new passphrase" type="password" size="xs" variant="outline" color="neutral" />
+          <UInput
+            v-model="passphraseForm.current"
+            placeholder="Current passphrase"
+            type="password"
+            aria-label="Current passphrase"
+            size="xs"
+            variant="outline"
+            color="neutral"
+          />
+          <UInput
+            v-model="passphraseForm.next"
+            placeholder="New passphrase"
+            type="password"
+            aria-label="New passphrase"
+            size="xs"
+            variant="outline"
+            color="neutral"
+          />
+          <UInput
+            v-model="passphraseForm.confirm"
+            placeholder="Confirm new passphrase"
+            type="password"
+            aria-label="Confirm new passphrase"
+            size="xs"
+            variant="outline"
+            color="neutral"
+          />
         </div>
         <div
           v-if="passphraseError"
+          role="alert"
           :class="
             'mt-3 rounded-sm border ' +
             'border-[var(--color-signal-red)]/30 bg-[var(--color-signal-red)]/10 px-3 py-2 text-xs font-[var(--font-mono)] text-[var(--color-signal-red)]'
@@ -516,7 +565,7 @@ async function changePassphrase(): Promise<void> {
           v-if="passphraseSuccess"
           :class="
             'mt-3 rounded-sm border ' +
-            'border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 px-3 py-2 text-xs font-[var(--font-mono)] text-[var(--color-accent)]'
+            'border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 px-3 py-2 text-xs font-[var(--font-mono)] text-[var(--color-accent-text)]'
           "
         >
           {{ passphraseSuccess }}
@@ -563,6 +612,7 @@ async function changePassphrase(): Promise<void> {
           <USelect
             :model-value="displayPreferences.theme"
             :items="themeOptions.map((t) => ({ label: t, value: t }))"
+            aria-label="Theme"
             size="sm"
             variant="outline"
             color="neutral"
@@ -575,6 +625,7 @@ async function changePassphrase(): Promise<void> {
           <USelect
             :model-value="displayPreferences.currencyFormat"
             :items="currencyOptions.map((c) => ({ label: c, value: c }))"
+            aria-label="Currency format"
             size="sm"
             variant="outline"
             color="neutral"
@@ -587,6 +638,7 @@ async function changePassphrase(): Promise<void> {
           <USelect
             :model-value="displayPreferences.dateFormat"
             :items="dateFormatOptions.map((d) => ({ label: d, value: d }))"
+            aria-label="Date format"
             size="sm"
             variant="outline"
             color="neutral"
@@ -599,6 +651,7 @@ async function changePassphrase(): Promise<void> {
           <USelect
             :model-value="displayPreferences.defaultAccountFilter ?? 'ALL'"
             :items="accountOptions.map((a) => ({ label: a.label, value: a.id }))"
+            aria-label="Default account filter"
             size="sm"
             variant="outline"
             color="neutral"
@@ -611,6 +664,7 @@ async function changePassphrase(): Promise<void> {
           <USelect
             :model-value="displayPreferences.defaultCostBasisMethod"
             :items="costBasisOptions.map((c) => ({ label: c, value: c }))"
+            aria-label="Default cost basis method"
             size="sm"
             variant="outline"
             color="neutral"
@@ -623,6 +677,7 @@ async function changePassphrase(): Promise<void> {
           <USelect
             :model-value="displayPreferences.defaultTimeRange"
             :items="timeRangeOptions.map((r) => ({ label: r, value: r }))"
+            aria-label="Default time range"
             size="sm"
             variant="outline"
             color="neutral"

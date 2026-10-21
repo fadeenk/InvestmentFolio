@@ -44,17 +44,27 @@ export const CSV_SCHEMAS_BY_BANK: Record<Bank, CsvSchema> = {
   [Bank.OPTUM]: {
     requiredColumns: ['date', 'transaction type', 'requested action', 'amount', 'fund name', 'shares', 'share price'],
     mapRow: (row) => {
-      const rawType = row['requested action'] || row['transaction type'] || ''
+      // 'Transaction type' describes what happened; 'requested action' describes
+      // the funding source. Generic cash-container labels (e.g. CASH RECEIPT for
+      // a dividend payout) defer to the source column, otherwise the event wins —
+      // e.g. PURCHASE OF SHARES funded by DIVIDEND RECEIVED must import as Buy.
+      const txnType = (row['transaction type'] ?? '').trim()
+      const requested = (row['requested action'] ?? '').trim()
+      const txnNormalized = txnType.toUpperCase().replace(/[\s-]+/g, '_')
+      const rawType = OPTUM_CASH_CONTAINER.test(txnNormalized) ? requested || txnType : txnType || requested
       const quantity = toOptionalNumber(row.shares)
       const amount = toOptionalNumber(row.amount)
       const sharePrice = toOptionalNumber(row['share price'])
+      // Cash-only legs (e.g. CASH RECEIPT with 0 shares) carry the fund NAV in
+      // 'share price' — value them at 'amount' instead.
+      const price = quantity ? (sharePrice ?? amount ?? 0) : (amount ?? 0)
 
       return {
         rawType,
         symbol: (row['fund name'] ?? '').trim().toUpperCase(),
         description: row['fund name'] ?? '',
         quantity,
-        price: sharePrice ?? amount ?? 0,
+        price,
         date: row.date ?? '',
         fees: 0,
         assetType: toAssetType(row.assettype, row['fund name'] ?? row['requested action'] ?? ''),
@@ -89,6 +99,13 @@ export const CSV_SCHEMAS_BY_BANK: Record<Bank, CsvSchema> = {
     },
   },
 }
+
+/**
+ * Optum labels that describe a generic cash container rather than the economic
+ * event. For these rows the funding source in 'requested action' (e.g.
+ * DIVIDEND RECEIVED) is the meaningful type.
+ */
+const OPTUM_CASH_CONTAINER = /^(CASH|CASH_RECEIPT|CONTRIBUTION|CONTRIBUTIONS|DISTRIBUTION|DISTRIBUTIONS)$/
 
 function getSchwabPrice(row: CsvRow): number | null {
   if (row.action === 'Full Redemption') return 1
@@ -172,8 +189,12 @@ export function toTransactionType(rawType: string): TransactionType {
 
   switch (normalized) {
     case 'BUY':
+    case 'PURCHASE':
+    case 'PURCHASE_OF_SHARES':
       return TransactionType.Buy
     case 'SELL':
+    case 'SALE':
+    case 'SALE_OF_SHARES':
       return TransactionType.Sell
     case 'DIVIDEND':
     case 'DIV':
@@ -188,6 +209,8 @@ export function toTransactionType(rawType: string): TransactionType {
       return TransactionType.Split
     case 'DEPOSIT':
     case 'FUNDS_RECEIVED':
+    case 'CONTRIBUTION':
+    case 'CONTRIBUTIONS':
       return TransactionType.DEPOSIT
     case 'WITHDRAWAL':
       return TransactionType.WITHDRAWAL

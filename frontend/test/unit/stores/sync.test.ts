@@ -91,6 +91,28 @@ describe('sync store csv import schemas', () => {
     expect(tx?.fees).toBe(0)
   })
 
+  it('imports an Optum dividend-reinvestment pair as Buy + Dividend', async () => {
+    initVault(Bank.OPTUM)
+    const store = useSyncStore()
+
+    const csv = [
+      'Date,Transaction type,Requested action,Amount,Fund name,Shares,Share price',
+      '9/28/2026,PURCHASE OF SHARES,DIVIDEND RECEIVED,$28.89,Vanguard 500 Index - A,0.041,$708.94',
+      '9/28/2026,CASH RECEIPT,DIVIDEND RECEIVED,$28.89,Vanguard 500 Index - A,0.000,$708.94',
+    ].join('\n')
+
+    const result = await store.importCsv(new File([csv], 'optum-div.csv', { type: 'text/csv' }), 'acc-1')
+
+    expect(result.errors).toEqual([])
+    expect(result.added).toBe(2)
+
+    const txs = useVaultStore().payload?.transactions ?? []
+    expect(txs.map((t) => t.type).sort()).toEqual([TransactionType.Buy, TransactionType.Dividend].sort())
+
+    const dividend = txs.find((t) => t.type === TransactionType.Dividend)
+    expect(dividend?.price).toBe(28.89)
+  })
+
   it('imports SCHWAB account csv format', async () => {
     initVault(Bank.SCHWAB)
     const store = useSyncStore()

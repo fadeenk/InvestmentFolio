@@ -86,12 +86,16 @@ describe('parseCsvText', () => {
 })
 
 describe('toTransactionType', () => {
-  it('maps "Buy" to TransactionType.Buy', () => {
+  it('maps "Buy" variants to TransactionType.Buy', () => {
     expect(toTransactionType('Buy')).toBe(TransactionType.Buy)
+    expect(toTransactionType('PURCHASE')).toBe(TransactionType.Buy)
+    expect(toTransactionType('PURCHASE OF SHARES')).toBe(TransactionType.Buy)
   })
 
-  it('maps "sell" to TransactionType.Sell', () => {
+  it('maps "Sell" variants to TransactionType.Sell', () => {
     expect(toTransactionType('sell')).toBe(TransactionType.Sell)
+    expect(toTransactionType('SALE')).toBe(TransactionType.Sell)
+    expect(toTransactionType('SALE OF SHARES')).toBe(TransactionType.Sell)
   })
 
   it('maps "Dividend" variants correctly', () => {
@@ -114,6 +118,7 @@ describe('toTransactionType', () => {
   it('maps deposit-related types', () => {
     expect(toTransactionType('DEPOSIT')).toBe(TransactionType.DEPOSIT)
     expect(toTransactionType('Funds Received')).toBe(TransactionType.DEPOSIT)
+    expect(toTransactionType('Contribution')).toBe(TransactionType.DEPOSIT)
   })
 
   it('maps "Withdrawal" correctly', () => {
@@ -350,7 +355,7 @@ describe('CSV_SCHEMAS_BY_BANK', () => {
       expect(schema.requiredColumns).toEqual(['date', 'transaction type', 'requested action', 'amount', 'fund name', 'shares', 'share price'])
     })
 
-    it('mapRow uses requested action as rawType with fallback', () => {
+    it('mapRow prefers transaction type over requested action', () => {
       const result = schema.mapRow({
         date: '2024-01-05',
         'transaction type': 'BUY',
@@ -360,10 +365,41 @@ describe('CSV_SCHEMAS_BY_BANK', () => {
         shares: '10.5',
         'share price': '95.24',
       })
-      expect(result.rawType).toBe('Purchase')
+      expect(result.rawType).toBe('BUY')
       expect(result.symbol).toBe('VANGUARD TOTAL MARKET')
       expect(result.quantity).toBe(10.5)
       expect(result.price).toBe(95.24)
+    })
+
+    it('mapRow maps a dividend-reinvestment purchase to its transaction type', () => {
+      const result = schema.mapRow({
+        date: '9/28/2026',
+        'transaction type': 'PURCHASE OF SHARES',
+        'requested action': 'DIVIDEND RECEIVED',
+        amount: '$28.89',
+        'fund name': 'Vanguard 500 Index - A',
+        shares: '0.041',
+        'share price': '$708.94',
+      })
+      expect(result.rawType).toBe('PURCHASE OF SHARES')
+      expect(toTransactionType(result.rawType)).toBe(TransactionType.Buy)
+      expect(result.quantity).toBe(0.041)
+      expect(result.price).toBe(708.94)
+    })
+
+    it('mapRow values a zero-share cash receipt at amount, not share price', () => {
+      const result = schema.mapRow({
+        date: '9/28/2026',
+        'transaction type': 'CASH RECEIPT',
+        'requested action': 'DIVIDEND RECEIVED',
+        amount: '$28.89',
+        'fund name': 'Vanguard 500 Index - A',
+        shares: '0.000',
+        'share price': '$708.94',
+      })
+      expect(result.rawType).toBe('DIVIDEND RECEIVED')
+      expect(toTransactionType(result.rawType)).toBe(TransactionType.Dividend)
+      expect(result.price).toBe(28.89)
     })
 
     it('mapRow falls back to transaction type when no requested action', () => {

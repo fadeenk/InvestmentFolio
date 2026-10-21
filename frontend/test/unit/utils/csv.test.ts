@@ -98,6 +98,8 @@ describe('toTransactionType', () => {
     expect(toTransactionType('DIVIDEND')).toBe(TransactionType.Dividend)
     expect(toTransactionType('DIV')).toBe(TransactionType.Dividend)
     expect(toTransactionType('Cash Dividend')).toBe(TransactionType.Dividend)
+    expect(toTransactionType('DIVIDEND RECEIVED')).toBe(TransactionType.Dividend)
+    expect(toTransactionType('Dividends Received')).toBe(TransactionType.Dividend)
   })
 
   it('maps "Interest" variants correctly', () => {

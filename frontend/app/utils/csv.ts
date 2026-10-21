@@ -178,6 +178,8 @@ export function toTransactionType(rawType: string): TransactionType {
     case 'DIVIDEND':
     case 'DIV':
     case 'CASH_DIVIDEND':
+    case 'DIVIDEND_RECEIVED':
+    case 'DIVIDENDS_RECEIVED':
       return TransactionType.Dividend
     case 'INTEREST':
     case 'CREDIT_INTEREST':
